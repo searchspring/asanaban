@@ -3,7 +3,7 @@
     "name": "Kanban on top of Asana",
     "description": "All your kanban needs, none of your asana chrome",
     "start_url": "/",
-    "background_color": "#white",
+    "background_color": "white",
     "display": "standalone",
     "scope": "/",
     "theme_color": "#3367D6"

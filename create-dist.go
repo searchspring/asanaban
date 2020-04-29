@@ -13,7 +13,6 @@ import (
 
 	"github.com/aymerick/douceur/css"
 	"github.com/aymerick/douceur/parser"
-	"github.com/iancoleman/strcase"
 	"github.com/otiai10/copy"
 	"github.com/tdewolff/minify"
 	mcss "github.com/tdewolff/minify/css"
@@ -72,6 +71,8 @@ func main() {
 
 	minifyCSS()
 
+	os.Remove("dist/css/tailwind.css")
+
 }
 func processSelectors(rule *css.Rule, set map[string][]string, orderedSelectors []string) []string {
 	for _, selector := range rule.Selectors {
@@ -99,7 +100,7 @@ func minifyCSS() {
 	allCSSTokens := map[string]map[string][]string{}
 	orderedSelectors := make([]string, 10)
 	allCSSTokens["global"] = map[string][]string{}
-	contents := loadFile("www/css/style.css")
+	contents := loadFile("www/css/tailwind.css")
 	mediaKeys := []string{}
 	stylesheet, err := parser.Parse(contents)
 	if err != nil {
@@ -236,20 +237,6 @@ func processHTML(filename string, jsFiles []string) (string, error) {
 		}
 	}
 
-	globalJS := loadFile("www/js/global.js")
-	globalJS = strings.ReplaceAll(globalJS, "GS.environment = 'development'", "GS.environment = 'production'")
-	js += "//------------\n//global.js\n" + globalJS + "\n"
-	jsFileName += "global"
-	instantiate := ""
-	for _, file := range jsFiles {
-		if strings.Contains(html, "</"+file+">") {
-			js += "//------------\n//" + file + ".js\n" + loadFile("www/js/"+file+".js") + "\n"
-			jsFileName += file
-			instantiate += "let " + strcase.ToLowerCamel(file) + " = new " + strcase.ToCamel(file) + "()\n"
-		}
-	}
-	instantiate += "GS.emit('instantiation')\n"
-	js += instantiate
 	splits := strings.Split(html, "</body>")
 
 	jsFileName = "js/" + fmt.Sprintf("%x", md5.Sum([]byte(jsFileName))) + ".js"

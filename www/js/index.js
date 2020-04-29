@@ -1,3 +1,7 @@
+let projectId = null
+let workspaceId = null
+let customFieldId = null
+
 let $ = function (id) { return document.getElementById(id) }
 let $c = function (classname) { return document.getElementsByClassName(classname) }
 let sectionIds = []
@@ -14,7 +18,6 @@ let model = {
 let queue = []
 
 async function start() {
-
     ensureCustomField()
     await loadSections()
     await loadTasks()
@@ -36,9 +39,10 @@ function setup(){
 function loadFromCookies(){
     projectId = Cookies.get('projectId')
     customFieldId = Cookies.get('customFieldId')
+    workspaceId = Cookies.get('workspaceId')
     let pat = Cookies.get('pat')
     axios.defaults.headers.common['Authorization'] = 'Bearer ' + pat
-    return projectId && customFieldId && pat
+    return projectId && customFieldId && pat && workspaceId
 }
 
 function ensureCustomField() {
@@ -777,6 +781,7 @@ function setupTaskTemplate() {
 }
 
 function newPat() {
+    workspaceId = $('workspaceId').value
     $('newProjects').innerHTML = '<option>loading...</option>'
     axios.defaults.headers.common['Authorization'] = 'Bearer ' + $('pat').value
     axios.get(`https://app.asana.com/api/1.0/projects?archived=false&workspace=${workspaceId}`).then((response) => {
@@ -798,7 +803,6 @@ function newPat() {
 }
 
 async function go() {
-
     await axios.post(`https://app.asana.com/api/1.0/custom_fields`, {
         'data': {
             'name': 'column-change',
@@ -832,6 +836,7 @@ async function go() {
     $('startingOverlay').classList.add('hidden')
     Cookies.set('projectId', projectId, { expires: 9999, path: '' })
     Cookies.set('customFieldId', customFieldId, { expires: 9999, path: '' })
+    Cookies.set('workspaceId', workspaceId, { expires: 9999, path: '' })
     Cookies.set('pat', $('pat').value, { expires: 9999, path: '' })
     start()
 }
