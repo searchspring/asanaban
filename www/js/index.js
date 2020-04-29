@@ -587,7 +587,7 @@ function changeUser() {
     currentlyEditingTask.assignee = newUser
 }
 function setUserPhoto(user) {
-    let photoUrl = user && user.photo ? user.photo['image_60x60'] : 'head.png'
+    let photoUrl = user && user.photo ? user.photo['image_60x60'] : 'images/head.png'
     $('userImage').src = photoUrl
 }
 function cancel() {
