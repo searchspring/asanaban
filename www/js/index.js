@@ -1,21 +1,6 @@
-let projectId = null
-let workspaceId = null
-let customFieldId = null
-
 let $ = function (id) { return document.getElementById(id) }
 let $c = function (classname) { return document.getElementsByClassName(classname) }
-let sectionIds = []
-let model = {
-    sections: {},
-    sectionsOrder: [],
-    tasks: {},
-    tasksOrder: [],
-    sectionMeta: {},
-    users: {},
-    usersOrder: [],
-    atValues: []
-}
-let queue = []
+
 
 async function start() {
     ensureCustomField()
@@ -32,10 +17,7 @@ if (loadFromCookies()) {
 } else {
     setup()
 }
-function setup(){
-    $('startingOverlay').classList.remove('hidden')
-    $('starting').classList.remove('hidden')
-}
+
 function loadFromCookies(){
     projectId = Cookies.get('projectId')
     customFieldId = Cookies.get('customFieldId')
@@ -45,154 +27,6 @@ function loadFromCookies(){
     return projectId && customFieldId && pat && workspaceId
 }
 
-function ensureCustomField() {
-    setStatus('green', `ensuring custom field`)
-    axios.post(`https://app.asana.com/api/1.0/projects/${projectId}/addCustomFieldSetting`, {
-        'data': {
-            'custom_field': `${customFieldId}`
-        }
-    }).then((response) => {
-        console.info(response)
-    }).catch((error) => {
-        if (error.response.status === 404 || error.response.status === 403) {
-            // do nothing.
-        } else {
-            console.error(error)
-        }
-    })
-}
-function startSyncLoop() {
-    self.setTimeout(syncLoop, 1000)
-}
-async function syncLoop() {
-    let didSomeSyncing = false
-    while (queue.length > 0) {
-        setStatus('yellow', `syncing ${queue.length} items`)
-        let queueItem = queue[0]
-        await queueItem.httpFunc(queueItem.url, queueItem.body).then(queueItem.callback)
-        queue.shift()
-        didSomeSyncing = true
-    }
-    if (didSomeSyncing) {
-        setStatus('green', `sync'd`)
-        disolveStatus()
-    }
-    self.setTimeout(syncLoop, 500)
-}
-function setStatus(color, text, append) {
-    let el = $('status')
-    el.classList.remove('text-yellow-900', 'text-green-900', 'text-red-900', 'hidden', 'bg-yellow-300', 'bg-green-300', 'bg-red-300')
-    el.classList.add(`text-${color}-900`, `bg-${color}-300`)
-    el.innerHTML = append ? el.innerHTML + text : text
-}
-function disolveStatus(timeout) {
-    self.setTimeout(() => {
-        $('status').classList.add('hidden')
-    }, timeout ? timeout : 1000)
-}
-async function loadSections() {
-    setStatus('green', ` loading... sections`)
-    await axios.get(`https://app.asana.com/api/1.0/projects/${projectId}/sections`).then((response) => {
-        for (let section of response.data.data) {
-            if (section.name.toLowerCase() === '(no section)') {
-                continue
-            }
-            let ss = getSectionAndSwimlane(section)
-            if (!ss) {
-                continue
-            }
-            if (!model.sectionMeta[ss.sectionName]) {
-                model.sectionMeta[ss.sectionName] = { count: 0, maximum: ss.maximum }
-            }
-            model.sections[section.gid] = section
-            model.sectionsOrder.push(section.gid)
-        }
-    })
-}
-async function loadUsers() {
-    setStatus('green', `loading... users`)
-    await axios.get(`https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email`).then((response) => {
-        let users = {}
-        let userWithSearchspring = {}
-        for (let user of response.data.data) {
-            if (user.name.indexOf('@') !== -1) {
-                continue
-            }
-            users[user.gid] = user
-            if (user.email.indexOf("@searchspring") !== -1) {
-                userWithSearchspring[user.name] = true
-            }
-        }
-        let dedupedUsers = []
-        for (let key in users) {
-            let user = users[key]
-            if (user.email.indexOf('@searchspring') === -1 && userWithSearchspring[user.name]) {
-                continue
-            }
-            dedupedUsers.push(user)
-        }
-        for (let user of dedupedUsers) {
-            model.users[user.gid] = user
-            model.usersOrder.push(user)
-        }
-        model.usersOrder.sort((a, b) => {
-            return a.name.localeCompare(b.name)
-        })
-        for (let user of model.usersOrder) {
-            model.atValues.push({ id: user.gid, value: user.name + (user.email.indexOf('@searchspring') === -1 ? (' (' + user.email + ')') : '') })
-        }
-    })
-}
-
-
-async function loadTasks() {
-    setStatus('green', ` loading... tasks`)
-    let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
-    await axios.get(`https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${projectId}&opt_fields=${taskFields}`).then((response) => {
-        for (let task of response.data.data) {
-            for (let membership of task.memberships) {
-                if (membership.project.gid === projectId) {
-                    let ss = getSectionAndSwimlane(membership.section)
-                    if (ss) {
-                        model.tasks[task.gid] = task
-                        model.tasksOrder.push(task.gid)
-                        model.sectionMeta[ss.sectionName].count++
-                    }
-                }
-            }
-        }
-        for (let key in model.tasks) {
-            let task = model.tasks[key]
-            if (!task.custom_fields) {
-                task.custom_fields = []
-            }
-            if (task.memberships.length > 1) {
-                task.memberships = task.memberships.sort((a, b) => {
-                    if (a.project.gid === projectId) {
-                        return -1
-                    } else {
-                        return 1
-                    }
-                })
-            }
-            task.custom_fields = task.custom_fields.sort((a, b) => {
-                if (a.gid.gid === customFieldId) {
-                    return -1
-                } else {
-                    return 1
-                }
-            })
-            if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== customFieldId) {
-                task.custom_fields.splice(0, 0, {
-                    gid: customFieldId,
-                    text_value: ''
-                });
-            }
-
-
-        }
-    })
-}
 
 function loadStories(taskId) {
     $('comments').innerHTML = '<div class="comment w-full bg-gray-200 mb-1 p-1 px-2 rounded-lg text-xs">loading...</div>'
@@ -301,8 +135,11 @@ function setupSearch() {
         let highlight = {}
         for (let key in model.tasks) {
             if (searchValue.trim() !== '' && model.tasks[key].name.toLowerCase().indexOf(searchValue) !== -1) {
-                highlight[key] = true
+                highlight[key] = model.tasks[key]
             }
+        }
+        for (let sectionId of sectionIds) {
+            $(`sectionHeader${sectionId}`).classList.remove('bg-yellow-800')
         }
         for (let key in model.tasks) {
             if (!highlight[key]) {
@@ -311,6 +148,8 @@ function setupSearch() {
         }
         for (let taskId in highlight) {
             $(`task${taskId}`).classList.add('highlight')
+            $(`sectionHeader${model.tasks[taskId].memberships[0].section.gid}`).classList.add('bg-yellow-800')
+        
         }
     })
 }
@@ -436,39 +275,14 @@ function setColumnColor(sectionId) {
     }
 }
 
-function getSectionAndSwimlane(section) {
-    let name = section.name
-    let colonIndex = name.indexOf(':')
-    if (colonIndex === -1) {
-        return null
-    }
-
-    let barIndex = name.indexOf('|')
-    let maximum = 1000
-    if (barIndex !== -1) {
-        try {
-            maximum = parseInt(name.substring(barIndex + 1))
-            name = name.substring(0, barIndex)
-        } catch (e) {
-            console.warn(e)
-        }
-    }
-    return {
-        sectionName: name.substring(colonIndex + 1).toLowerCase().replace(/ /g, ''),
-        swimlaneName: name.substring(0, colonIndex).toLowerCase().replace(/ /g, ''),
-        sectionNameDisplay: name.substring(colonIndex + 1),
-        swimlaneNameDisplay: name.substring(0, colonIndex),
-        maximum: maximum
-    }
-}
 
 function createColumn(displayName, name, id, maximum, count) {
     let collapsed = ''
     if (Cookies.get(`collapsed-${name}`) === 'true') {
-        collapsed = 'collapsed'
+        collapsed = ' collapsed'
     }
-    let html = `<div class="flex-1 ml-1 ${name} ${collapsed}">
-        <a href="javascript:toggleSection('${name}')" class="bg-gray-600 text-white text-bold p-1 text-center block">
+    let html = `<div class="flex-1 ml-1 ${name}${collapsed}">
+        <a id="sectionHeader${id}"  href="javascript:toggleSection('${name}')" class="bg-gray-600 text-white text-bold p-1 text-center block">
             <span data-section-id="${id}" class="add-task text-gray-400 hover:underline hover:text-white float-left inline-block ml-1 pt-1 text-xs">add task</span>
             ${displayName} 
             <span class="ml-4 text-xs"><span class="count${name}">${count}</span> of ${maximum === 1000 ? '∞' : maximum}</span>`
@@ -505,9 +319,9 @@ function createTaskUi() {
 function addTaskToUi(task, toTop) {
     let hasImage = task.assignee && task.assignee.photo
     let el = $(`section${task.memberships[0].section.gid}`)
-    let html = `<div onclick="edit('${task.gid}')" id="task${task.gid}" class="w-2/4 border-1">
+    let html = `<div style="width:50%" onclick="edit('${task.gid}')" id="task${task.gid}" class="border-1">
         <div id="taskBox${task.gid}" class="hover:shadow border rounded m-1 bg-white mb-1 p-1 cursor-pointer text-center text-xs">
-            <img id="photo${task.gid}" class="${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2" src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}"/>
+            <img alt="user image" id="photo${task.gid}" class="${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2" src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}"/>
             <span id="taskName${task.gid}">${task.name}</span>
             <div id="taskDate${task.gid}"></div>
             </div>
@@ -697,10 +511,6 @@ function save() {
     currentlyEditingTask = null
 }
 
-function convertToAsana(text) {
-    let reg = /<span class="mention" data-index="[0-9]*" data-denotation-char="@" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">@<\/span>([^<]+)<\/span>\s*<\/span>/g
-    return text.replace(reg, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>').replace(/<\/*span>/g, '').replace(/<br>/g, '\n')
-}
 
 document.onkeydown = function (evt) {
     evt = evt || window.event;
@@ -778,65 +588,4 @@ function setupTaskTemplate() {
     }
     quillDescription = new Quill('#description', quillConfig);
     quillComment = new Quill('#addComment', quillConfig);
-}
-
-function newPat() {
-    workspaceId = $('workspaceId').value
-    $('newProjects').innerHTML = '<option>loading...</option>'
-    axios.defaults.headers.common['Authorization'] = 'Bearer ' + $('pat').value
-    axios.get(`https://app.asana.com/api/1.0/projects?archived=false&workspace=${workspaceId}`).then((response) => {
-        $('patError').classList.add('hidden')
-        response.data.data = response.data.data.sort((a, b) => {
-            return a.name.localeCompare(b.name)
-        })
-        let html = ''
-        for (let project of response.data.data) {
-            html += `<option value="${project.gid}">${project.name}</option>`
-        }
-        $('newProjects').innerHTML = html
-    }).catch((error) => {
-        $('newProjects').innerHTML = ''
-        $('patError').classList.remove('hidden')
-        $('patError').innerHTML = JSON.stringify(error.response.data)
-
-    })
-}
-
-async function go() {
-    await axios.post(`https://app.asana.com/api/1.0/custom_fields`, {
-        'data': {
-            'name': 'column-change',
-            'type': 'text',
-            'workspace': workspaceId
-        }
-    }).then((response) => {
-        console.info(response)
-    }).catch((error) => {
-        if (error.response.status === 403) {
-            // do nothing.
-        } else {
-            console.error(error)
-        }
-    })
-
-    customFieldId = await axios.get(`https://app.asana.com/api/1.0/workspaces/${workspaceId}/custom_fields`).then((response) => {
-        for (let cf of response.data.data) {
-            if (cf.name === 'column-change') {
-                return cf.gid
-            }
-        }
-    }).catch((error) => {
-        console.error(error)
-        return -1
-    })
-
-    projectId = $('newProjects').value
-    ensureCustomField()
-    $('starting').classList.add('hidden')
-    $('startingOverlay').classList.add('hidden')
-    Cookies.set('projectId', projectId, { expires: 9999, path: '' })
-    Cookies.set('customFieldId', customFieldId, { expires: 9999, path: '' })
-    Cookies.set('workspaceId', workspaceId, { expires: 9999, path: '' })
-    Cookies.set('pat', $('pat').value, { expires: 9999, path: '' })
-    start()
 }
