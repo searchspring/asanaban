@@ -1,4 +1,5 @@
 <html lang="en">
+
 <head>
     <title>asanaban</title>
     <meta charset="utf-8">
@@ -46,11 +47,23 @@
                 <div id="addComment" class="text-xs h-32 w-full bg-gray-300 rounded-b inline-block"></div>
 
             </div>
-            <div class="clearfix mt-4">
-                <a href="javascript:cancel()" id="cancel"
-                    class="hover:bg-gray-500 rounded-lg bg-gray-300 p-1 px-2 inline-block">cancel</a>
-                <a href="javascript:save()" id="save"
-                    class="hover:bg-gray-700 rounded-lg bg-gray-500 p-1 px-2 float-right inline-block">save</a>
+            <div class="clearfix mt-4 flex">
+                <div>
+                    <a href="javascript:cancel()" id="cancel"
+                        class="hover:bg-gray-500 rounded-lg bg-gray-300 p-1 px-2 inline-block">cancel</a>
+                </div>
+                <div class="m-auto">
+                    <div id="editButtons">
+                        <a href="javascript:deleteTask()" id="delete"
+                            class="hover:underline text-sm text-red-600 border border-gray-300 rounded-full p-1 px-2 inline-block">delete</a>
+                        <a href="javascript:complete()" id="complete"
+                            class="ml-6 hover:underline text-sm text-gray-600 border border-gray-300 rounded-full p-1 px-2 inline-block">complete</a>
+                    </div>
+                </div>
+                <div>
+                    <a href="javascript:save()" id="save"
+                        class="hover:bg-gray-700 rounded-lg bg-gray-500 p-1 px-2 float-right inline-block">save</a>
+                </div>
             </div>
         </div>
     </div>
@@ -69,7 +82,8 @@
         <div style="width:80%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow">
             <div class="text-2xl">Getting Started</div>
             <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-4">1</div>
-            <div class="clearfix"> Get your workspace gid by clicking <a target="_blank" class="text-blue-500 underline" href="https://app.asana.com/api/1.0/workspaces">here</a> 
+            <div class="clearfix"> Get your workspace gid by clicking <a target="_blank" class="text-blue-500 underline"
+                    href="https://app.asana.com/api/1.0/workspaces">here</a>
                 <input placeholder="workspace id" id="workspaceId" type="text"
                     class="float-right w-3/5 px-4 border-blue-500 text-blue-500 border rounded-full inline-block">
             </div>
@@ -113,10 +127,12 @@
                     happens when I click go?</a>
                 <div id="explain" class="hidden text-gray-600 text-xs">
                     <ul>
-                        <li>1. The system checks if you have a custom field called "column-change" and creates it if it
+                        <li>1. The system checks if you have a custom field called "column-change" and creates
+                            it if it
                             doesn't exist.</li>
                         <li>2. The custom field "column-change" is added to the selected project.</li>
-                        <li>3. The project is loaded in to the Kanban view and no other changes happen until you start
+                        <li>3. The project is loaded in to the Kanban view and no other changes happen until you
+                            start
                             editing tasks. </li>
                     </ul>
                 </div>

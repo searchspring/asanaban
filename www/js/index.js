@@ -18,7 +18,7 @@ if (loadFromCookies()) {
     setup()
 }
 
-function loadFromCookies(){
+function loadFromCookies() {
     projectId = Cookies.get('projectId')
     customFieldId = Cookies.get('customFieldId')
     workspaceId = Cookies.get('workspaceId')
@@ -103,7 +103,7 @@ function createReleaseListener() {
                             }
                         })
                         let taskEl = $(`task${key}`)
-                        taskEl.parentNode.removeChild(taskEl);
+                        taskEl.parentNode.removeChild(taskEl)
                         delete model.tasks[key]
                         model.tasksOrder = model.tasksOrder.filter(e => e !== key)
                         updateColumnCount(sectionName, --model.sectionMeta[sectionName].count)
@@ -149,7 +149,7 @@ function setupSearch() {
         for (let taskId in highlight) {
             $(`task${taskId}`).classList.add('highlight')
             $(`sectionHeader${model.tasks[taskId].memberships[0].section.gid}`).classList.add('bg-yellow-800')
-        
+
         }
     })
 }
@@ -370,10 +370,8 @@ function getCustomFieldDate(task) {
 }
 
 let currentlyEditingTask = null
-let currentlyEditingQueue = []
 function edit(taskId) {
     currentlyEditingTask = createNew ? model.tasks[taskId] : JSON.parse(JSON.stringify(model.tasks[taskId]))
-    currentlyEditingQueue = []
     $('name').value = currentlyEditingTask.name
     $('users').value = currentlyEditingTask.assignee ? currentlyEditingTask.assignee.gid : 'no value'
     if (currentlyEditingTask.due_on) {
@@ -382,9 +380,11 @@ function edit(taskId) {
     if (!createNew) {
         loadStories(taskId)
         $('newCommentHolder').style.display = 'block'
+        $('editButtons').classList.remove('hidden')
     } else {
         $('comments').style.display = 'none'
         $('newCommentHolder').style.display = 'none'
+        $('editButtons').classList.add('hidden')
     }
     quillDescription.root.innerHTML = currentlyEditingTask['html_notes'] ? currentlyEditingTask['html_notes'] : ''
     quillComment.root.innerHTML = ''
@@ -407,8 +407,44 @@ function setUserPhoto(user) {
 function cancel() {
     $('overlay').classList.add('hidden')
     $('taskTemplate').classList.add('hidden')
-    currentlyEditingQueue = []
     currentlyEditingTask = null
+}
+
+function complete() {
+    $('overlay').classList.add('hidden')
+    $('taskTemplate').classList.add('hidden')
+    queue.push({
+        httpFunc: axios.put,
+        url: `https://app.asana.com/api/1.0/tasks/${currentlyEditingTask.gid}`,
+        body: {
+            'data': {
+                'completed': true
+            }
+        },
+        callback: (response) => {
+            console.info(response)
+        }
+    })
+    let taskEl = $(`task${currentlyEditingTask.gid}`)
+    taskEl.parentNode.removeChild(taskEl)
+    currentlyEditingTask = null
+}
+function deleteTask() {
+    let confirmed = confirm('Are you sure? There is no undo!')
+    if (confirmed) {
+        $('overlay').classList.add('hidden')
+        $('taskTemplate').classList.add('hidden')
+        queue.push({
+            httpFunc: axios.delete,
+            url: `https://app.asana.com/api/1.0/tasks/${currentlyEditingTask.gid}`,
+            callback: (response) => {
+                console.info(response)
+            }
+        })
+        let taskEl = $(`task${currentlyEditingTask.gid}`)
+        taskEl.parentNode.removeChild(taskEl)
+        currentlyEditingTask = null
+    }
 }
 function save() {
     $('overlay').classList.add('hidden')
@@ -505,9 +541,6 @@ function save() {
             }
         })
     }
-
-
-    currentlyEditingQueue = []
     currentlyEditingTask = null
 }
 
