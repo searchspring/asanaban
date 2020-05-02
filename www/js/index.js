@@ -249,7 +249,7 @@ function createSectionUi() {
     let html = ''
     let i = 0
     for (let key in htmlSwimlanes) {
-        let blue = i % 2 == 0 ? 'bg-blue-800': 'bg-blue-700'
+        let blue = i % 2 == 0 ? 'bg-blue-800' : 'bg-blue-700'
         i++
         html += `<div class="flex mb-1">
             <h2 style="writing-mode: vertical-rl" class="${blue} text-white text-bold text-center p-1">${key}</h2>
@@ -325,7 +325,7 @@ function addTaskToUi(task, toTop) {
     let hasImage = task.assignee && task.assignee.photo
     let el = $(`section${task.memberships[0].section.gid}`)
     let html = `<div style="width:50%" onclick="edit('${task.gid}')" id="task${task.gid}" class="border-1">
-        <div id="taskBox${task.gid}" class="hover:shadow border rounded m-1 bg-white mb-1 p-1 cursor-pointer text-center text-xs">
+        <div id="taskBox${task.gid}" style="overflow:hidden" class="hover:shadow border rounded m-1 bg-white mb-1 p-1 cursor-pointer text-center text-xs">
             <img alt="user image" id="photo${task.gid}" class="${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2" src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}"/>
             <span id="taskName${task.gid}">${task.name}</span>
             <div id="taskDate${task.gid}"></div>
@@ -479,7 +479,7 @@ function save() {
         let photoEl = $(`photo${currentlyEditingTask.gid}`)
         if (!hasPhoto) {
             photoEl.classList.add('hidden')
-            photoEl.src = 'blank.png'
+            photoEl.src = 'images/blank.png'
         } else {
             photoEl.classList.remove('hidden')
             photoEl.src = currentlyEditingTask.assignee.photo['image_60x60']
