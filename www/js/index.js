@@ -29,7 +29,6 @@ function loadFromCookies() {
     return projectId && customFieldId && pat && workspaceId
 }
 
-
 function loadStories(taskId) {
     $('comments').innerHTML = '<div class="comment w-full bg-gray-200 mb-1 p-1 px-2 rounded-lg text-xs">loading...</div>'
     $('comments').style.display = 'block'
