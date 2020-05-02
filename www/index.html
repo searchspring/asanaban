@@ -77,27 +77,28 @@
         </div>
         <div>
             <div id="status"
-                class="hidden ml-10 h-8 text-yellow-900 float-right rounded-full px-4 py-1 bg-yellow-300 inline-block w-3/5">
+                class="opacity-75 hidden ml-10 h-8 text-yellow-900 float-right rounded-full px-4 py-1 bg-yellow-300 inline-block w-3/5">
                 status</div>
         </div>
         <div class="flex-grow">
-            <select onchange="image()" class="float-right w-3/5 px-4 border-blue-500 text-blue-500 border rounded-full inline-block"
+            <select onchange="image()" class="mt-1 float-right w-3/5 px-4 border-blue-500 text-blue-500 border rounded-full inline-block"
                     id="backgroundImages">
                     <option value="">no image</option>
-                    <option value="https://www.influxdata.com/wp-content/uploads/pandas-influxdb.jpg">pandas</option>
+                    <option value="https://www.influxdata.com/wp-content/uploads/pandas-influxdb.jpg">panda 1</option>
+                    <option value="https://www.nationalgeographic.com/content/dam/news/2015/12/15/pandas/01pandainsemination.ngsversion.1450209600474.adapt.1900.1.jpg">panda 2</option>
                     <option value="https://www.valtech.com/globalassets/15-uk/02-images/04-insights/post-it-notes-1284667_1920.jpg">stickys</option>
                     <option value="https://miro.medium.com/max/7000/1*STTTVL5jx050alkYv1iq9w.jpeg">mountain 1</option>
                     <option value="https://hips.hearstapps.com/hmg-prod.s3.amazonaws.com/images/moraine-lake-and-the-valley-of-the-ten-peaks-in-the-royalty-free-image-1571062944.jpg">mountain 2</option>
                     <option value="https://static.independent.co.uk/s3fs-public/thumbnails/image/2019/08/13/11/istock-1092001144.jpg">mountain 3</option>
                     <option value="https://vanaqua.org/application/themes/vanaqua/assets/images/vanaqua-otter.jpg">fat sea weasel</option>
-                    <option value="https://live.staticflickr.com/4885/45193456835_a7ffb5622e_b.jpg">racoons</option>
+                    <option value="https://live.staticflickr.com/4885/45193456835_a7ffb5622e_b.jpg">trash panda</option>
                     <option value="https://i.dailymail.co.uk/1s/2020/02/26/22/25245416-0-image-a-18_1582757637588.jpg">red panda</option>
                     <option value="https://3er1viui9wo30pkxh1v2nh4w-wpengine.netdna-ssl.com/wp-content/uploads/prod/sites/45/2019/11/MS_Penguin-Counting-Story_1900x800.jpg">penguins</option>
             </select>
         </div>
     </div>
-    <div id="wrapper" class="opacity-90"></div>
-
+    <div id="wrapper" class="opacity-90 mb-10"></div>
+    <div id="footer" style="bottom:0" class='fixed flex w-full'></div>
     <div id="startingOverlay" style="top:0;" class="hidden absolute w-full h-full bg-white opacity-100"></div>
     <div id="starting" style="top:0;overflow-y:scroll;" class="hidden absolute w-full h-full">
         <div style="width:80%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow">

@@ -8,7 +8,6 @@ async function start() {
     await loadTasks()
     await loadUsers()
     setStatus('green', `loading complete`)
-    disolveStatus(3000)
     createUI()
     startSyncLoop()
 }
@@ -99,6 +98,7 @@ function createReleaseListener() {
                                     "completed": true
                                 }
                             },
+                            message: `releasing ${key}`,
                             callback: (response) => {
                                 console.info(response)
                             }
@@ -118,6 +118,7 @@ function createReleaseListener() {
                                         'html_text': '<body>Released:\n<strong>' + confirmed + '</strong></body>'
                                     }
                                 },
+                                message: `releasing - adding comment ${task.gid}`,
                                 callback: (response) => {
                                     console.info(response)
                                 }
@@ -136,12 +137,19 @@ function setupSearch() {
         let highlight = {}
         let emptySearch = searchValue.trim() === ''
         for (let key in model.tasks) {
-            if (!emptySearch && model.tasks[key].name.toLowerCase().indexOf(searchValue) !== -1) {
+            let task = model.tasks[key]
+            let text = task.name.toLowerCase()
+            for (let tag of task.tags) {
+                if (tag.name) {
+                    text += ' ' + tag.name.toLowerCase()
+                }
+            }
+            if (!emptySearch && text.indexOf(searchValue) !== -1) {
                 highlight[key] = model.tasks[key]
             }
         }
         for (let sectionId of sectionIds) {
-            $(`sectionHeader${sectionId}`).classList.remove('bg-yellow-800')
+            $(`sectionHeader${sectionId}`).classList.remove('column-header-highlighted')
         }
         for (let key in model.tasks) {
             if (highlight[key] || emptySearch) {
@@ -151,7 +159,7 @@ function setupSearch() {
             }
         }
         for (let taskId in highlight) {
-            $(`sectionHeader${model.tasks[taskId].memberships[0].section.gid}`).classList.add('bg-yellow-800')
+            $(`sectionHeader${model.tasks[taskId].memberships[0].section.gid}`).classList.add('column-header-highlighted')
         }
     })
 }
@@ -192,6 +200,7 @@ function emitAsanaMovementSync(sectionId, taskId, siblingTaskId) {
                 "insert_before": siblingTaskId,
             }
         },
+        message: `moving ${taskId}`,
         callback: (response) => {
             console.info(response)
         }
@@ -210,6 +219,7 @@ function emitAsanaMovementSync(sectionId, taskId, siblingTaskId) {
         httpFunc: axios.put,
         url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
         body: customFieldBody,
+        message: `updating last modified ${taskId}`,
         callback: (response) => {
             console.info(response)
         }
@@ -236,12 +246,12 @@ function createSectionUi() {
 
         let ss = getSectionAndSwimlane(section)
         if (ss) {
-            if (!htmlSwimlanes[ss.swimlaneName]) {
-                htmlSwimlanes[ss.swimlaneName] = ''
+            if (!htmlSwimlanes[ss.swimlaneNameDisplay]) {
+                htmlSwimlanes[ss.swimlaneNameDisplay] = ''
                 row++
                 newRow = true
             }
-            htmlSwimlanes[ss.swimlaneName] += createColumn(ss.sectionNameDisplay, ss.sectionName, section.gid, model.sectionMeta[ss.sectionName].maximum, model.sectionMeta[ss.sectionName].count)
+            htmlSwimlanes[ss.swimlaneNameDisplay] += createColumn(ss.sectionNameDisplay, ss.sectionName, section.gid, model.sectionMeta[ss.sectionName].maximum, model.sectionMeta[ss.sectionName].count)
             sectionIds.push(section.gid)
             newRow = false
         }
@@ -252,7 +262,7 @@ function createSectionUi() {
         let blue = i % 2 == 0 ? 'bg-blue-800' : 'bg-blue-700'
         i++
         html += `<div class="flex mb-1">
-            <h2 style="writing-mode: vertical-rl" class="${blue} text-white text-bold text-center p-1">${key}</h2>
+            <h2 style="writing-mode: vertical-rl" class="${blue} text-white text-bold text-center p-1 py-4">${key}</h2>
             <div class="flex-1 flex">
                 ${htmlSwimlanes[key]}
             </div>
@@ -269,14 +279,14 @@ function setColumnColor(sectionId) {
     let sectionName = getSectionAndSwimlane(section).sectionName
     let count = model.sectionMeta[sectionName].count
     let maximum = model.sectionMeta[sectionName].maximum
-    let columnColor = count > maximum ? 'bg-red-400' : 'bg-gray-300'
+    let columnColor = count > maximum ? 'bg-red-gradient' : 'bg-gray-gradient'
     let el = $(`section${sectionId}`)
-    if (columnColor === 'bg-red-400') {
-        el.classList.add('bg-red-400')
-        el.classList.remove('bg-gray-300')
+    if (columnColor === 'bg-red-gradient') {
+        el.classList.add('bg-red-gradient')
+        el.classList.remove('bg-gray-gradient')
     } else {
-        el.classList.add('bg-gray-300')
-        el.classList.remove('bg-red-400')
+        el.classList.add('bg-gray-gradient')
+        el.classList.remove('bg-red-gradient')
     }
 }
 
@@ -287,7 +297,7 @@ function createColumn(displayName, name, id, maximum, count) {
         collapsed = ' collapsed'
     }
     let html = `<div class="flex-1 ml-1 ${name}${collapsed}">
-        <a id="sectionHeader${id}"  href="javascript:toggleSection('${name}')" class="bg-gray-600 text-white text-bold p-1 text-center block">
+        <a id="sectionHeader${id}"  href="javascript:toggleSection('${name}')" class="column-header text-white text-bold p-1 text-center block">
             <span data-section-id="${id}" class="add-task text-gray-400 hover:underline hover:text-white float-left inline-block ml-1 pt-1 text-xs">add task</span>
             ${displayName} 
             <span class="ml-4 text-xs"><span class="count${name}">${count}</span> of ${maximum === 1000 ? '∞' : maximum}</span>`
@@ -329,6 +339,7 @@ function addTaskToUi(task, toTop) {
             <img alt="user image" id="photo${task.gid}" class="${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2" src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}"/>
             <span id="taskName${task.gid}">${task.name}</span>
             <div id="taskDate${task.gid}"></div>
+            <div id="taskTags${task.gid}" class="flex mt-1"></div>
             </div>
     </div>`
 
@@ -339,6 +350,7 @@ function addTaskToUi(task, toTop) {
 function setTaskColor(task) {
     let taskBoxEl = $(`taskBox${task.gid}`)
     let taskDateEl = $(`taskDate${task.gid}`)
+    let taskTagEl = $(`taskTags${task.gid}`)
     taskBoxEl.classList.remove('bg-red-600', 'text-white', 'bg-purple-600', 'text-black')
     let lastMod = getCustomFieldDate(task)
     let daysSinceMove = dateFns.differenceInDays(new Date(), lastMod)
@@ -355,9 +367,42 @@ function setTaskColor(task) {
             taskBoxEl.classList.add('bg-purple-600', 'text-white')
         }
         taskDateEl.innerHTML = `<div style="font-size:8px" class="text-left mt-1 border-t ${border}">Due Date<span class="float-right">${task.due_on}</span></div>`
+    } else {
+        taskDateEl.innerHTML = ''
+    }
+    if (task.tags) {
+        let tagHtml = ''
+        for (let tag of task.tags) {
+            let color = convertTagColor(tag.color)
+            tagHtml += `<div title="${tag.name}" style="${color};margin-right:1px;overflow-hidden;max-width:2rem" class="border border-1 border-white rounded-full flex-1">${tag.name.substring(0, 1).toLowerCase()}</div>`
+            if (!$(`footer${tag.gid}`)) {
+                $('footer').innerHTML = $('footer').innerHTML + `<a href="javascript:search('${tag.gid}')" id="footer${tag.gid}" style="${color}" class="inline-block hover:border hover:border-1 hover:border-white text-center flex-1 p-1 px-1">${tag.name}</a>`
+            }
+        }
+        taskTagEl.innerHTML = tagHtml
     }
 }
 
+function search(gid) {
+    if ($('search').value === $(`footer${gid}`).innerText) {
+        $('search').value = ''
+    } else {
+        $('search').value = $(`footer${gid}`).innerText
+    }
+    $('search').dispatchEvent(new Event('keyup'));
+}
+function convertTagColor(c) {
+    if (!c) {
+        return 'background-color:gray'
+    }
+    if (c.indexOf('light-') !== -1) {
+        return c.replace(/light-(.*)/g, 'opacity:0.8;background-color:$1')
+    } else if (c.indexOf('dark-') !== -1) {
+        return c.replace(/dark-(.*)/g, 'background-color:$1;color:white')
+    } else {
+        return 'opacity:0.9; background-color:' + c
+    }
+}
 function getCustomFieldDate(task) {
     for (let customField of task.custom_fields) {
         if (customField.gid = customFieldId) {
@@ -426,6 +471,7 @@ function complete() {
                 'completed': true
             }
         },
+        message: `completing ${currentlyEditingTask.gid}`,
         callback: (response) => {
             console.info(response)
         }
@@ -442,6 +488,7 @@ function deleteTask() {
         queue.push({
             httpFunc: axios.delete,
             url: `https://app.asana.com/api/1.0/tasks/${currentlyEditingTask.gid}`,
+            message: `deleting ${currentlyEditingTask.gid}`,
             callback: (response) => {
                 console.info(response)
             }
@@ -468,9 +515,11 @@ function save() {
                 'data': {
                     'assignee': newAssignee,
                     'name': currentlyEditingTask.name,
-                    'html_notes': currentlyEditingTask.html_notes
+                    'html_notes': currentlyEditingTask.html_notes,
+                    'due_on': currentlyEditingTask.due_on
                 }
             },
+            message: `updating ${currentlyEditingTask.gid}`,
             callback: (response) => {
                 console.info(response)
             }
@@ -496,6 +545,7 @@ function save() {
                         "html_text": '<body>' + rawComment + '</body>'
                     }
                 },
+                message: `adding comment ${currentlyEditingTask.gid}`,
                 callback: (response) => {
                     console.info(response)
                 }
@@ -518,6 +568,7 @@ function save() {
                     'projects': [`${projectId}`]
                 }
             },
+            message: `creating new task`,
             callback: (response) => {
                 let rt = response.data.data
                 rt.memberships = newTask.memberships
@@ -538,6 +589,7 @@ function save() {
                             "task": taskId
                         }
                     },
+                    message: `moving new task to section ${taskId}`,
                     callback: (response) => {
                         console.info(response)
 
@@ -573,10 +625,8 @@ document.onkeyup = function (evt) {
         $('search').focus()
     }
 };
-let quillDescription = null
-let quillComment = null
 
-function setupTaskTemplate() {
+function setupTaskTemplateUsers() {
     let options = ''
     for (let user of model.usersOrder) {
         options += `<option value="${user.gid}">${user.name} ${user.email.indexOf('@searchspring') === -1 ? ('(' + user.email + ')') : ''}</option>`
@@ -596,7 +646,12 @@ function setupTaskTemplate() {
         options = `<option value="${user.gid}">${user.name} ${user.email.indexOf('@searchspring') === -1 ? ('(' + user.email + ')') : ''}</option>` + options
     }
     $('users').innerHTML = `<option selected value="no value">please select</option>` + options
+}
 
+let quillDescription = null
+let quillComment = null
+function setupTaskTemplate() {
+    setupTaskTemplateUsers()
     var Block = Quill.import('blots/block');
     Block.tagName = 'SPAN';
     Quill.register(Block, true);

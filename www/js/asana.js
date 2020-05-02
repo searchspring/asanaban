@@ -67,10 +67,10 @@ async function loadTasks() {
     })
 }
 
-async function loadUsers() {
+async function loadUsers(bustCache) {
     setStatus('green', `loading... users`)
     let cachedUsers = localStorage.getItem('users')
-    if (cachedUsers) {
+    if (cachedUsers && !bustCache) {
         processUsers(JSON.parse(cachedUsers))
     } else {
         await axios.get(`https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email`).then((response) => {
@@ -100,6 +100,9 @@ function processUsers(data) {
         }
         dedupedUsers.push(user)
     }
+    model.users = {}
+    model.usersOrder = []
+    model.atValues = []
     for (let user of dedupedUsers) {
         model.users[user.gid] = user
         model.usersOrder.push(user)
@@ -136,19 +139,28 @@ function convertToAsana(text) {
 
 function startSyncLoop() {
     self.setTimeout(syncLoop, 1000)
+    self.setInterval(async () => {
+        if (!currentlyEditingTask) {
+            await loadUsers(true)
+            setupTaskTemplateUsers()
+        }
+    }, 3600000)
 }
 async function syncLoop() {
     let didSomeSyncing = false
     while (queue.length > 0) {
-        setStatus('yellow', `syncing ${queue.length} items`)
         let queueItem = queue[0]
+        let message = ''
+        if (queueItem.message) {
+            message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
+        }
+        setStatus('yellow', `syncing ${queue.length} items${message}`)
         await queueItem.httpFunc(queueItem.url, queueItem.body).then(queueItem.callback)
         queue.shift()
         didSomeSyncing = true
     }
     if (didSomeSyncing) {
         setStatus('green', `sync'd`)
-        disolveStatus()
     }
     self.setTimeout(syncLoop, 500)
 }

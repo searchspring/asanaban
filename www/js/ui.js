@@ -3,9 +3,14 @@ function setStatus(color, text, append) {
     el.classList.remove('text-yellow-900', 'text-green-900', 'text-red-900', 'hidden', 'bg-yellow-300', 'bg-green-300', 'bg-red-300')
     el.classList.add(`text-${color}-900`, `bg-${color}-300`)
     el.innerHTML = append ? el.innerHTML + text : text
+    disolveStatus(3000)
 }
+let statusTimeout;
 function disolveStatus(timeout) {
-    self.setTimeout(() => {
+    if (statusTimeout) {
+        clearTimeout(statusTimeout)
+    }
+    statusTimeout = self.setTimeout(() => {
         $('status').classList.add('hidden')
     }, timeout ? timeout : 1000)
 }
