@@ -566,6 +566,9 @@ document.onkeydown = function (evt) {
 
 
 document.onkeyup = function (evt) {
+    if (currentlyEditingTask) {
+        return
+    }
     evt = evt || window.event;
     if (evt.keyCode === 191) {
         $('search').focus()
