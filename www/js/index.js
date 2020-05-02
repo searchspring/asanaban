@@ -133,8 +133,9 @@ function setupSearch() {
     $('search').addEventListener('keyup', (e) => {
         let searchValue = $('search').value.toLowerCase()
         let highlight = {}
+        let emptySearch = searchValue.trim() === ''
         for (let key in model.tasks) {
-            if (searchValue.trim() !== '' && model.tasks[key].name.toLowerCase().indexOf(searchValue) !== -1) {
+            if (!emptySearch && model.tasks[key].name.toLowerCase().indexOf(searchValue) !== -1) {
                 highlight[key] = model.tasks[key]
             }
         }
@@ -142,14 +143,14 @@ function setupSearch() {
             $(`sectionHeader${sectionId}`).classList.remove('bg-yellow-800')
         }
         for (let key in model.tasks) {
-            if (!highlight[key]) {
-                $(`task${key}`).classList.remove('highlight')
+            if (highlight[key] || emptySearch) {
+                $(`task${key}`).classList.remove('hidden')
+            } else {
+                $(`task${key}`).classList.add('hidden')
             }
         }
         for (let taskId in highlight) {
-            $(`task${taskId}`).classList.add('highlight')
             $(`sectionHeader${model.tasks[taskId].memberships[0].section.gid}`).classList.add('bg-yellow-800')
-
         }
     })
 }
