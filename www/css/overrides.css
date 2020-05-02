@@ -130,3 +130,7 @@
   background-color: rgba(0, 0, 0, .2);
   -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .2);
 }
+
+.opacity-90 {
+  opacity: 0.90;
+}

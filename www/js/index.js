@@ -22,6 +22,8 @@ function loadFromCookies() {
     projectId = Cookies.get('projectId')
     customFieldId = Cookies.get('customFieldId')
     workspaceId = Cookies.get('workspaceId')
+    $('backgroundImages').value = Cookies.get('backgroundImage')
+    image()
     let pat = Cookies.get('pat')
     axios.defaults.headers.common['Authorization'] = 'Bearer ' + pat
     return projectId && customFieldId && pat && workspaceId
@@ -246,9 +248,12 @@ function createSectionUi() {
         }
     }
     let html = ''
+    let i = 0
     for (let key in htmlSwimlanes) {
+        let blue = i % 2 == 0 ? 'bg-blue-800': 'bg-blue-700'
+        i++
         html += `<div class="flex mb-1">
-            <h2 style="writing-mode: vertical-rl" class="bg-gray-600 text-white text-bold text-center p-1">${key}</h2>
+            <h2 style="writing-mode: vertical-rl" class="${blue} text-white text-bold text-center p-1">${key}</h2>
             <div class="flex-1 flex">
                 ${htmlSwimlanes[key]}
             </div>

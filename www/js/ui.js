@@ -9,3 +9,13 @@ function disolveStatus(timeout) {
         $('status').classList.add('hidden')
     }, timeout ? timeout : 1000)
 }
+
+function image(){
+   let newImage = $('backgroundImages').value
+   document.body.style.backgroundImage = `url('${newImage}')`
+   document.body.style.backgroundSize = 'cover'
+   Cookies.set(`backgroundImage`, newImage, { expires: 9999, path: '' })
+}
+
+
+
