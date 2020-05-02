@@ -35,10 +35,10 @@ async function go() {
     ensureCustomField()
     $('starting').classList.add('hidden')
     $('startingOverlay').classList.add('hidden')
-    Cookies.set('projectId', projectId, { expires: 9999, path: '' })
-    Cookies.set('customFieldId', customFieldId, { expires: 9999, path: '' })
-    Cookies.set('workspaceId', workspaceId, { expires: 9999, path: '' })
-    Cookies.set('pat', $('pat').value, { expires: 9999, path: '' })
+    localStorage.setItem('projectId', projectId)
+    localStorage.setItem('customFieldId', customFieldId)
+    localStorage.setItem('workspaceId', workspaceId)
+    localStorage.setItem('pat', $('pat').value)
     start()
 }
 

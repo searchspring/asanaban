@@ -69,37 +69,47 @@ async function loadTasks() {
 
 async function loadUsers() {
     setStatus('green', `loading... users`)
-    await axios.get(`https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email`).then((response) => {
-        let users = {}
-        let userWithSearchspring = {}
-        for (let user of response.data.data) {
-            if (user.name.indexOf('@') !== -1) {
-                continue
-            }
-            users[user.gid] = user
-            if (user.email.indexOf("@searchspring") !== -1) {
-                userWithSearchspring[user.name] = true
-            }
-        }
-        let dedupedUsers = []
-        for (let key in users) {
-            let user = users[key]
-            if (user.email.indexOf('@searchspring') === -1 && userWithSearchspring[user.name]) {
-                continue
-            }
-            dedupedUsers.push(user)
-        }
-        for (let user of dedupedUsers) {
-            model.users[user.gid] = user
-            model.usersOrder.push(user)
-        }
-        model.usersOrder.sort((a, b) => {
-            return a.name.localeCompare(b.name)
+    let cachedUsers = localStorage.getItem('users')
+    if (cachedUsers) {
+        processUsers(JSON.parse(cachedUsers))
+    } else {
+        await axios.get(`https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email`).then((response) => {
+            localStorage.setItem('users', JSON.stringify(response.data.data))
+            processUsers(response.data.data)
         })
-        for (let user of model.usersOrder) {
-            model.atValues.push({ id: user.gid, value: user.name + (user.email.indexOf('@searchspring') === -1 ? (' (' + user.email + ')') : '') })
+    }
+}
+
+function processUsers(data) {
+    let users = {}
+    let userWithSearchspring = {}
+    for (let user of data) {
+        if (user.name.indexOf('@') !== -1) {
+            continue
         }
+        users[user.gid] = user
+        if (user.email.indexOf("@searchspring") !== -1) {
+            userWithSearchspring[user.name] = true
+        }
+    }
+    let dedupedUsers = []
+    for (let key in users) {
+        let user = users[key]
+        if (user.email.indexOf('@searchspring') === -1 && userWithSearchspring[user.name]) {
+            continue
+        }
+        dedupedUsers.push(user)
+    }
+    for (let user of dedupedUsers) {
+        model.users[user.gid] = user
+        model.usersOrder.push(user)
+    }
+    model.usersOrder.sort((a, b) => {
+        return a.name.localeCompare(b.name)
     })
+    for (let user of model.usersOrder) {
+        model.atValues.push({ id: user.gid, value: user.name + (user.email.indexOf('@searchspring') === -1 ? (' (' + user.email + ')') : '') })
+    }
 }
 
 function ensureCustomField() {

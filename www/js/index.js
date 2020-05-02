@@ -12,19 +12,19 @@ async function start() {
     createUI()
     startSyncLoop()
 }
-if (loadFromCookies()) {
+if (loadFromStorage()) {
     start()
 } else {
     setup()
 }
 
-function loadFromCookies() {
-    projectId = Cookies.get('projectId')
-    customFieldId = Cookies.get('customFieldId')
-    workspaceId = Cookies.get('workspaceId')
-    $('backgroundImages').value = Cookies.get('backgroundImage')
+function loadFromStorage() {
+    projectId = localStorage.getItem('projectId')
+    customFieldId = localStorage.getItem('customFieldId')
+    workspaceId = localStorage.getItem('workspaceId')
+    $('backgroundImages').value = localStorage.getItem('backgroundImage')
     image()
-    let pat = Cookies.get('pat')
+    let pat = localStorage.getItem('pat')
     axios.defaults.headers.common['Authorization'] = 'Bearer ' + pat
     return projectId && customFieldId && pat && workspaceId
 }
@@ -283,7 +283,7 @@ function setColumnColor(sectionId) {
 
 function createColumn(displayName, name, id, maximum, count) {
     let collapsed = ''
-    if (Cookies.get(`collapsed-${name}`) === 'true') {
+    if (localStorage.getItem(`collapsed-${name}`) === 'true') {
         collapsed = ' collapsed'
     }
     let html = `<div class="flex-1 ml-1 ${name}${collapsed}">
@@ -306,10 +306,10 @@ function toggleSection(sectionClass) {
     for (let sectionEl of sectionEls) {
         if (sectionEl.classList.contains('collapsed')) {
             sectionEl.classList.remove('collapsed')
-            Cookies.set(`collapsed-${sectionClass}`, 'false', { expires: 9999, path: '' })
+            localStorage.setItem(`collapsed-${sectionClass}`, 'false')
         } else {
             sectionEl.classList.add('collapsed')
-            Cookies.set(`collapsed-${sectionClass}`, 'true', { expires: 9999, path: '' })
+            localStorage.setItem(`collapsed-${sectionClass}`, 'true')
         }
     }
 }
