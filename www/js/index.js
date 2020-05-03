@@ -510,8 +510,10 @@ function save() {
     currentlyEditingTask.name = $('name').value
     currentlyEditingTask.due_on = $('date').value
     let tags = []
-    for (let tag of JSON.parse(tagify.DOM.originalInput.value)) {
-        tags.push({ gid: tag.gid, name: tag.value, color: tag.color })
+    if (tagify.DOM.originalInput.value) {
+        for (let tag of JSON.parse(tagify.DOM.originalInput.value)) {
+            tags.push({ gid: tag.gid, name: tag.value, color: tag.color })
+        }
     }
     currentlyEditingTask.tags = tags
 
