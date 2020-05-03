@@ -171,6 +171,9 @@ function processUsers(data) {
 }
 
 function ensureCustomField() {
+    if (customFieldId === '-1') {
+        return
+    }
     setStatus('green', `ensuring custom field`)
     axios.post(`https://app.asana.com/api/1.0/projects/${projectId}/addCustomFieldSetting`, {
         'data': {

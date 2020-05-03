@@ -213,18 +213,20 @@ function emitAsanaMovementSync(sectionId, taskId, siblingTaskId) {
             },
         }
     }
-    customFieldBody.data.custom_fields[`${customFieldId}`] = new Date().toISOString()
-    model.tasks[taskId].custom_fields[0].text_value = new Date().toISOString()
-    setTaskColor(model.tasks[taskId])
-    queue.push({
-        httpFunc: axios.put,
-        url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
-        body: customFieldBody,
-        message: `updating last modified ${taskId}`,
-        callback: (response) => {
-            console.info(response)
-        }
-    })
+    if (customFieldId !== '-1') {
+        customFieldBody.data.custom_fields[`${customFieldId}`] = new Date().toISOString()
+        model.tasks[taskId].custom_fields[0].text_value = new Date().toISOString()
+        setTaskColor(model.tasks[taskId])
+        queue.push({
+            httpFunc: axios.put,
+            url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
+            body: customFieldBody,
+            message: `updating last modified ${taskId}`,
+            callback: (response) => {
+                console.info(response)
+            }
+        })
+    }
     setStatus('yellow', `syncing ${queue.length} items`)
 }
 
@@ -405,16 +407,18 @@ function convertTagColor(c) {
     }
 }
 function getCustomFieldDate(task) {
-    for (let customField of task.custom_fields) {
-        if (customField.gid = customFieldId) {
-            if (!customField.text_value || customField.text_value.trim() === '') {
-                return new Date()
+    if (customFieldId !== '-1') {
+        for (let customField of task.custom_fields) {
+            if (customField.gid = customFieldId) {
+                if (!customField.text_value || customField.text_value.trim() === '') {
+                    return new Date()
+                }
+                let parsed = dateFns.parse(customField.text_value)
+                if (parsed.toString() === 'Invalid Date') {
+                    return new Date()
+                }
+                return parsed
             }
-            let parsed = dateFns.parse(customField.text_value)
-            if (parsed.toString() === 'Invalid Date') {
-                return new Date()
-            }
-            return parsed
         }
     }
     return new Date()
