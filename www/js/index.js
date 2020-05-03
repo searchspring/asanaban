@@ -436,10 +436,13 @@ function edit(taskId) {
         $('newCommentHolder').style.display = 'block'
         $('editButtons').classList.remove('hidden')
         tagify.addTags(currentlyEditingTask.tags.map(tag => { return { value: tag.name, gid: tag.gid, color: tag.color } }))
+        $('asanaLink').href = `https://app.asana.com/0/${projectId}/${currentlyEditingTask.gid}`
+        $('asanaLink').classList.remove('hidden')
     } else {
         $('comments').style.display = 'none'
         $('newCommentHolder').style.display = 'none'
         $('editButtons').classList.add('hidden')
+        $('asanaLink').classList.add('hidden')
     }
     quillDescription.root.innerHTML = currentlyEditingTask['html_notes'] ? currentlyEditingTask['html_notes'] : ''
     quillComment.root.innerHTML = ''
@@ -463,6 +466,7 @@ function cancel() {
     $('overlay').classList.add('hidden')
     $('taskTemplate').classList.add('hidden')
     currentlyEditingTask = null
+    createNew = false
 }
 
 function complete() {
@@ -618,6 +622,7 @@ function save() {
         })
     }
     currentlyEditingTask = null
+    createNew = false;
 }
 
 
