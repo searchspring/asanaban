@@ -80,6 +80,61 @@ async function loadUsers(bustCache) {
     }
 }
 
+async function loadTags(bustCache) {
+    setStatus('green', `loading... tags`)
+    let cachedTags = localStorage.getItem('tags')
+    if (cachedTags && !bustCache) {
+        processTags(JSON.parse(cachedTags))
+    } else {
+        await axios.get(`https://app.asana.com/api/1.0/tags?workspace=${workspaceId}&opt_fields=color,name`).then((response) => {
+            localStorage.setItem('tags', JSON.stringify(response.data.data))
+            processTags(response.data.data)
+        })
+    }
+}
+
+let tagify;
+function processTags(data) {
+    let whitelist = []
+    for (let tag of data) {
+        whitelist.push({ value: tag.name, color: tag.color, gid: tag.gid })
+    }
+    whitelist = whitelist.sort((a, b) => {
+        return a.value.localeCompare(b.value)
+    })
+    tagify = new Tagify($('tags'), {
+        whitelist: whitelist,
+        dropdown: {
+            enabled: 0,
+            closeOnSelect: true,
+            maxItems: 200
+        },
+        enforceWhitelist: true,
+        editTags: null
+    })
+    tagify.on('add', (e) => {
+        createTagTask(`addTag`, e.detail.data)
+    }).on('remove', (e) => {
+        createTagTask(`removeTag`, e.detail.data)
+    })
+}
+
+function createTagTask(method, tag) {
+    tagsQueue.push({
+        httpFunc: axios.post,
+        url: `https://app.asana.com/api/1.0/tasks/${currentlyEditingTask.gid}/` + method,
+        body: {
+            'data': {
+                'tag': `${tag.gid}`
+            }
+        },
+        message: `${method} ${tag.value}`,
+        callback: (response) => {
+            console.info(response)
+        }
+    })
+}
+
 function processUsers(data) {
     let users = {}
     let userWithSearchspring = {}

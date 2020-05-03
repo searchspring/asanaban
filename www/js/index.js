@@ -7,6 +7,7 @@ async function start() {
     await loadSections()
     await loadTasks()
     await loadUsers()
+    loadTags()
     setStatus('green', `loading complete`)
     createUI()
     startSyncLoop()
@@ -393,12 +394,12 @@ function search(gid) {
 }
 function convertTagColor(c) {
     if (!c) {
-        return 'background-color:gray'
+        return 'background-color:gray;'
     }
     if (c.indexOf('light-') !== -1) {
-        return c.replace(/light-(.*)/g, 'opacity:0.8;background-color:$1')
+        return c.replace(/light-(.*)/g, 'opacity:0.8;background-color:$1;')
     } else if (c.indexOf('dark-') !== -1) {
-        return c.replace(/dark-(.*)/g, 'background-color:$1;color:white')
+        return c.replace(/dark-(.*)/g, 'background-color:$1;color:white;')
     } else {
         return 'opacity:0.9; background-color:' + c
     }
@@ -420,17 +421,21 @@ function getCustomFieldDate(task) {
 }
 
 let currentlyEditingTask = null
+let tagsQueue = []
 function edit(taskId) {
+    tagsQueue = []
     currentlyEditingTask = createNew ? model.tasks[taskId] : JSON.parse(JSON.stringify(model.tasks[taskId]))
     $('name').value = currentlyEditingTask.name
     $('users').value = currentlyEditingTask.assignee ? currentlyEditingTask.assignee.gid : 'no value'
     if (currentlyEditingTask.due_on) {
         $('date').value = currentlyEditingTask.due_on
     }
+    tagify.removeAllTags()
     if (!createNew) {
         loadStories(taskId)
         $('newCommentHolder').style.display = 'block'
         $('editButtons').classList.remove('hidden')
+        tagify.addTags(currentlyEditingTask.tags.map(tag => { return { value: tag.name, gid: tag.gid, color: tag.color } }))
     } else {
         $('comments').style.display = 'none'
         $('newCommentHolder').style.display = 'none'
@@ -504,6 +509,11 @@ function save() {
     currentlyEditingTask.html_notes = '<body>' + convertToAsana(quillDescription.root.innerHTML) + '</body>'
     currentlyEditingTask.name = $('name').value
     currentlyEditingTask.due_on = $('date').value
+    let tags = []
+    for (let tag of JSON.parse(tagify.DOM.originalInput.value)) {
+        tags.push({ gid: tag.gid, name: tag.value, color: tag.color })
+    }
+    currentlyEditingTask.tags = tags
 
     let newAssignee = currentlyEditingTask.assignee ? `${currentlyEditingTask.assignee.gid}` : null
 
@@ -516,7 +526,7 @@ function save() {
                     'assignee': newAssignee,
                     'name': currentlyEditingTask.name,
                     'html_notes': currentlyEditingTask.html_notes,
-                    'due_on': currentlyEditingTask.due_on
+                    'due_on': currentlyEditingTask.due_on,
                 }
             },
             message: `updating ${currentlyEditingTask.gid}`,
@@ -524,6 +534,10 @@ function save() {
                 console.info(response)
             }
         })
+
+        for (let job of tagsQueue) {
+            queue.push(job)
+        }
         let hasPhoto = currentlyEditingTask.assignee && currentlyEditingTask.assignee.photo
         let photoEl = $(`photo${currentlyEditingTask.gid}`)
         if (!hasPhoto) {
@@ -556,6 +570,7 @@ function save() {
         createNew = false
         let newTask = model.tasks['new']
         delete model.tasks['new']
+
         queue.push({
             httpFunc: axios.post,
             url: `https://app.asana.com/api/1.0/tasks`,
@@ -565,7 +580,8 @@ function save() {
                     'name': currentlyEditingTask.name,
                     'html_notes': currentlyEditingTask.html_notes,
                     'due_on': currentlyEditingTask.due_on,
-                    'projects': [`${projectId}`]
+                    'projects': [`${projectId}`],
+                    'tags': currentlyEditingTask.tags.map(item => { return item.gid })
                 }
             },
             message: `creating new task`,
@@ -574,6 +590,7 @@ function save() {
                 rt.memberships = newTask.memberships
                 rt.html_notes = newTask.html_notes
                 rt.assignee = newTask.assignee
+                rt.tags = newTask.tags
                 let sectionId = rt.memberships[0].section.gid
                 let taskId = rt.gid
                 let ss = getSectionAndSwimlane(rt.memberships[0].section)

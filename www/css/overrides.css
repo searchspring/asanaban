@@ -150,3 +150,8 @@
 .column-header-highlighted {
   background-color: rgba(130, 130, 0, 1);
 }
+
+.tagify {
+
+  --tags-bg: black
+}
