@@ -113,8 +113,11 @@ function processProjects(data) {
     })
     let html = ''
     for (let project of data) {
-        let selected = project.gid === projectId ? ' selected' : ''
-        document.title = `${project.name}`
+        let selected = ''
+        if (project.gid === projectId) {
+            selected = ' selected'
+            document.title = `${project.name}`
+        }
         html += `<option value="${project.gid}"${selected}>${project.name}</option>`
     }
     $('projectSwitcher').innerHTML = html
