@@ -85,7 +85,7 @@
         </div>
         <div class="flex-grow">
             <select onchange="image()"
-                class="mt-1 float-right w-3/5 px-4 border-blue-500 text-blue-500 border rounded-full inline-block"
+                class="mt-1 float-right w-3/5 px-4 border-gray-500 text-gray-800 border rounded-full inline-block"
                 id="backgroundImages">
                 <option value="">no image</option>
                 <option value="https://www.influxdata.com/wp-content/uploads/pandas-influxdb.jpg">panda 1</option>
@@ -111,6 +111,10 @@
                     value="https://3er1viui9wo30pkxh1v2nh4w-wpengine.netdna-ssl.com/wp-content/uploads/prod/sites/45/2019/11/MS_Penguin-Counting-Story_1900x800.jpg">
                     penguins</option>
             </select>
+
+            <select onchange="project()"
+                class="mt-1 float-right w-3/5 mr-2 px-4 border-gray-500 text-gray-800 border rounded-full inline-block"
+                id="projectSwitcher"></select>
         </div>
     </div>
     <div id="wrapper" class="opacity-90 mb-10"></div>

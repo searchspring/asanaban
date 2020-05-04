@@ -93,6 +93,32 @@ async function loadTags(bustCache) {
     }
 }
 
+
+async function loadProjects(bustCache) {
+    setStatus('green', `loading... projects`)
+    let cachedTags = localStorage.getItem('projects')
+    if (cachedTags && !bustCache) {
+        processProjects(JSON.parse(cachedTags))
+    } else {
+        await axios.get(`https://app.asana.com/api/1.0/projects?archived=false&workspace=${workspaceId}`).then((response) => {
+            localStorage.setItem('projects', JSON.stringify(response.data.data))
+            processProjects(response.data.data)
+        })
+    }
+}
+
+function processProjects(data) {
+    data = data.sort((a, b) => {
+        return a.name.localeCompare(b.name)
+    })
+    let html = ''
+    for (let project of data) {
+        let selected = project.gid === projectId ? ' selected' : ''
+        html += `<option value="${project.gid}"${selected}>${project.name}</option>`
+    }
+    $('projectSwitcher').innerHTML = html
+}
+
 let tagify;
 function processTags(data) {
     let whitelist = []

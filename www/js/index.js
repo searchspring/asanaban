@@ -7,6 +7,7 @@ async function start() {
     await loadSections()
     await loadTasks()
     await loadUsers()
+    loadProjects()
     loadTags()
     setStatus('green', `loading complete`)
     createUI()
@@ -712,4 +713,9 @@ function setupTaskTemplate() {
     }
     quillDescription = new Quill('#description', quillConfig);
     quillComment = new Quill('#addComment', quillConfig);
+}
+
+function project() {
+    localStorage.setItem('projectId', $('projectSwitcher').value)
+    window.location.reload()
 }
