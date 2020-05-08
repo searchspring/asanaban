@@ -10,16 +10,18 @@ function disolveStatus(timeout) {
     if (statusTimeout) {
         clearTimeout(statusTimeout)
     }
-    statusTimeout = self.setTimeout(() => {
-        $('status').classList.add('hidden')
-    }, timeout ? timeout : 1000)
+    if (!$('status').classList.contains('text-red-900')) {
+        statusTimeout = self.setTimeout(() => {
+            $('status').classList.add('hidden')
+        }, timeout ? timeout : 1000)
+    }
 }
 
-function image(){
-   let newImage = $('backgroundImages').value
-   document.body.style.backgroundImage = `url('${newImage}')`
-   document.body.style.backgroundSize = 'cover'
-   localStorage.setItem(`backgroundImage`, newImage)
+function image() {
+    let newImage = $('backgroundImages').value
+    document.body.style.backgroundImage = `url('${newImage}')`
+    document.body.style.backgroundSize = 'cover'
+    localStorage.setItem(`backgroundImage`, newImage)
 }
 
 

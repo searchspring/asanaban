@@ -136,11 +136,11 @@
 }
 
 .bg-gray-gradient {
-  background-image: linear-gradient(to top, rgba(200, 200, 200, 0.4), rgba(200, 200, 200, 1));
+  background-image: linear-gradient(to top, rgba(200, 200, 200, 0.4), rgba(200, 200, 200, 0.8));
 }
 
 .bg-red-gradient {
-  background-image: linear-gradient(to top, rgba(255, 0, 0, 0.4), rgba(255, 0, 0, 1));
+  background-image: linear-gradient(to top, rgba(255, 0, 0, 0.4), rgba(255, 0, 0, 0.8));
 }
 
 .column-header {
@@ -148,7 +148,7 @@
 }
 
 .column-header-highlighted {
-  background-color: rgba(130, 130, 0, 1);
+  background-color: rgba(130, 130, 0, 0.8);
 }
 
 .tagify {

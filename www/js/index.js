@@ -266,7 +266,7 @@ function createSectionUi() {
         let blue = i % 2 == 0 ? 'bg-blue-800' : 'bg-blue-700'
         i++
         html += `<div class="flex mb-1">
-            <h2 style="writing-mode: vertical-rl" class="${blue} text-white text-bold text-center p-1 py-4">${key}</h2>
+            <h2 style="writing-mode: vertical-rl" class="${blue} opacity-90 text-white text-bold text-center p-1 py-4">${key}</h2>
             <div class="flex-1 flex">
                 ${htmlSwimlanes[key]}
             </div>
@@ -677,20 +677,36 @@ function setupTaskTemplateUsers() {
         options = `<option value="${user.gid}">${user.name} ${user.email.indexOf('@searchspring') === -1 ? ('(' + user.email + ')') : ''}</option>` + options
     }
     $('users').innerHTML = `<option selected value="no value">please select</option>` + options
-}
+};
+
 
 let quillDescription = null
 let quillComment = null
 function setupTaskTemplate() {
     setupTaskTemplateUsers()
-    var Block = Quill.import('blots/block');
-    Block.tagName = 'SPAN';
-    Quill.register(Block, true);
+    setupQuill()
+}
+function setupQuill() {
+    var Block = Quill.import('blots/block')
+    Block.tagName = 'SPAN'
+    Quill.register(Block, true)
+    var Link = Quill.import('formats/link')
+    class MyLink extends Link {
+        static create(value) {
+            let node = super.create(value)
+            value = this.sanitize(value)
+            node.setAttribute('href', value)
+            node.removeAttribute('target')
+            return node;
+        }
+    }
+    Quill.register(MyLink);
     let quillConfig = {
         modules: {
             toolbar: [
                 ['bold', 'underline'],
                 [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                ['link'],
             ],
             mention: {
                 allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,

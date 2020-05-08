@@ -221,8 +221,10 @@ function ensureCustomField() {
 }
 
 function convertToAsana(text) {
-    let reg = /<span class="mention" data-index="[0-9]*" data-denotation-char="@" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">@<\/span>([^<]+)<\/span>\s*<\/span>/g
-    return text.replace(reg, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>').replace(/<\/*span>/g, '').replace(/<br>/g, '\n')
+    let regMention = /<span class="mention" data-index="[0-9]*" data-denotation-char="@" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">@<\/span>([^<]+)<\/span>\s*<\/span>/g
+    return text.replace(regMention, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>')
+        .replace(/<\/*span>/g, '')
+        .replace(/<br>/g, '\n')
 }
 
 function startSyncLoop() {
@@ -236,19 +238,30 @@ function startSyncLoop() {
 }
 async function syncLoop() {
     let didSomeSyncing = false
-    while (queue.length > 0) {
+    let errorFree = true
+    while (queue.length > 0 && errorFree) {
         let queueItem = queue[0]
         let message = ''
         if (queueItem.message) {
             message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
         }
         setStatus('yellow', `syncing ${queue.length} items${message}`)
-        await queueItem.httpFunc(queueItem.url, queueItem.body).then(queueItem.callback)
+
+        await queueItem.httpFunc(queueItem.url, queueItem.body).then(queueItem.callback).catch((error) => {
+            let message = error.message
+            if (error.response && error.response.data && error.response.data.errors) {
+                message = error.response.data.errors[0].message
+            }
+            setStatus('red', message)
+            errorFree = false
+        })
         queue.shift()
         didSomeSyncing = true
     }
-    if (didSomeSyncing) {
+    if (didSomeSyncing && errorFree) {
         setStatus('green', `sync'd`)
     }
-    self.setTimeout(syncLoop, 500)
+    if (errorFree) {
+        self.setTimeout(syncLoop, 500)
+    }
 }
