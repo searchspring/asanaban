@@ -434,6 +434,8 @@ function edit(taskId) {
     $('users').value = currentlyEditingTask.assignee ? currentlyEditingTask.assignee.gid : 'no value'
     if (currentlyEditingTask.due_on) {
         $('date').value = currentlyEditingTask.due_on
+    } else {
+        $('date').value = ''
     }
     tagify.removeAllTags()
     if (!createNew) {
