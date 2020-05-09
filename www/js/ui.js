@@ -10,7 +10,7 @@ function disolveStatus(timeout) {
     if (statusTimeout) {
         clearTimeout(statusTimeout)
     }
-    if (!$('status').classList.contains('text-red-900')) {
+    if ($('status').classList.contains('text-green-900')) {
         statusTimeout = self.setTimeout(() => {
             $('status').classList.add('hidden')
         }, timeout ? timeout : 1000)
