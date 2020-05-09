@@ -648,14 +648,18 @@ document.onkeydown = function (evt) {
 
 
 document.onkeyup = function (evt) {
-    if (currentlyEditingTask) {
-        return
-    }
     evt = evt || window.event;
-    if (evt.keyCode === 191) {
-        $('search').focus()
+    if (currentlyEditingTask) {
+        if (evt.keyCode === 13 && evt.srcElement.id === 'name') {
+            save()
+        }
+        return
+    } else {
+        if (evt.keyCode === 191) {
+            $('search').focus()
+        }
     }
-};
+}
 
 function setupTaskTemplateUsers() {
     let options = ''
