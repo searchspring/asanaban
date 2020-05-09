@@ -8,7 +8,7 @@ async function start() {
     await loadTasks()
     await loadUsers()
     loadProjects()
-    loadTags()
+    loadTags(true)
     setStatus('green', `loading complete`)
     createUI()
     startSyncLoop()
