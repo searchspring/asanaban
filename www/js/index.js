@@ -285,11 +285,14 @@ function setColumnColor(sectionId) {
     let maximum = model.sectionMeta[sectionName].maximum
     let columnColor = count > maximum ? 'bg-red-gradient' : 'bg-gray-gradient'
     let el = $(`section${sectionId}`)
+    let elHeader = $(`sectionHeader${sectionId}`)
     if (columnColor === 'bg-red-gradient') {
         el.classList.add('bg-red-gradient')
+        elHeader.classList.add('column-header-red')
         el.classList.remove('bg-gray-gradient')
     } else {
         el.classList.add('bg-gray-gradient')
+        elHeader.classList.remove('column-header-red')
         el.classList.remove('bg-red-gradient')
     }
 }
@@ -338,7 +341,7 @@ function createTaskUi() {
 function addTaskToUi(task, toTop) {
     let hasImage = task.assignee && task.assignee.photo
     let el = $(`section${task.memberships[0].section.gid}`)
-    let html = `<div style="width:50%" onclick="edit('${task.gid}')" id="task${task.gid}" class="border-1">
+    let html = `<div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id="task${task.gid}" class="border-1">
         <div id="taskBox${task.gid}" style="overflow:hidden" class="hover:shadow border rounded m-1 bg-white mb-1 p-1 cursor-pointer text-center text-xxs">
             <img alt="user image" id="photo${task.gid}" class="${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2" src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}"/>
             <span id="taskName${task.gid}">${task.name}</span>
