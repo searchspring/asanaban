@@ -492,9 +492,17 @@ function complete() {
             console.info(response)
         }
     })
-    let taskEl = $(`task${currentlyEditingTask.gid}`)
-    taskEl.parentNode.removeChild(taskEl)
+    deleteTaskFromUi(currentlyEditingTask)
+    deleteTaskFromModel(currentlyEditingTask)
     currentlyEditingTask = null
+}
+function deleteTaskFromUi(task) {
+    let taskEl = $(`task${task.gid}`)
+    taskEl.parentNode.removeChild(taskEl)
+}
+function deleteTaskFromModel(task) {
+    delete model.tasks[task.gid]
+    model.tasksOrder = model.tasksOrder.filter(e => e !== task.gid);
 }
 function deleteTask() {
     let confirmed = confirm('Are you sure? There is no undo!')
@@ -509,8 +517,8 @@ function deleteTask() {
                 console.info(response)
             }
         })
-        let taskEl = $(`task${currentlyEditingTask.gid}`)
-        taskEl.parentNode.removeChild(taskEl)
+        deleteTaskFromUi(currentlyEditingTask)
+        deleteTaskFromModel(currentlyEditingTask)
         currentlyEditingTask = null
     }
 }
