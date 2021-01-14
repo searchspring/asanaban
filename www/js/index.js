@@ -146,6 +146,9 @@ function setupSearch() {
                     text += ' ' + tag.name.toLowerCase()
                 }
             }
+            if (task.assignee) {
+                text += ' ' + task.assignee.name.toLowerCase()
+            }
             if (!emptySearch && text.indexOf(searchValue) !== -1) {
                 highlight[key] = model.tasks[key]
             }

@@ -1,4 +1,4 @@
-function setup(){
+function setup() {
     $('startingOverlay').classList.remove('hidden')
     $('starting').classList.remove('hidden')
 }
@@ -42,24 +42,19 @@ async function go() {
     start()
 }
 
-function newPat() {
+async function newPat() {
     workspaceId = $('workspaceId').value
     $('newProjects').innerHTML = '<option>loading...</option>'
     axios.defaults.headers.common['Authorization'] = 'Bearer ' + $('pat').value
-    axios.get(`https://app.asana.com/api/1.0/projects?archived=false&workspace=${workspaceId}`).then((response) => {
-        $('patError').classList.add('hidden')
-        response.data.data = response.data.data.sort((a, b) => {
-            return a.name.localeCompare(b.name)
-        })
-        let html = ''
-        for (let project of response.data.data) {
-            html += `<option value="${project.gid}">${project.name}</option>`
-        }
-        $('newProjects').innerHTML = html
-    }).catch((error) => {
-        $('newProjects').innerHTML = ''
-        $('patError').classList.remove('hidden')
-        $('patError').innerHTML = JSON.stringify(error.response.data)
-
+    let projects = await loadAllProjects([])
+    $('patError').classList.add('hidden')
+    projects = projects.sort((a, b) => {
+        return a.name.localeCompare(b.name)
     })
+    let html = ''
+    for (let project of projects) {
+        html += `<option value="${project.gid}">${he.encode(project.name)}</option>`
+    }
+    $('newProjects').innerHTML = html
+
 }

@@ -100,11 +100,25 @@ async function loadProjects(bustCache) {
     if (cachedTags && !bustCache) {
         processProjects(JSON.parse(cachedTags))
     } else {
-        await axios.get(`https://app.asana.com/api/1.0/projects?archived=false&workspace=${workspaceId}`).then((response) => {
-            localStorage.setItem('projects', JSON.stringify(response.data.data))
-            processProjects(response.data.data)
-        })
+        let projects = await loadAllProjects([])
+        localStorage.setItem('projects', JSON.stringify(projects))
+        processProjects(projects)
     }
+}
+
+async function loadAllProjects(projects, offset) {
+    if (!offset) {
+        offset = ''
+    } else {
+        offset = '&offset=' + offset
+    }
+    await axios.get(`https://app.asana.com/api/1.0/projects?limit=100${offset}&archived=false&workspace=${workspaceId}`).then(async (response) => {
+        projects.push(...response.data.data)
+        if (response.data.next_page) {
+            await loadAllProjects(projects, response.data.next_page.offset)
+        }
+    })
+    return projects
 }
 
 function processProjects(data) {
@@ -118,7 +132,8 @@ function processProjects(data) {
             selected = ' selected'
             document.title = `${project.name}`
         }
-        html += `<option value="${project.gid}"${selected}>${project.name}</option>`
+        let name = he.encode(project.name)
+        html += `<option value="${project.gid}"${selected}>${name}</option>`
     }
     $('projectSwitcher').innerHTML = html
 }
