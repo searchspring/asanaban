@@ -5,6 +5,7 @@ Kanban on Asana
 - Node.
 - Vercel - `npm -g i vercel`
 - Vercel account - signup at vercel.com
+- Asana account - signup at asana.com
 
 # Running locally
 
