@@ -19,4 +19,4 @@ The run dev mode
 
 ## Deployment
 
-run `./deployProduction`
+run `./deployProduction.sh`
