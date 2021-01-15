@@ -307,7 +307,7 @@ function createColumn(displayName, name, id, maximum, count) {
         collapsed = ' collapsed'
     }
     let html = `<div class="flex-1 ml-1 ${name}${collapsed}">
-        <a id="sectionHeader${id}"  href="javascript:toggleSection('${name}')" class="column-header text-white text-bold p-1 text-center block">
+        <a id="sectionHeader${id}"  href="javascript:toggleSection('${name}')" class="hover:opacity-75 column-header text-white text-bold p-1 text-center block rounded-t">
             <span data-section-id="${id}" class="add-task text-gray-400 hover:underline hover:text-white float-left inline-block ml-1 pt-1 text-xs">add task</span>
             ${displayName} 
             <span class="ml-4 text-xs"><span class="count${name}">${count}</span> of ${maximum === 1000 ? '∞' : maximum}</span>`

@@ -23,6 +23,3 @@ function image() {
     document.body.style.backgroundSize = 'cover'
     localStorage.setItem(`backgroundImage`, newImage)
 }
-
-
-
