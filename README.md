@@ -7,7 +7,7 @@ Kanban on Asana
 - Vercel account - signup at vercel.com
 - Asana account - signup at asana.com
 
-# Running locally
+## Running locally
 
 You have to associated with a vercel project
 
@@ -16,3 +16,7 @@ You have to associated with a vercel project
 The run dev mode
 
 `vercel dev`
+
+## Deployment
+
+run `./deployProduction`
