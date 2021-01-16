@@ -4,11 +4,12 @@ const jsonstore = require("./utils/jsonstore")
 
 const Home = require('./views/Home')
 const Setup = require('./views/Setup')
+const Asana = require('./model/asana')
 
 const Auth = function (view) {
   return {
     onmatch: function () {
-      if (!jsonstore.has('pat') || !jsonstore.has('workspaceId')) {
+      if (!Asana.isSetup()) {
         m.route.set('/setup')
       }
       else {
