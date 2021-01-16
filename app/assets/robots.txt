@@ -1,2 +1,0 @@
-User-agent: Googlebot
-Disallow: /*_escaped_fragment_=DONOTCRAWL
