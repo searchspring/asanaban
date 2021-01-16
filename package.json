@@ -1,0 +1,27 @@
+{
+  "name": "nerdherder.io",
+  "description": "nerdherder.io application",
+  "private": true,
+  "author": "codeallthethingz",
+  "version": "0.0.1",
+  "repository": "",
+  "scripts": {
+    "test": "jest",
+    "start": "brunch watch --server",
+    "now-build": "echo brunch build --production"
+  },
+  "devDependencies": {
+    "@babel/polyfill": "^7.12.1",
+    "auto-reload-brunch": "^2",
+    "babel-brunch": "~6.0",
+    "babel-plugin-transform-react-jsx": "^6.24.1",
+    "babel-preset-latest": "^6",
+    "brunch": "^2",
+    "clean-css-brunch": "^2",
+    "tailwindcss": "^1.6.0",
+    "uglify-js-brunch": "^2"
+  },
+  "dependencies": {
+    "mithril": "^1.1.6"
+  }
+}
