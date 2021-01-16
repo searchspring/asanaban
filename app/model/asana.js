@@ -98,7 +98,7 @@ const Asana = {
             return
         })
         if (customFieldId === '-1') {
-            // setStatus('green', `ensuring custom field`)
+            setStatus('green', `ensuring custom field`)
             await x.request({
                 url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
                 'data': {
