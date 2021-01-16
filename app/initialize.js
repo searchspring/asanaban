@@ -2,7 +2,7 @@ require("@babel/polyfill")
 const m = require('mithril')
 const jsonstore = require("./utils/jsonstore")
 
-const Home = require('./views/Home')
+const Kanban = require('./views/Kanban')
 const Setup = require('./views/Setup')
 const Asana = require('./model/asana')
 
@@ -22,7 +22,7 @@ const Auth = function (view) {
 
 document.addEventListener('DOMContentLoaded', () => {
   m.route(document.body, '/', {
-    '/': Auth(Home),
+    '/': Auth(Kanban),
     '/setup': Setup
   })
 });
