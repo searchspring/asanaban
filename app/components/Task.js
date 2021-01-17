@@ -9,7 +9,7 @@ module.exports = {
         let styles = this.getTaskStyles(task)
         let wrapperStyles = `${task.hidden ? 'hidden' : ''} border-1`
         return <div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id="task${task.gid}" class={wrapperStyles}>
-            <div id="taskBox${task.gid}" style={styles.taskStyle} class={styles.taskClass}>
+            <div style={styles.taskStyle} class={styles.taskClass}>
                 <img alt="user image" id="photo${task.gid}" class={imageClasses} src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}" />
                 <span id="taskName${task.gid}">{task.name}</span>
                 <div id="taskDate${task.gid}">
@@ -40,7 +40,7 @@ module.exports = {
         }
         return {
             taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-center text-xxs`,
-            taskStyle: `overflow:hidden opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
+            taskStyle: `overflow:hidden; opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
         }
     }, getCustomFieldDate(task) {
         if (Asana.customFieldId !== '-1') {
