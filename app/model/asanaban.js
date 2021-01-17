@@ -1,10 +1,10 @@
 const m = require('mithril')
 const jsonstore = require('../utils/jsonstore')
 const Asana = require('./asana')
+const dragula = require('dragula')
 
 const Asanaban = {
     backgroundImage: '',
-    statusTimeout: null,
     initFromStorage() {
         if (jsonstore.has('backgroundImage')) {
             this.setBackgroundImage(jsonstore.get('backgroundImage'))
@@ -16,36 +16,41 @@ const Asanaban = {
         document.body.style.backgroundImage = `url('${this.backgroundImage}')`
         document.body.style.backgroundSize = 'cover'
     },
-    setStatus(color, text, append) {
-        let el = document.getElementById('status')
-        el.classList.remove('text-yellow-900', 'text-green-900', 'text-red-900', 'hidden', 'bg-yellow-300', 'bg-green-300', 'bg-red-300')
-        el.classList.add(`text-${color}-900`, `bg-${color}-300`)
-        el.innerHTML = append ? el.innerHTML + text : text
-        this.disolveStatus(3000)
-    },
-    disolveStatus(timeout) {
-        if (this.statusTimeout) {
-            clearTimeout(this.statusTimeout)
-        }
-        if (document.getElementById('status').classList.contains('text-green-900')) {
-            this.statusTimeout = self.setTimeout(() => {
-                document.getElementById('status').classList.add('hidden')
-            }, timeout ? timeout : 1000)
-        }
-    },
-    toggleColumn(columnName){
+    toggleColumn(columnName) {
         let key = `collapsed-${columnName}`
         if (jsonstore.has(key)) {
             jsonstore.set(key, !jsonstore.get(key))
         } else {
             jsonstore.set(key, true)
-        }
+        } 
     },
     doSearch(search) {
         this.search = search
         jsonstore.set('search', this.search)
         Asana.search(this.search)
         m.redraw()
+    },
+    setupDragula() {
+        let drags = []
+        for (let sectionId of Asana.sectionsOrder) {
+            drags.push(document.getElementById(`section${sectionId}`))
+        }
+        dragula(drags).on('drop', function (el, target, source, sibling) {
+            let taskId = el.getAttribute('id').substring(4)
+            let siblingTaskId = sibling === null ? null : sibling.getAttribute('id').substring(4)
+            let targetSectionId = target.getAttribute('id').substring(7)
+            let sourceSectionId = source.getAttribute('id').substring(7)
+            let sourceSection = Asana.sections[sourceSectionId]
+            let sourceSectionName = Asana.getSectionAndSwimlane(sourceSection).sectionName
+            Asana.sectionMeta[sourceSectionName].count--
+            let targetSection = Asana.sections[targetSectionId]
+            let targetSectionName = Asana.getSectionAndSwimlane(targetSection).sectionName
+            Asana.sectionMeta[targetSectionName].count++
+            let task = Asana.tasks[taskId]
+            task.memberships[0].section = targetSection
+            Asana.taskMoved(targetSectionId, taskId, siblingTaskId)
+            m.redraw()
+        });
     }
 
 }

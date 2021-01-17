@@ -1,4 +1,5 @@
 const m = require('mithril')
+const Status = require('../components/Status')
 const jsonstore = require('../utils/jsonstore')
 const x = require('../utils/xhr-with-auth')(m)
 
@@ -18,6 +19,7 @@ const Asana = {
     tasksOrder: [],
     columnTasks: {},
     projectTags: {},
+    queue: [],
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -107,7 +109,7 @@ const Asana = {
             return
         })
         if (customFieldId === '-1') {
-            Asanaban.setStatus('green', `ensuring custom field`)
+            Status.set('green', `ensuring custom field`)
             await x.request({
                 url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
                 'data': {
@@ -320,6 +322,83 @@ const Asana = {
             return c.replace(/dark-(.*)/g, 'background-color:$1;color:white;')
         } else {
             return 'opacity:0.9; background-color:' + c
+        }
+    }, 
+    taskMoved(sectionId, taskId, siblingTaskId){
+        this.queue.push({
+            method: 'POST',
+            url: `https://app.asana.com/api/1.0/sections/${sectionId}/addTask`,
+            body: {
+                "data": {
+                    "task": taskId,
+                    "insert_before": siblingTaskId,
+                }
+            },
+            message: `moving ${taskId}`,
+            callback: (response) => {
+                console.info(response)
+            }
+        })
+        let customFieldBody = {
+            'data': {
+                "custom_fields": {
+    
+                },
+            }
+        }
+        if (this.customFieldId !== '-1') {
+            customFieldBody.data.custom_fields[`${this.customFieldId}`] = new Date().toISOString()
+            this.tasks[taskId].custom_fields[0].text_value = new Date().toISOString()
+            // setTaskColor(model.tasks[taskId])
+            this.queue.push({
+                method: 'PUT',
+                url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
+                body: customFieldBody,
+                message: `updating last modified ${taskId}`,
+                callback: (response) => {
+                    console.info(response)
+                }
+            })
+        }
+        Status.set('yellow', `syncing ${this.queue.length} items`)
+    },
+    startSyncLoops() {
+        self.setTimeout(Asana.syncLoop, 1000)
+        // self.setInterval(async () => {
+        //     if (!currentlyEditingTask) {
+        //         await loadUsers(true)
+        //         setupTaskTemplateUsers()
+        //     }
+        // }, 3600000)
+    }, 
+    async  syncLoop() {
+        let didSomeSyncing = false
+        let errorFree = true
+        while (Asana.queue.length > 0 && errorFree) {
+            let queueItem = Asana.queue[0]
+            let message = ''
+            if (queueItem.message) {
+                message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
+            }
+            Status.set('yellow', `syncing ${Asana.queue.length} items${message}`)
+    
+            await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method}).then(queueItem.callback).catch((error) => {
+                console.log(error)
+                let message = error.message
+                if (error.response && error.response.data && error.response.data.errors) {
+                    message = error.response.data.errors[0].message
+                }
+                Status.set('red', message)
+                errorFree = false
+            })
+            Asana.queue.shift()
+            didSomeSyncing = true
+        }
+        if (didSomeSyncing && errorFree) {
+            Status.set('green', `sync'd`)
+        }
+        if (errorFree) {
+            self.setTimeout(Asana.syncLoop, 500)
         }
     }
 

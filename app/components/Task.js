@@ -8,14 +8,14 @@ module.exports = {
         let imageClasses = `${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2`
         let styles = this.getTaskStyles(task)
         let wrapperStyles = `${task.hidden ? 'hidden' : ''} border-1`
-        return <div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id="task${task.gid}" class={wrapperStyles}>
+        return <div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id={`task${task.gid}`} class={wrapperStyles}>
             <div style={styles.taskStyle} class={styles.taskClass}>
                 <img alt="user image" id="photo${task.gid}" class={imageClasses} src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}" />
                 <span id="taskName${task.gid}">{task.name}</span>
                 <div id="taskDate${task.gid}">
                     {task.due_on ? <div style="font-size:8px" class="text-left mt-1 border-t ${border}">Due Date<span class="float-right">{task.due_on}</span></div> : null}
                 </div>
-                <div id="taskTags${task.gid}" class="flex mt-1">
+                <div class="flex mt-1">
                     {task.tags.map((tag, index) => {
                         let style = `${Asana.convertTagColor(tag.color)};margin-right:1px;overflow-hidden;max-width:2rem`
                         return <div title={tag.name} style={style} class="border border-1 border-white rounded-full flex-1">{tag.name.substring(0, 1).toLowerCase()}</div>

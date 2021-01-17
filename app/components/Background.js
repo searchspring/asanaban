@@ -1,5 +1,4 @@
 const m = require('mithril')
-const Asana = require('../model/asana')
 const Asanaban = require('../model/asanaban')
 module.exports = {
     view(vnode) {

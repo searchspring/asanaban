@@ -11,6 +11,7 @@ module.exports = {
         let count = Asana.sectionMeta[c.sectionName].count
         let tasks = Asana.columnTasks[c.sectionId] || []
         let styles = this.getColumnStyle(c)
+        let id = c.sectionId
         return (
             <div class={style}>
                 <a id="sectionHeader${id}" href="javascript:;" onclick={() => {
@@ -24,7 +25,7 @@ module.exports = {
                         </span>
                     </div>
                 </a>
-                <div style="min-height:50px;" class={styles.column} id="section${id}">
+                <div style="min-height:50px;" class={styles.column} id={`section${id}`}>
                     {tasks.map((task, index) => {
                         return <Task task={task} key={index} />
                     })}

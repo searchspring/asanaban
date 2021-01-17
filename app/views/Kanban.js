@@ -1,12 +1,12 @@
 const m = require('mithril')
 const Background = require('../components/Background')
 const Projects = require('../components/Projects')
-const Section = require('../components/Column')
 const Swimlane = require('../components/Swimlane')
 const Asana = require('../model/asana')
 const Asanaban = require('../model/asanaban')
 const jsonstore = require('../utils/jsonstore')
 const ProjectTags = require('../components/ProjectTags')
+const Status = require('../components/Status')
 
 module.exports = {
     oninit() {
@@ -14,17 +14,19 @@ module.exports = {
         Asanaban.initFromStorage()
     },
     async oncreate() {
-        Asanaban.setStatus('green', 'loading...')
+        Status.set('green', 'loading...')
         await Asana.loadAllProjects()
-        Asanaban.setStatus('green', 'loading... sections')
+        Status.set('green', 'loading... sections')
         await Asana.loadSections()
-        Asanaban.setStatus('green', ` loading... tasks`)
+        Status.set('green', ` loading... tasks`)
         await Asana.loadTasks()
         if (jsonstore.has('search')) {
             Asanaban.doSearch(jsonstore.get('search'))
         }
-        Asanaban.setStatus('green', `loading... tags`)
+        Status.set('green', `loading... tags`)
         Asana.loadTags(true)
+        Asanaban.setupDragula()
+        Asana.startSyncLoops()
         m.redraw()
     },
     view: function () {
