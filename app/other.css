@@ -61,10 +61,10 @@ input:focus, select:focus {
   
   .collapsed {
     flex: none;
-    display: block
+    display: block;
   }
   
-  .collapsed div, .collapsed span {
+  .collapsed span.text-right ,  .collapsed span.text-left {
     display: none;
   }
   
@@ -75,8 +75,9 @@ input:focus, select:focus {
     width: 12px;
     padding-left: 0;
     padding-right: 0;
-    font-size: 12;
+    font-size: 12px;
     line-height: 12px;
+    border-radius: 1rem;
   }
   
   .highlight div {

@@ -31,6 +31,14 @@ const Asanaban = {
                 document.getElementById('status').classList.add('hidden')
             }, timeout ? timeout : 1000)
         }
+    },
+    toggleColumn(columnName){
+        let key = `collapsed-${columnName}`
+        if (jsonstore.has(key)) {
+            jsonstore.set(key, !jsonstore.get(key))
+        } else {
+            jsonstore.set(key, true)
+        }
     }
 
 }

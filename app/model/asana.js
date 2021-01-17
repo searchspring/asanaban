@@ -7,7 +7,13 @@ const Asana = {
     pat: '',
     projects: [],
     customFieldId: '',
-    projectId: '', 
+    projectId: '',
+    sectionMeta: {},
+    sections: {},
+    sectionsOrder: [],
+    swimlanes: [],
+    swimlanesDisplay: [],
+    swimlaneColumns: {},
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -44,7 +50,7 @@ const Asana = {
         this.projects = this.projects.sort((a, b) => {
             return a.name.localeCompare(b.name)
         })
-        this.projects.unshift({name: 'Please select', gid: '-1'})
+        this.projects.unshift({ name: 'Please select', gid: '-1' })
         m.redraw(true)
     },
     setWorkspaceId(workspaceId) {
@@ -117,6 +123,65 @@ const Asana = {
         }
 
         this.setCustomFieldId(customFieldId)
+    },
+    async loadSections() {
+        await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+            for (let section of response.data) {
+                if (section.name.toLowerCase() === '(no section)') {
+                    continue
+                }
+                let ss = this.getSectionAndSwimlane(section)
+                if (!ss) {
+                    continue
+                }
+                if (!this.sectionMeta[ss.sectionName]) {
+                    this.sectionMeta[ss.sectionName] = { count: 0, maximum: ss.maximum }
+                }
+                if (!this.contains(this.swimlanes, ss.swimlaneName)) {
+                    this.swimlanes.push(ss.swimlaneName)
+                    this.swimlanesDisplay.push(ss.swimlaneNameDisplay)
+                    this.swimlaneColumns[ss.swimlaneName] = []
+                }
+                this.swimlaneColumns[ss.swimlaneName].push(ss)
+                this.sections[`${section.gid}`] = section
+                this.sectionsOrder.push(section.gid)
+            }
+            console.log(this.swimlanes);
+        })
+    },
+    contains(haystack, needle) {
+        for (const n of haystack) {
+            if (n === needle) {
+                return true
+            }
+        }
+        return false
+    },
+    getSectionAndSwimlane(section) {
+        let name = section.name
+        let colonIndex = name.indexOf(':')
+        if (colonIndex === -1) {
+            return null
+        }
+
+        let barIndex = name.indexOf('|')
+        let maximum = 1000
+        if (barIndex !== -1) {
+            try {
+                maximum = parseInt(name.substring(barIndex + 1))
+                name = name.substring(0, barIndex)
+            } catch (e) {
+                console.warn(e)
+            }
+        }
+        return {
+            sectionName: name.substring(colonIndex + 1).toLowerCase().replace(/ /g, ''),
+            swimlaneName: name.substring(0, colonIndex).toLowerCase().replace(/ /g, ''),
+            sectionNameDisplay: name.substring(colonIndex + 1),
+            swimlaneNameDisplay: name.substring(0, colonIndex),
+            maximum: maximum,
+            count: 0
+        }
     }
 }
 
