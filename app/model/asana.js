@@ -241,8 +241,12 @@ const Asana = {
     search(searchValue) {
         searchValue = searchValue.toLowerCase()
         let emptySearch = searchValue.trim() === ''
+        for (let key in Asana.sections) {
+            Asana.sections[key].highlight = false
+        }
         for (let key in Asana.tasks) {
             let task = Asana.tasks[key]
+            console.log(task)
             let text = task.name.toLowerCase()
             for (let tag of task.tags) {
                 if (tag.name) {
@@ -252,8 +256,14 @@ const Asana = {
             if (task.assignee) {
                 text += ' ' + task.assignee.name.toLowerCase()
             }
-            if (!emptySearch && text.indexOf(searchValue) !== -1) {
-                Asana.tasks[key].highlight = true
+            task.hidden = false
+            if (!emptySearch) {
+                if (text.indexOf(searchValue) === -1) {
+                    task.hidden = true
+                    console.log(task);
+                } else {
+                    Asana.sections[task.memberships[0].section.gid].highlight = true
+                }
             }
         }
     }

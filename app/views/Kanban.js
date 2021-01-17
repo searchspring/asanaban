@@ -12,7 +12,6 @@ module.exports = {
     oninit() {
         Asana.initFromStorage()
         Asanaban.initFromStorage()
-        this.search = jsonstore.has('search') ? jsonstore.get('search') : ''
     },
     async oncreate() {
         Asanaban.setStatus('green', 'loading...')
@@ -21,6 +20,9 @@ module.exports = {
         await Asana.loadSections()
         Asanaban.setStatus('green', ` loading... tasks`)
         await Asana.loadTasks()
+        if (jsonstore.has('search')) {
+            this.doSearch(jsonstore.get('search'))
+        }
         m.redraw()
     },
     view: function () {
@@ -55,6 +57,6 @@ module.exports = {
     doSearch(search){
         this.search = search
         jsonstore.set('search', this.search)
-        Asasa.search(this.search)
+        Asana.search(this.search)
     }
 }

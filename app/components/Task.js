@@ -7,7 +7,8 @@ module.exports = {
         let hasImage = task.assignee && task.assignee.photo
         let imageClasses = `${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2`
         let styles = this.getTaskStyles(task)
-        return <div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id="task${task.gid}" class="border-1">
+        let wrapperStyles = `${task.hidden ? 'hidden' : ''} border-1`
+        return <div style="width:50%; max-width:15rem" onclick="edit('${task.gid}')" id="task${task.gid}" class={wrapperStyles}>
             <div id="taskBox${task.gid}" style={styles.taskStyle} class={styles.taskClass}>
                 <img alt="user image" id="photo${task.gid}" class={imageClasses} src="${hasImage ? task.assignee.photo['image_60x60'] : 'images/blank.png'}" />
                 <span id="taskName${task.gid}">{task.name}</span>
@@ -31,7 +32,7 @@ module.exports = {
             } else {
                 taskBg = 'bg-purple-600 text-white'
             }
-        } 
+        }
         // if (task.tags) {
         //     let tagHtml = ''
         //     for (let tag of task.tags) {

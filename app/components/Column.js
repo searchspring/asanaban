@@ -35,13 +35,14 @@ module.exports = {
     getColumnStyle(c) {
         let section = Asana.sections[c.sectionId]
         let sectionName = Asana.getSectionAndSwimlane(section).sectionName
-        let count = Asana.sectionMeta[sectionName].count
-        let maximum = Asana.sectionMeta[sectionName].maximum
+        let meta = Asana.sectionMeta[sectionName]
+        let count = meta.count
+        let maximum = meta.maximum
         let columnColor = count > maximum ? 'bg-red-gradient' : 'bg-gray-gradient'
         let headerColor = count > maximum ? 'column-header-red' : ''
         return {
             column: `${columnColor} tasks flex flex-wrap pt-1 pr-1 rounded-b`,
-            header: `${headerColor} hover:opacity-75 column-header text-white text-bold p-1 block rounded-t`
+            header: `${section.highlight ? 'column-header-highlighted' : ''} ${headerColor} hover:opacity-75 column-header text-white text-bold p-1 block rounded-t`
         }
     }
 }
