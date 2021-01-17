@@ -14,9 +14,10 @@ module.exports = {
     async oncreate() {
         Asanaban.setStatus('green', 'loading...')
         await Asana.loadAllProjects()
-        Asanaban.setStatus('green', 'loading sections')
+        Asanaban.setStatus('green', 'loading... sections')
         await Asana.loadSections()
-
+        Asanaban.setStatus('green', ` loading... tasks`)
+        await Asana.loadTasks()
         m.redraw()
     },
     view: function () {
@@ -24,11 +25,10 @@ module.exports = {
             <div>
                 <div class="p-1 flex title-bar mb-1 rounded-b shadow">
                     <div>
-                        <img alt="logo" class="h-8 inline-block" src="images/icon.png" />
+                        <img alt="logo" class="h-8 inline-block" style="filter:grayscale(100%) brightness(40%)" src="images/icon.png" />
                     </div>
                     <div>
-                        <input id="search" class="h-8 ml-2 w-64 px-2 bg-gray-300 rounded-full inline-block" type="text"
-                            placeholder="search" />
+                        <input id="search" class="h-8 ml-2 w-64 px-2 bg-gray-300 rounded-full inline-block" type="text" placeholder="search" />
                     </div>
                     <div>
                         <div id="status" class="hidden ml-10 float-right rounded-full px-4 py-1"></div>
@@ -40,11 +40,11 @@ module.exports = {
                 </div>
                 <div id="wrapper" class="mb-10">
                     {
-                        Asana.swimlanes.map((swimlaneName, index)=>{
-                            return <Swimlane key={index} swimlaneName={swimlaneName}/>
+                        Asana.swimlanes.map((swimlaneName, index) => {
+                            return <Swimlane key={index} swimlaneName={swimlaneName} />
                         })
                     }
-            </div>
+                </div>
             </div>
         )
     }

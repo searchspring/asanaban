@@ -14,6 +14,9 @@ const Asana = {
     swimlanes: [],
     swimlanesDisplay: [],
     swimlaneColumns: {},
+    tasks: {},
+    tasksOrder: [],
+    columnTasks: {},
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -104,7 +107,7 @@ const Asana = {
             return
         })
         if (customFieldId === '-1') {
-            setStatus('green', `ensuring custom field`)
+            Asanaban.setStatus('green', `ensuring custom field`)
             await x.request({
                 url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
                 'data': {
@@ -142,6 +145,7 @@ const Asana = {
                     this.swimlanesDisplay.push(ss.swimlaneNameDisplay)
                     this.swimlaneColumns[ss.swimlaneName] = []
                 }
+                ss.sectionId = section.gid
                 this.swimlaneColumns[ss.swimlaneName].push(ss)
                 this.sections[`${section.gid}`] = section
                 this.sectionsOrder.push(section.gid)
@@ -182,7 +186,59 @@ const Asana = {
             maximum: maximum,
             count: 0
         }
+    },
+    async loadTasks() {
+        let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+        await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
+            for (let task of response.data) {
+                for (let membership of task.memberships) {
+                    if (membership.project.gid === this.projectId) {
+                        let ss = this.getSectionAndSwimlane(membership.section)
+                        if (ss) {
+                            this.tasks[task.gid] = task
+                            if (!this.columnTasks[membership.section.gid]) {
+                                this.columnTasks[membership.section.gid] = []
+                            }
+                            this.columnTasks[membership.section.gid].push(task)
+                            this.tasksOrder.push(task.gid)
+                            this.sectionMeta[ss.sectionName].count++
+                        }
+                    }
+                }
+            }
+            for (let key in this.tasks) {
+                let task = this.tasks[key]
+                if (!task.custom_fields) {
+                    task.custom_fields = []
+                }
+                if (task.memberships.length > 1) {
+                    task.memberships = task.memberships.sort((a, b) => {
+                        if (a.project.gid === this.projectId) {
+                            return -1
+                        } else {
+                            return 1
+                        }
+                    })
+                }
+                task.custom_fields = task.custom_fields.sort((a, b) => {
+                    if (a.gid.gid === this.customFieldId) {
+                        return -1
+                    } else {
+                        return 1
+                    }
+                })
+                if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== this.customFieldId) {
+                    task.custom_fields.splice(0, 0, {
+                        gid: this.customFieldId,
+                        text_value: ''
+                    });
+                }
+
+
+            }
+        })
     }
+
 }
 
 module.exports = Asana

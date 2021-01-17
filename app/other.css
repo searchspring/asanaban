@@ -64,7 +64,7 @@ input:focus, select:focus {
     display: block;
   }
   
-  .collapsed span.text-right ,  .collapsed span.text-left {
+  .collapsed span.text-right ,  .collapsed span.text-left, .collapsed .tasks {
     display: none;
   }
   
