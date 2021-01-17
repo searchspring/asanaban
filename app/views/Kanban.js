@@ -43,7 +43,12 @@ module.exports = {
                     </div>
                     <div class="flex-grow">
                         <Background />
-                        <Projects classNames="mr-4 mt-1 float-right px-4 border-gray-500 text-gray-800 border rounded-full inline-block" />
+                        <Projects
+                            callback={(projectId) => {
+                                Asana.setProjectId(projectId)
+                                location.reload()
+                            }}
+                            classNames="mr-4 mt-1 float-right px-4 border-gray-500 text-gray-800 border rounded-full inline-block" />
                     </div>
                 </div>
                 <div id="wrapper" class="mb-10">
@@ -53,7 +58,7 @@ module.exports = {
                         })
                     }
                 </div>
-                <ProjectTags/>
+                <ProjectTags />
             </div>
         )
     }

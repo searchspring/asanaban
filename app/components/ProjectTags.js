@@ -5,7 +5,6 @@ module.exports = {
     view(vnode) {
         return (<div class="flex">
             { Object.values(Asana.projectTags).map((tag) => {
-                console.log(tag);
                 let style = `${tag.color}`
                 return <a href="javascript:;" style={style}
                     onclick={() => {

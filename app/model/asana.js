@@ -87,7 +87,6 @@ const Asana = {
         }).then((response) => {
             console.info(response)
         }).catch((error) => {
-            console.log(JSON.stringify(error));
             if (error.errors[0].error === 'custom_field_duplicate_name') {
                 // do nothing.
             } else {
@@ -151,7 +150,6 @@ const Asana = {
                 this.sections[`${section.gid}`] = section
                 this.sectionsOrder.push(section.gid)
             }
-            console.log(this.swimlanes);
         })
     },
     contains(haystack, needle) {
@@ -258,7 +256,6 @@ const Asana = {
         }
         for (let key in Asana.tasks) {
             let task = Asana.tasks[key]
-            console.log(task)
             let text = task.name.toLowerCase()
             for (let tag of task.tags) {
                 if (tag.name) {
@@ -272,7 +269,6 @@ const Asana = {
             if (!emptySearch) {
                 if (text.indexOf(searchValue) === -1) {
                     task.hidden = true
-                    console.log(task);
                 } else {
                     Asana.sections[task.memberships[0].section.gid].highlight = true
                 }
