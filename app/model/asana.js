@@ -237,6 +237,25 @@ const Asana = {
 
             }
         })
+    },
+    search(searchValue) {
+        searchValue = searchValue.toLowerCase()
+        let emptySearch = searchValue.trim() === ''
+        for (let key in Asana.tasks) {
+            let task = Asana.tasks[key]
+            let text = task.name.toLowerCase()
+            for (let tag of task.tags) {
+                if (tag.name) {
+                    text += ' ' + tag.name.toLowerCase()
+                }
+            }
+            if (task.assignee) {
+                text += ' ' + task.assignee.name.toLowerCase()
+            }
+            if (!emptySearch && text.indexOf(searchValue) !== -1) {
+                Asana.tasks[key].highlight = true
+            }
+        }
     }
 
 }
