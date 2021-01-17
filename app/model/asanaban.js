@@ -1,5 +1,6 @@
 const m = require('mithril')
 const jsonstore = require('../utils/jsonstore')
+const Asana = require('./asana')
 
 const Asanaban = {
     backgroundImage: '',
@@ -39,6 +40,12 @@ const Asanaban = {
         } else {
             jsonstore.set(key, true)
         }
+    },
+    doSearch(search) {
+        this.search = search
+        jsonstore.set('search', this.search)
+        Asana.search(this.search)
+        m.redraw()
     }
 
 }

@@ -15,7 +15,12 @@ module.exports = {
                 <div id="taskDate${task.gid}">
                     {task.due_on ? <div style="font-size:8px" class="text-left mt-1 border-t ${border}">Due Date<span class="float-right">{task.due_on}</span></div> : null}
                 </div>
-                <div id="taskTags${task.gid}" class="flex mt-1"></div>
+                <div id="taskTags${task.gid}" class="flex mt-1">
+                    {task.tags.map((tag, index) => {
+                        let style = `${Asana.convertTagColor(tag.color)};margin-right:1px;overflow-hidden;max-width:2rem`
+                        return <div title={tag.name} style={style} class="border border-1 border-white rounded-full flex-1">{tag.name.substring(0, 1).toLowerCase()}</div>
+                    })}
+                </div>
             </div>
         </div>
     },
@@ -33,18 +38,6 @@ module.exports = {
                 taskBg = 'bg-purple-600 text-white'
             }
         }
-        // if (task.tags) {
-        //     let tagHtml = ''
-        //     for (let tag of task.tags) {
-        //         let color = convertTagColor(tag.color)
-        //         tagHtml += `<div title="${tag.name}" style="${color};margin-right:1px;overflow-hidden;max-width:2rem" class="border border-1 border-white rounded-full flex-1">${tag.name.substring(0, 1).toLowerCase()}</div>`
-        //         if (!$(`footer${tag.gid}`)) {
-        //             $('footer').innerHTML = $('footer').innerHTML + `<a href="javascript:search('${tag.gid}')" id="footer${tag.gid}" style="${color}" class="inline-block hover:border hover:border-1 hover:border-white text-center flex-1 p-1 px-1">${tag.name}</a>`
-        //         }
-        //     }
-        //     taskTagEl.innerHTML = tagHtml
-        // }
-
         return {
             taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-center text-xxs`,
             taskStyle: `overflow:hidden opacity:${(100 - (daysSinceMove * 2.3)) / 100}`

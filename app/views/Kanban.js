@@ -6,9 +6,9 @@ const Swimlane = require('../components/Swimlane')
 const Asana = require('../model/asana')
 const Asanaban = require('../model/asanaban')
 const jsonstore = require('../utils/jsonstore')
+const ProjectTags = require('../components/ProjectTags')
 
 module.exports = {
-    search: '',
     oninit() {
         Asana.initFromStorage()
         Asanaban.initFromStorage()
@@ -21,8 +21,10 @@ module.exports = {
         Asanaban.setStatus('green', ` loading... tasks`)
         await Asana.loadTasks()
         if (jsonstore.has('search')) {
-            this.doSearch(jsonstore.get('search'))
+            Asanaban.doSearch(jsonstore.get('search'))
         }
+        Asanaban.setStatus('green', `loading... tags`)
+        Asana.loadTags(true)
         m.redraw()
     },
     view: function () {
@@ -34,7 +36,7 @@ module.exports = {
                     </div>
                     <div>
                         <input id="search" class="h-8 ml-2 w-64 px-2 bg-gray-300 rounded-full inline-block" type="text" placeholder="search"
-                        oninput={(e) => { this.doSearch(e.target.value) }} value={this.search} />
+                            oninput={(e) => { Asanaban.doSearch(e.target.value) }} value={Asanaban.search} />
                     </div>
                     <div>
                         <div id="status" class="hidden ml-10 float-right rounded-full px-4 py-1"></div>
@@ -51,12 +53,8 @@ module.exports = {
                         })
                     }
                 </div>
+                <ProjectTags/>
             </div>
         )
-    },
-    doSearch(search){
-        this.search = search
-        jsonstore.set('search', this.search)
-        Asana.search(this.search)
     }
 }
