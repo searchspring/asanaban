@@ -400,8 +400,37 @@ const Asana = {
         if (errorFree) {
             self.setTimeout(Asana.syncLoop, 500)
         }
+    },
+    release(sectionName) {
+        let count = this.sectionMeta[sectionName].count
+        let confirmed = confirm(`Release ${count} task${count > 1 ? 's' : ''} and mark as complete?`)
+        if (confirmed) {
+            for (let key in this.tasks) {
+                let task = this.tasks[key]
+                if (sectionName === this.getSectionAndSwimlane(task.memberships[0].section).sectionName) {
+                    this.queue.push({
+                        method: 'PUT',
+                        url: `https://app.asana.com/api/1.0/tasks/${key}`,
+                        body: {
+                            "data": {
+                                "completed": true
+                            }
+                        },
+                        message: `releasing ${key}`,
+                        callback: (response) => {
+                            console.info(response)
+                        }
+                    })
+                    let taskEl = document.getElementById(`task${key}`)
+                    taskEl.parentNode.removeChild(taskEl)
+                    delete this.tasks[key]
+                    this.tasksOrder = this.tasksOrder.filter(e => e !== key)
+                    this.sectionMeta[sectionName].count--
+                    Status.set('yellow', `syncing ${this.queue.length} items`)
+                }
+            }
+        }
     }
-
 }
 
 module.exports = Asana
