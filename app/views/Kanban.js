@@ -7,6 +7,7 @@ const Asanaban = require('../model/asanaban')
 const jsonstore = require('../utils/jsonstore')
 const ProjectTags = require('../components/ProjectTags')
 const Status = require('../components/Status')
+const TaskEditor = require('../components/TaskEditor')
 
 module.exports = {
     oninit() {
@@ -24,7 +25,7 @@ module.exports = {
             Asanaban.doSearch(jsonstore.get('search'))
         }
         Status.set('green', `loading... tags`)
-        Asana.loadTags(true)
+        Asana.loadTags(!Asana.testing)
         Asanaban.setupDragula()
         Asana.startSyncLoops()
         m.redraw()
@@ -32,6 +33,7 @@ module.exports = {
     view: function () {
         return (
             <div>
+                <TaskEditor/>
                 <div class="p-1 flex title-bar mb-1 rounded-b shadow">
                     <div>
                         <img alt="logo" class="h-8 inline-block" style="filter:grayscale(100%) brightness(40%)" src="images/icon.png" />

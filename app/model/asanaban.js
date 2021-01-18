@@ -22,7 +22,7 @@ const Asanaban = {
             jsonstore.set(key, !jsonstore.get(key))
         } else {
             jsonstore.set(key, true)
-        } 
+        }
     },
     doSearch(search) {
         this.search = search
@@ -52,7 +52,6 @@ const Asanaban = {
             m.redraw()
         });
     }
-
 }
 
 module.exports = Asanaban

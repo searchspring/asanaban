@@ -20,6 +20,8 @@ const Asana = {
     columnTasks: {},
     projectTags: {},
     queue: [],
+    createNew: false,
+    testing: true,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -42,6 +44,10 @@ const Asana = {
     },
     async loadAllProjects(offset) {
 
+        if (this.testing && jsonstore.has('projects')) {
+            this.projects = jsonstore.get('projects')
+            return
+        }
         if (!offset) {
             offset = ''
         } else {
@@ -57,6 +63,10 @@ const Asana = {
             return a.name.localeCompare(b.name)
         })
         this.projects.unshift({ name: 'Please select', gid: '-1' })
+
+        if (this.testing) {
+            jsonstore.set('projects', this.projects)
+        }
         m.redraw(true)
     },
     setWorkspaceId(workspaceId) {
@@ -130,29 +140,36 @@ const Asana = {
         this.setCustomFieldId(customFieldId)
     },
     async loadSections() {
-        await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
-            for (let section of response.data) {
-                if (section.name.toLowerCase() === '(no section)') {
-                    continue
-                }
-                let ss = this.getSectionAndSwimlane(section)
-                if (!ss) {
-                    continue
-                }
-                if (!this.sectionMeta[ss.sectionName]) {
-                    this.sectionMeta[ss.sectionName] = { count: 0, maximum: ss.maximum }
-                }
-                if (!this.contains(this.swimlanes, ss.swimlaneName)) {
-                    this.swimlanes.push(ss.swimlaneName)
-                    this.swimlanesDisplay.push(ss.swimlaneNameDisplay)
-                    this.swimlaneColumns[ss.swimlaneName] = []
-                }
-                ss.sectionId = section.gid
-                this.swimlaneColumns[ss.swimlaneName].push(ss)
-                this.sections[`${section.gid}`] = section
-                this.sectionsOrder.push(section.gid)
+        let response = ''
+        if (this.testing && jsonstore.has('sections')) {
+            response = jsonstore.get('sections')
+        } else {
+            response = await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+                return response;
+            })
+            jsonstore.set('sections', response)
+        }
+        for (let section of response.data) {
+            if (section.name.toLowerCase() === '(no section)') {
+                continue
             }
-        })
+            let ss = this.getSectionAndSwimlane(section)
+            if (!ss) {
+                continue
+            }
+            if (!this.sectionMeta[ss.sectionName]) {
+                this.sectionMeta[ss.sectionName] = { count: 0, maximum: ss.maximum }
+            }
+            if (!this.contains(this.swimlanes, ss.swimlaneName)) {
+                this.swimlanes.push(ss.swimlaneName)
+                this.swimlanesDisplay.push(ss.swimlaneNameDisplay)
+                this.swimlaneColumns[ss.swimlaneName] = []
+            }
+            ss.sectionId = section.gid
+            this.swimlaneColumns[ss.swimlaneName].push(ss)
+            this.sections[`${section.gid}`] = section
+            this.sectionsOrder.push(section.gid)
+        }
     },
     contains(haystack, needle) {
         for (const n of haystack) {
@@ -189,66 +206,70 @@ const Asana = {
         }
     },
     async loadTasks() {
-        let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
-        await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
-            for (let task of response.data) {
-                for (let membership of task.memberships) {
-                    if (membership.project.gid === this.projectId) {
-                        let ss = this.getSectionAndSwimlane(membership.section)
-                        if (ss) {
-                            this.tasks[task.gid] = task
-                            if (!this.columnTasks[membership.section.gid]) {
-                                this.columnTasks[membership.section.gid] = []
-                            }
-                            this.columnTasks[membership.section.gid].push(task)
-                            this.tasksOrder.push(task.gid)
-                            this.sectionMeta[ss.sectionName].count++
+        let response = null
+        if (this.testing && jsonstore.has('tasks')) {
+            response = jsonstore.get('tasks')
+        } else {
+            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+            response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
+                return response
+            })
+            jsonstore.set('tasks', response)
+        }
+        for (let task of response.data) {
+            for (let membership of task.memberships) {
+                if (membership.project.gid === this.projectId) {
+                    let ss = this.getSectionAndSwimlane(membership.section)
+                    if (ss) {
+                        this.tasks[task.gid] = task
+                        if (!this.columnTasks[membership.section.gid]) {
+                            this.columnTasks[membership.section.gid] = []
                         }
+                        this.columnTasks[membership.section.gid].push(task)
+                        this.tasksOrder.push(task.gid)
+                        this.sectionMeta[ss.sectionName].count++
                     }
                 }
             }
-            for (let key in this.tasks) {
-                let task = this.tasks[key]
-                if (!task.custom_fields) {
-                    task.custom_fields = []
-                }
-                if (task.memberships.length > 1) {
-                    task.memberships = task.memberships.sort((a, b) => {
-                        if (a.project.gid === this.projectId) {
-                            return -1
-                        } else {
-                            return 1
-                        }
-                    })
-                }
-                task.custom_fields = task.custom_fields.sort((a, b) => {
-                    if (a.gid.gid === this.customFieldId) {
+        }
+        for (let key in this.tasks) {
+            let task = this.tasks[key]
+            if (!task.custom_fields) {
+                task.custom_fields = []
+            }
+            if (task.memberships.length > 1) {
+                task.memberships = task.memberships.sort((a, b) => {
+                    if (a.project.gid === this.projectId) {
                         return -1
                     } else {
                         return 1
                     }
                 })
-                if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== this.customFieldId) {
-                    task.custom_fields.splice(0, 0, {
-                        gid: this.customFieldId,
-                        text_value: ''
-                    });
+            }
+            task.custom_fields = task.custom_fields.sort((a, b) => {
+                if (a.gid.gid === this.customFieldId) {
+                    return -1
+                } else {
+                    return 1
                 }
-
-                if (task.tags) {
-                    for (let tag of task.tags) {
-                        let color = this.convertTagColor(tag.color)
-                        this.projectTags[tag.gid] = {
-                            name: tag.name,
-                            color: color,
-                            id: tag.gid
-                        }
+            })
+            if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== this.customFieldId) {
+                task.custom_fields.splice(0, 0, {
+                    gid: this.customFieldId,
+                    text_value: ''
+                });
+            }
+            if (task.tags) {
+                for (let tag of task.tags) {
+                    let color = this.convertTagColor(tag.color)
+                    this.projectTags[tag.gid] = {
+                        name: tag.name,
+                        color: color,
+                        id: tag.gid
                     }
                 }
-
-
             }
-        })
+        }
     },
     search(searchValue) {
         searchValue = searchValue.toLowerCase()
@@ -323,8 +344,8 @@ const Asana = {
         } else {
             return 'opacity:0.9; background-color:' + c
         }
-    }, 
-    taskMoved(sectionId, taskId, siblingTaskId){
+    },
+    taskMoved(sectionId, taskId, siblingTaskId) {
         this.queue.push({
             method: 'POST',
             url: `https://app.asana.com/api/1.0/sections/${sectionId}/addTask`,
@@ -342,7 +363,7 @@ const Asana = {
         let customFieldBody = {
             'data': {
                 "custom_fields": {
-    
+
                 },
             }
         }
@@ -370,8 +391,8 @@ const Asana = {
         //         setupTaskTemplateUsers()
         //     }
         // }, 3600000)
-    }, 
-    async  syncLoop() {
+    },
+    async syncLoop() {
         let didSomeSyncing = false
         let errorFree = true
         while (Asana.queue.length > 0 && errorFree) {
@@ -381,8 +402,8 @@ const Asana = {
                 message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
             }
             Status.set('yellow', `syncing ${Asana.queue.length} items${message}`)
-    
-            await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method}).then(queueItem.callback).catch((error) => {
+
+            await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method }).then(queueItem.callback).catch((error) => {
                 console.log(error)
                 let message = error.message
                 if (error.response && error.response.data && error.response.data.errors) {
