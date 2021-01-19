@@ -26,6 +26,8 @@ module.exports = {
         }
         Status.set('green', `loading... tags`)
         Asana.loadTags(!Asana.testing)
+        Status.set('green', `loading... users`)
+        Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()
         Asana.startSyncLoops()
         m.redraw()

@@ -20,6 +20,10 @@ const Asana = {
     columnTasks: {},
     projectTags: {},
     queue: [],
+    users: {},
+    usersOrder: [],
+    usersInTasks: [],
+    atValues: [],
     createNew: false,
     testing: true,
     initFromStorage() {
@@ -450,6 +454,69 @@ const Asana = {
                     Status.set('yellow', `syncing ${this.queue.length} items`)
                 }
             }
+        }
+    },
+    async loadUsers(bustCache) {
+        if (jsonstore.has('users') && !bustCache) {
+            this.processUsers(jsonstore.get('users'))
+            m.redraw()
+        } else {
+            await x.request({ url: `https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email` }).then((response) => {
+                jsonstore.set('users', response)
+                this.processUsers(response)
+            })
+        }
+    },
+    processUsers(data) {
+        let users = {}
+        let userWithSearchspring = {}
+        for (let user of data.data) {
+            if (user.name.indexOf('@') !== -1) {
+                continue
+            }
+            users[user.gid] = user
+            if (user.email.indexOf("@searchspring") !== -1) {
+                userWithSearchspring[user.name] = true
+            }
+        }
+        let dedupedUsers = []
+        for (let key in users) {
+            let user = users[key]
+            if (user.email.indexOf('@searchspring') === -1 && userWithSearchspring[user.name]) {
+                continue
+            }
+            dedupedUsers.push(user)
+        }
+        this.users = {}
+        this.usersOrder = []
+        this.atValues = []
+        for (let user of dedupedUsers) {
+            this.users[user.gid] = user
+            this.usersOrder.push(user)
+        }
+        this.usersOrder.sort((a, b) => {
+            return a.name.localeCompare(b.name)
+        })
+        for (let user of this.usersOrder) {
+            this.atValues.push({ id: user.gid, value: user.name + (user.email.indexOf('@searchspring') === -1 ? (' (' + user.email + ')') : '') })
+        }
+
+        this.usersInTasks = []
+        for (let user of this.usersOrder) {
+            this.usersInTasks.push(user)
+        }
+        let usersInTasks = {}
+        for (let key in this.tasks) {
+            let task = this.tasks[key]
+            if (task.assignee) {
+                usersInTasks[task.assignee.gid] = task.assignee
+            }
+        }
+        if (Object.keys(usersInTasks).length > 0) {
+            this.usersInTasks.unshift({ name: '----' })
+        }
+        for (let key in usersInTasks) {
+            this.usersInTasks.unshift(usersInTasks[key])
         }
     }
 }

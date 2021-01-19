@@ -1,30 +1,39 @@
 const m = require('mithril')
+const Asana = require('../model/asana')
 
 const TaskEditor = {
-    open: false,
-    new: true, 
-    sectionId: null, 
+    open: true,
+    new: true,
+    sectionId: null,
+    name: 'test',
+    date: '2021-12-12',
+    assignee: '1140147937013713', 
     view() {
         if (!this.open) return null
         return (
             <div id="taskTemplate" style="top:0;overflow-y:scroll;z-index: 9999; background-color:rgba(255,255,255,0.9)" class="absolute w-full h-full">
                 <div id="taskTemplateClick" style="width:40%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow-2xl">
                     <div>
-                        <div class="text-xs">name { this.new ? null : <a target="_blank" href="" class="float-right" id="asanaLink"><img style="height:10px" class="inline-block" src="images/asana.png" /></a> } </div>
-                        <input type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
+                        <div class="text-xs">name {this.new ? null : <a target="_blank" href="" class="float-right" id="asanaLink"><img style="height:10px" class="inline-block" src="images/asana.png" /></a>} </div>
+                        <input value={this.name} oninput={(e) => { this.name = e.target.value }} type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
                     </div>
                     <div class="flex mt-1">
                         <div class="flex-grow">
                             <div class="text-xs">assignee</div>
                             <div class="flex">
                                 <img alt="user image" id="userImage" class="h-8 w-8 rounded-full" src="images/head.png" />
-                                <select onchange="changeUser()" id="users"
-                                    class="text-xs ml-1 h-8 w-full px-2 bg-gray-300 rounded inline-block"></select>
+                                <select value={`${this.assignee}`}
+                                    class="text-xs ml-1 h-8 w-full px-2 bg-gray-300 rounded inline-block">
+                                        <option value="no value">please select</option>
+                                        { Asana.usersInTasks.map((user)=>{
+                                            return <option value={`${user.gid}`}>{user.name}</option>
+                                        })}
+                                    </select>
                             </div>
                         </div>
                         <div class="ml-2 flex-none">
                             <div class="text-xs">due date</div>
-                            <input type="date" id="date" class="mr-1 h-8 w-full px-2 text-sm bg-gray-300 rounded inline-block" />
+                            <input value={this.date} oninput={(e) => { this.date = e.target.value }} type="date" id="date" class="mr-1 h-8 w-full px-2 text-sm bg-gray-300 rounded inline-block" />
                         </div>
                     </div>
                     <div class="mt-1">
@@ -60,7 +69,7 @@ const TaskEditor = {
     },
     openNewTaskEditor(sectionId) {
         TaskEditor.open = true
-        TaskEditor.new =  true
+        TaskEditor.new = true
         TaskEditor.sectionId = sectionId
     }
 }
