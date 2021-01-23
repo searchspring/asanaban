@@ -1,5 +1,6 @@
 const m = require('mithril')
 const Asana = require('../model/asana')
+const QuillTextarea = require('./QuillTextarea')
 
 const TaskEditor = {
     open: true,
@@ -8,6 +9,8 @@ const TaskEditor = {
     name: 'test',
     date: '2021-12-12',
     assignee: '1140147937013713', 
+    description: 'TEST',
+    comment: 'my comment', 
     view() {
         if (!this.open) return null
         return (
@@ -38,7 +41,9 @@ const TaskEditor = {
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">description</div>
-                        <div id="description" class="text-xs h-32 w-full bg-gray-300 rounded inline-block"></div>
+                        <QuillTextarea id="description" value={this.description} onchange={(value)=>{
+                            TaskEditor.description = value
+                        }}/>
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">tags</div>
@@ -47,7 +52,10 @@ const TaskEditor = {
                     <div id="comments" class="mt-2"></div>
                     <div id="newCommentHolder" class="mt-2">
                         <div class="text-xs">new comment</div>
-                        <div id="addComment" class="text-xs h-32 w-full bg-gray-300 rounded inline-block"></div>
+                        
+                        <QuillTextarea id="comment" onchange={(value)=>{
+                            TaskEditor.comment = value
+                        }}/>
                     </div>
                     <div class="clearfix mt-4 flex">
                         <div>
@@ -60,7 +68,7 @@ const TaskEditor = {
                             </div>
                         </div>
                         <div>
-                            <a href="javascript:save()" id="save" class="hover:bg-gray-700 rounded-lg bg-gray-500 p-1 px-2 float-right inline-block">save</a>
+                            <a href="javascript:;" onclick={this.save} class="hover:bg-gray-700 rounded-lg bg-gray-500 p-1 px-2 float-right inline-block">save</a>
                         </div>
                     </div>
                 </div>
@@ -71,6 +79,9 @@ const TaskEditor = {
         TaskEditor.open = true
         TaskEditor.new = true
         TaskEditor.sectionId = sectionId
+    },
+    save() {
+        console.log(TaskEditor.comment, TaskEditor.description)
     }
 }
 

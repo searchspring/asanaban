@@ -181,3 +181,57 @@ input:focus, select:focus {
   .text-xxs {
     font-size: 0.7rem;
   }
+
+  .ql-editor>span {
+    display: block;
+  }
+  .ql-toolbar {
+    border-top-left-radius: .25rem;
+    border-top-right-radius: .25rem
+  }
+  
+  .ql-toolbar.ql-snow {
+    padding-top: 1px;
+    padding-bottom: 1px;
+  }
+
+.ql-mention-list-container {
+  width: 400px;
+}
+
+.ql-mention-list-item {
+  height: 1rem;
+  line-height: 1rem;
+  font-size: 0.8rem;
+  padding-top: 2px;
+}
+
+
+.comment ul, .comment ol {
+  margin-left: 2rem;
+}
+
+.comment ul li {
+  list-style-type: circle;
+}
+
+.comment ol li {
+  list-style-type: decimal;
+}
+
+.comment a {
+  color: blue;
+}
+
+
+#comments::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px;
+}
+
+#comments::-webkit-scrollbar-thumb {
+  border-radius: 5px;
+  padding: 4px;
+  background-color: rgba(0, 0, 0, .2);
+  -webkit-box-shadow: 0 0 1px rgba(255, 255, 255, .2);
+}
