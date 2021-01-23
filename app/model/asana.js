@@ -24,6 +24,7 @@ const Asana = {
     usersOrder: [],
     usersInTasks: [],
     atValues: [],
+    tags: [],
     createNew: false,
     testing: true,
     initFromStorage() {
@@ -305,48 +306,24 @@ const Asana = {
 
     async loadTags(bustCache) {
         if (jsonstore.has('tags') && !bustCache) {
-            this.processTags(jsonstore.get('tags'))
+            this.tags = jsonstore.get('tags')
         } else {
             await x.request({ url: `https://app.asana.com/api/1.0/tags?workspace=${this.workspaceId}&opt_fields=color,name` }).then((response) => {
                 jsonstore.set('tags', response.data)
-                this.processTags(response.data)
+                this.tags = response.data
             })
         }
-    },
-    processTags(data) {
-        let whitelist = []
-        for (let tag of data) {
-            whitelist.push({ value: tag.name, color: tag.color, gid: tag.gid })
-        }
-        whitelist = whitelist.sort((a, b) => {
-            return a.value.localeCompare(b.value)
-        })
-        // Asanaban.tagify = new Tagify($('tags'), {
-        //     whitelist: whitelist,
-        //     dropdown: {
-        //         enabled: 0,
-        //         closeOnSelect: true,
-        //         maxItems: 200
-        //     },
-        //     enforceWhitelist: true,
-        //     editTags: null
-        // })
-        // Asanaban.tagify.on('add', (e) => {
-        //     createTagTask(`addTag`, e.detail.data)
-        // }).on('remove', (e) => {
-        //     createTagTask(`removeTag`, e.detail.data)
-        // })
     },
     convertTagColor(c) {
         if (!c) {
             return 'background-color:gray;'
         }
         if (c.indexOf('light-') !== -1) {
-            return c.replace(/light-(.*)/g, 'opacity:0.8;background-color:$1;')
+            return c.replace(/light-(.*)/g, 'filter: brightness(120%); background-color:$1;')
         } else if (c.indexOf('dark-') !== -1) {
-            return c.replace(/dark-(.*)/g, 'background-color:$1;color:white;')
+            return c.replace(/dark-(.*)/g, 'filter: brightness(80%); background-color:$1;color:white;')
         } else {
-            return 'opacity:0.9; background-color:' + c
+            return 'background-color:' + c
         }
     },
     taskMoved(sectionId, taskId, siblingTaskId) {
@@ -374,7 +351,6 @@ const Asana = {
         if (this.customFieldId !== '-1') {
             customFieldBody.data.custom_fields[`${this.customFieldId}`] = new Date().toISOString()
             this.tasks[taskId].custom_fields[0].text_value = new Date().toISOString()
-            // setTaskColor(model.tasks[taskId])
             this.queue.push({
                 method: 'PUT',
                 url: `https://app.asana.com/api/1.0/tasks/${taskId}`,

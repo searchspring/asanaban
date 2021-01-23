@@ -23,6 +23,7 @@
     "uglify-js-brunch": "^2"
   },
   "dependencies": {
+    "@yaireo/tagify": "^3.7.3",
     "date-fns": "1.30.1",
     "dragula": "^3.7.3",
     "mithril": "^1.1.6",

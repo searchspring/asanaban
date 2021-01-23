@@ -10,9 +10,10 @@ const Status = require('../components/Status')
 const TaskEditor = require('../components/TaskEditor')
 
 module.exports = {
-    oninit() {
+    async oninit() {
         Asana.initFromStorage()
         Asanaban.initFromStorage()
+        await Asana.loadTags(!Asana.testing)
     },
     async oncreate() {
         Status.set('green', 'loading...')
@@ -24,8 +25,6 @@ module.exports = {
         if (jsonstore.has('search')) {
             Asanaban.doSearch(jsonstore.get('search'))
         }
-        Status.set('green', `loading... tags`)
-        Asana.loadTags(!Asana.testing)
         Status.set('green', `loading... users`)
         Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()

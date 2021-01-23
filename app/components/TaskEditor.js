@@ -1,16 +1,19 @@
 const m = require('mithril')
 const Asana = require('../model/asana')
 const QuillTextarea = require('./QuillTextarea')
+const Tags = require('./Tags')
 
 const TaskEditor = {
     open: true,
     new: true,
+    taskId: null,
     sectionId: null,
     name: 'test',
     date: '2021-12-12',
     assignee: '1140147937013713', 
     description: 'TEST',
     comment: 'my comment', 
+    taskQueue:[],
     view() {
         if (!this.open) return null
         return (
@@ -47,7 +50,9 @@ const TaskEditor = {
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">tags</div>
-                        <input type="text" id="tags" class="rounded h-10" />
+                        <Tags onchange={(method, tag)=>{
+                            this.addTagsQueue(method, tag)
+                        }} value={this.tags} />
                     </div>
                     <div id="comments" class="mt-2"></div>
                     <div id="newCommentHolder" class="mt-2">
@@ -79,9 +84,27 @@ const TaskEditor = {
         TaskEditor.open = true
         TaskEditor.new = true
         TaskEditor.sectionId = sectionId
+        TaskEditor.tags = []
+        TaskEditor.tagsQueue = []
     },
     save() {
-        console.log(TaskEditor.comment, TaskEditor.description)
+        console.log(TaskEditor.comment, TaskEditor.description, TaskEditor.taskQueue)
+        // TaskEditor.tagsQueue.push({
+        //     method: 'POST',
+        //     url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/` + method,
+        //     body: {
+        //         'data': {
+        //             'tag': `${tag.gid}`
+        //         }
+        //     },
+        //     message: `${method} ${tag.value}`,
+        //     callback: (response) => {
+        //         console.info(response)
+        //     }
+        // })
+    },
+    addTagsQueue(method, tag) {
+            TaskEditor.taskQueue.push({method: method, tag: tag})
     }
 }
 
