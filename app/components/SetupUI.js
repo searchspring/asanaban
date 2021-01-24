@@ -5,10 +5,10 @@ const Projects = require('../components/Projects')
 module.exports = {
     loading: false,
     async oninit() {
-         Asana.initFromStorage()
+        Asana.initFromStorage()
         if (jsonstore.has('pat') && jsonstore.has('workspaceId')) {
             this.loading = true
-            await Asana.loadAllProjects().then(()=>{
+            await Asana.loadAllProjects().then(() => {
                 this.loading = false
             })
         }
@@ -22,7 +22,7 @@ module.exports = {
                     <div class="clearfix"> Get your Asana workspace gid by clicking <a target="_blank" class="text-blue-500 underline"
                         href="https://app.asana.com/api/1.0/workspaces">here</a>
                         <input placeholder="workspace id" id="workspaceId" type="text"
-                            onchange={this.storeWorkspaceId} value={Asana.workspaceId} oninput={(e) => { Asana.storeWorkspaceId(e.target.value) }}
+                            onchange={this.storeWorkspaceId} value={Asana.workspaceId} oninput={(e) => { Asana.setWorkspaceId(e.target.value) }}
                             class="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" value={Asana.workspaceId} />
                     </div>
                     <div class="flex">
@@ -51,7 +51,7 @@ module.exports = {
                             <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-8">Step 4</div>
                             <div class="clearfix"> Enter your token here
                     <input placeholder="personal access token" id="pat" type="text"
-                                    onchange={Asana.loadAllProjects} value={Asana.pat} oninput={(e) => { Asana.storePat(e.target.value) }}
+                                    onchange={() => { Asana.loadAllProjects() }} value={Asana.pat} oninput={(e) => { Asana.setPat(e.target.value) }}
                                     class="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" />
                                 <div id="patError" class="hidden text-xs block text-red-600"></div>
                             </div>

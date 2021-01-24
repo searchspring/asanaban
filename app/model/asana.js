@@ -100,48 +100,40 @@ const Asana = {
                     'type': 'text',
                     'workspace': this.workspaceId
                 }
-            }
+            },
+            background: true
         }).then((response) => {
             console.info(response)
-        }).catch((error) => {
-            if (error.errors[0].error === 'custom_field_duplicate_name') {
-                // do nothing.
-            } else {
-                console.error(error)
-                return
-            }
+        }).catch(() => {
+            // do nothing
         })
 
-        let customFieldId = await x.request({ url: `https://app.asana.com/api/1.0/workspaces/${this.workspaceId}/custom_fields` }).then((response) => {
+        let customFieldId = await x.request({
+            url: `https://app.asana.com/api/1.0/workspaces/${this.workspaceId}/custom_fields`,
+            background: true
+        }).then((response) => {
             for (let cf of response.data) {
                 if (cf.name === 'column-change') {
                     return cf.gid
                 }
             }
             return '-1'
-        }).catch((error) => {
-            console.error(error)
-            return
+        }).catch(() => {
+            return '-1'
         })
         if (customFieldId === '-1') {
-            Status.set('green', `ensuring custom field`)
             await x.request({
                 url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
                 'data': {
                     'custom_field': `${customFieldId}`
-                }
+                },
+                background: true
             }).then((response) => {
                 console.info(response)
-            }).catch((error) => {
-                if (error.response.status === 404 || error.response.status === 403) {
-                    // do nothing.
-                } else {
-                    console.error(error)
-                    // continue as custom field is not critical, supports the transparancy.
-                }
+            }).catch(() => {
+                // do nothing.
             })
         }
-
         this.setCustomFieldId(customFieldId)
     },
     async loadSections() {
@@ -265,7 +257,7 @@ const Asana = {
             }
         }
     },
-    addProjectTag(tag){
+    addProjectTag(tag) {
         let color = this.convertTagColor(tag.color)
         this.projectTags[tag.gid] = {
             name: tag.name,
