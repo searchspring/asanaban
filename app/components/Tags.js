@@ -11,7 +11,6 @@ const Tags = {
         whitelist = whitelist.sort((a, b) => {
             return a.value.localeCompare(b.value)
         })
-        console.log(whitelist);
         let tagify = new Tagify(document.getElementById('tags'), {
             whitelist: whitelist,
             dropdown: {

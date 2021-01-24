@@ -4,16 +4,17 @@ const QuillTextarea = require('./QuillTextarea')
 const Tags = require('./Tags')
 
 const TaskEditor = {
-    open: true,
+    open: false,
     new: true,
     taskId: null,
-    sectionId: null,
+    sectionId: '1149690437186601',
     name: 'test',
     date: '2021-12-12',
-    assignee: '1140147937013713', 
+    assignee: '1140147937013713',
     description: 'TEST',
-    comment: 'my comment', 
-    taskQueue:[],
+    comment: 'my comment',
+    tagsQueue: [],
+    memberships: [],
     view() {
         if (!this.open) return null
         return (
@@ -29,38 +30,41 @@ const TaskEditor = {
                             <div class="flex">
                                 <img alt="user image" id="userImage" class="h-8 w-8 rounded-full" src="images/head.png" />
                                 <select value={`${this.assignee}`}
+                                    onchange={(e) => {
+                                        TaskEditor.assignee = e.target.value
+                                    }}
                                     class="text-xs ml-1 h-8 w-full px-2 bg-gray-300 rounded inline-block">
-                                        <option value="no value">please select</option>
-                                        { Asana.usersInTasks.map((user)=>{
-                                            return <option value={`${user.gid}`}>{user.name}</option>
-                                        })}
-                                    </select>
+                                    <option value="no value">please select</option>
+                                    {Asana.usersInTasks.map((user) => {
+                                        return <option value={`${user.gid}`}>{user.name}</option>
+                                    })}
+                                </select>
                             </div>
                         </div>
                         <div class="ml-2 flex-none">
                             <div class="text-xs">due date</div>
-                            <input value={this.date} oninput={(e) => { this.date = e.target.value }} type="date" id="date" class="mr-1 h-8 w-full px-2 text-sm bg-gray-300 rounded inline-block" />
+                            <input value={this.date} oninput={(e) => { TaskEditor.date = e.target.value }} type="date" id="date" class="mr-1 h-8 w-full px-2 text-sm bg-gray-300 rounded inline-block" />
                         </div>
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">description</div>
-                        <QuillTextarea id="description" value={this.description} onchange={(value)=>{
+                        <QuillTextarea id="description" value={this.description} onchange={(value) => {
                             TaskEditor.description = value
-                        }}/>
+                        }} />
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">tags</div>
-                        <Tags onchange={(method, tag)=>{
-                            this.addTagsQueue(method, tag)
+                        <Tags onchange={(method, tag) => {
+                            TaskEditor.addTagsQueue(method, tag)
                         }} value={this.tags} />
                     </div>
                     <div id="comments" class="mt-2"></div>
                     <div id="newCommentHolder" class="mt-2">
                         <div class="text-xs">new comment</div>
-                        
-                        <QuillTextarea id="comment" onchange={(value)=>{
+
+                        <QuillTextarea id="comment" onchange={(value) => {
                             TaskEditor.comment = value
-                        }}/>
+                        }} />
                     </div>
                     <div class="clearfix mt-4 flex">
                         <div>
@@ -86,25 +90,68 @@ const TaskEditor = {
         TaskEditor.sectionId = sectionId
         TaskEditor.tags = []
         TaskEditor.tagsQueue = []
-    },
-    save() {
-        console.log(TaskEditor.comment, TaskEditor.description, TaskEditor.taskQueue)
-        // TaskEditor.tagsQueue.push({
-        //     method: 'POST',
-        //     url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/` + method,
-        //     body: {
-        //         'data': {
-        //             'tag': `${tag.gid}`
-        //         }
-        //     },
-        //     message: `${method} ${tag.value}`,
-        //     callback: (response) => {
-        //         console.info(response)
-        //     }
-        // })
+        TaskEditor.memberships = [{
+            project: { gid: Asana.projectId },
+            section: Asana.sections[sectionId]
+        }]
     },
     addTagsQueue(method, tag) {
-            TaskEditor.taskQueue.push({method: method, tag: tag})
+        TaskEditor.tagsQueue.push({ method: method, tag: tag })
+    },
+    save() {
+        if (TaskEditor.new) {
+            let tagsToAdd = TaskEditor.debounceTags(TaskEditor.tagsQueue)
+
+            let tagList = tagsToAdd.map((tag) => {
+                Asana.addProjectTag({ name: tag.value, color: tag.color, gid: tag.gid })
+                return tag.gid
+            })
+            TaskEditor.open = false
+            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+            Asana.queue.push({
+                method: 'POST',
+                url: `https://app.asana.com/api/1.0/tasks?opt_fields=${taskFields}`,
+                body: {
+                    'data': {
+                        'assignee': TaskEditor.assignee,
+                        'name': TaskEditor.name,
+                        'html_notes': '<body>' + TaskEditor.description + '</body>',
+                        'due_on': TaskEditor.date,
+                        'projects': [`${Asana.projectId}`],
+                        'tags': tagList
+                    }
+                },
+                message: `creating new task`,
+                callback: (response) => {
+                    let rt = response.data
+                    rt.memberships = TaskEditor.memberships
+                    let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
+                    Asana.tasks[rt.gid] = rt
+                    Asana.tasksOrder.push(rt.gid)
+                    if (!Asana.columnTasks[TaskEditor.sectionId]) {
+                        Asana.columnTasks[TaskEditor.sectionId] = []
+                    }
+                    Asana.columnTasks[TaskEditor.sectionId].push(rt)
+                    Asana.sectionMeta[ss.sectionName].count++
+                    Asana.queue.push({
+                        method: 'POST',
+                        url: `https://app.asana.com/api/1.0/sections/${TaskEditor.sectionId}/addTask`,
+                        body: {
+                            "data": {
+                                "task": rt.gid
+                            }
+                        },
+                        message: `moving new task to section ${rt.gid}`,
+                        callback: () => {
+                            // do nothing
+                        }
+                    })
+                }
+            })
+        }
+    },
+    debounceTags(tags) {
+        return tags.filter(item => { return item.method === 'add' }).map((item) => { return item.tag })
     }
 }
 

@@ -22,7 +22,7 @@ module.exports = {
                         <span
                             onclick={(e) => {
                                 e.stopPropagation(); e.preventDefault()
-                                openNewTaskEditor(c.sectionId)
+                                openNewTaskEditor(id)
                             }}
                             data-section-id="${id}" class="flex-shrink text-gray-400 hover:underline hover:text-white inline-block ml-1 mr-1 pt-1 text-xs text-left">add task</span>
                         <span class="flex-grow whitespace-no-wrap text-center">{c.sectionNameDisplay}</span>

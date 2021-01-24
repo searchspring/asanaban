@@ -26,7 +26,7 @@ const Asana = {
     atValues: [],
     tags: [],
     createNew: false,
-    testing: true,
+    testing: false,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -211,16 +211,10 @@ const Asana = {
         }
     },
     async loadTasks() {
-        let response = null
-        if (this.testing && jsonstore.has('tasks')) {
-            response = jsonstore.get('tasks')
-        } else {
-            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
-            response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
-                return response
-            })
-            jsonstore.set('tasks', response)
-        }
+        let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+        let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
+            return response
+        })
         for (let task of response.data) {
             for (let membership of task.memberships) {
                 if (membership.project.gid === this.projectId) {
@@ -266,14 +260,17 @@ const Asana = {
             }
             if (task.tags) {
                 for (let tag of task.tags) {
-                    let color = this.convertTagColor(tag.color)
-                    this.projectTags[tag.gid] = {
-                        name: tag.name,
-                        color: color,
-                        id: tag.gid
-                    }
+                    this.addProjectTag(tag)
                 }
             }
+        }
+    },
+    addProjectTag(tag){
+        let color = this.convertTagColor(tag.color)
+        this.projectTags[tag.gid] = {
+            name: tag.name,
+            color: color,
+            id: tag.gid
         }
     },
     search(searchValue) {
