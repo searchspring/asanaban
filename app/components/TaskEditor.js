@@ -91,8 +91,8 @@ const TaskEditor = {
                         </div>
                         <div class="m-auto">
                             <div id="editButtons">
-                                <a href="javascript:deleteTask()" id="delete" class="hover:underline text-sm text-red-600 border border-gray-300 rounded-full p-1 px-2 inline-block">delete</a>
-                                <a href="javascript:complete()" id="complete" class="ml-6 hover:underline text-sm text-gray-600 border border-gray-300 rounded-full p-1 px-2 inline-block">complete</a>
+                                <a href="javascript:;" onclick={TaskEditor.deleteTask} class="hover:underline text-sm text-red-600 border border-gray-300 rounded-full p-1 px-2 inline-block">delete</a>
+                                <a href="javascript:;" onclick={TaskEditor.completeTask} class="ml-6 hover:underline text-sm text-gray-600 border border-gray-300 rounded-full p-1 px-2 inline-block">complete</a>
                             </div>
                         </div>
                         <div>
@@ -124,7 +124,7 @@ const TaskEditor = {
         TaskEditor.assignee = task.assignee ? task.assignee.gid : null
         TaskEditor.name = task.name
         TaskEditor.date = task.due_on
-        TaskEditor.description = task.html_notes
+        TaskEditor.description = task.html_notes === '<body></body>' ? '' : task.html_notes
         TaskEditor.tags = task.tags
         TaskEditor.tagsQueue = []
         TaskEditor.comment = ''
@@ -148,8 +148,10 @@ const TaskEditor = {
         }
     },
     saveEdit() {
+        TaskEditor.debounceTags(TaskEditor.tagsQueue).map((tag) => {
+            Asana.addProjectTag({ name: tag.value, color: tag.color, gid: tag.gid })
+        })
         for (let tag of TaskEditor.tagsQueue) {
-            console.log(tag);
             Asana.queue.push({
                 method: 'POST',
                 url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/` + tag.method + 'Tag',
@@ -164,7 +166,6 @@ const TaskEditor = {
                 }
             })
         }
-        console.log(TaskEditor.comment);
         let rawComment = TaskEditor.comment
         if (rawComment.replace(/<br>/g, '').trim() !== '') {
             Asana.queue.push({
@@ -186,7 +187,7 @@ const TaskEditor = {
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}?opt_fields=${taskFields}`,
             body: {
                 'data': {
-                    'assignee': TaskEditor.assignee,
+                    'assignee': TaskEditor.assignee || null,
                     'name': TaskEditor.name,
                     'html_notes': '<body>' + TaskEditor.description + '</body>',
                     'due_on': TaskEditor.date,
@@ -194,7 +195,6 @@ const TaskEditor = {
             },
             message: `updating ${TaskEditor.taskId}`,
             callback: (response) => {
-                console.log(response.data)
                 Object.assign(TaskEditor.task, response.data)
                 Asana.tasks[response.data.gid] = TaskEditor.task
             }
@@ -214,7 +214,7 @@ const TaskEditor = {
             url: `https://app.asana.com/api/1.0/tasks?opt_fields=${taskFields}`,
             body: {
                 'data': {
-                    'assignee': TaskEditor.assignee,
+                    'assignee': TaskEditor.assignee || null,
                     'name': TaskEditor.name,
                     'html_notes': '<body>' + TaskEditor.description + '</body>',
                     'due_on': TaskEditor.date,
@@ -254,6 +254,46 @@ const TaskEditor = {
     },
     debounceTags(tags) {
         return tags.filter(item => { return item.method === 'add' }).map((item) => { return item.tag })
+    },
+    deleteTask() {
+        let confirmed = confirm('Are you sure? There is no undo!')
+        if (confirmed) {
+            Asana.queue.push({
+                method: 'DELETE',
+                url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}`,
+                message: `deleting ${TaskEditor.taskId}`,
+                callback: () => {
+                    // do nothing
+                }
+            })
+            TaskEditor.removeFromView()
+            TaskEditor.open = false
+        }
+    },
+    completeTask(){
+        Asana.queue.push({
+            method: 'PUT',
+            url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}`,
+            body: {
+                'data': {
+                    'completed': true
+                }
+            },
+            message: `completing ${TaskEditor.taskId}`,
+            callback: (response) => {
+                // do nothing
+            }
+        })
+
+        TaskEditor.removeFromView()
+        TaskEditor.open = false
+    }, 
+    removeFromView(){
+        let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
+        delete Asana.tasks[TaskEditor.taskId]
+        Asana.tasksOrder = Asana.tasksOrder.filter(e => e.gid !== TaskEditor.taskId)
+        Asana.sectionMeta[ss.sectionName].count--
+        Asana.columnTasks[TaskEditor.sectionId] =  Asana.columnTasks[TaskEditor.sectionId].filter(e => e.gid !== TaskEditor.taskId)
     }
 }
 
