@@ -69,10 +69,10 @@ input:focus, select:focus {
   padding-top: 30px;
   padding-bottom: 30px;
   width: 12px;
-  padding-left: 0;
+  padding-left: 16px;
   padding-right: 0;
   font-size: 12px;
-  line-height: 12px;
+  line-height: normal;
   border-radius: 1rem;
 }
 

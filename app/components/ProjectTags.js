@@ -3,7 +3,7 @@ const Asana = require('../model/asana');
 const Asanaban = require('../model/asanaban');
 module.exports = {
     view(vnode) {
-        return (<div class="flex">
+        return (<div class="flex" style="bottom:0" class="fixed flex w-full opacity-90">
             { Object.values(Asana.projectTags).map((tag) => {
                 let style = `${tag.color}`
                 return <a href="javascript:;" style={style}
