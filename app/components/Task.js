@@ -7,7 +7,7 @@ module.exports = {
         let task = vnode.attrs.task
         let sectionId = vnode.attrs.task.memberships[0].section.gid
         let hasImage = task.assignee && task.assignee.photo
-        let imageClasses = `${hasImage ? '' : 'hidden'} h-6 w-6 rounded-full inline-block mr-2`
+        let imageClasses = `${hasImage ? '' : 'hidden'} h-6 w-6 rounded-lg inline-block mr-2`
         let styles = this.getTaskStyles(task)
         let wrapperStyles = `${task.hidden ? 'hidden' : ''} border-1`
         return <div style="width:50%; max-width:15rem" onclick={() => { openEditTaskEditor(task, sectionId) }} id={`task${task.gid}`} class={wrapperStyles}>
@@ -19,8 +19,8 @@ module.exports = {
                 </div>
                 <div class="flex mt-1">
                     {task.tags.map((tag, index) => {
-                        let style = `${Asana.convertTagColor(tag.color)};margin-right:1px;overflow-hidden;max-width:2rem;`
-                        return <div title={tag.name} style={style} class="border border-1 border-white rounded-full flex-1 mb-1">{tag.name.substring(0, 1).toLowerCase()}</div>
+                        let style = `${Asana.convertTagColor(tag.color)};margin-right:1px;overflow-hidden;max-width:1.3rem;`
+                        return <div title={tag.name} style={style} class="border border-1 text-center border-white rounded-full flex-1 mb-1">{tag.name.substring(0, 1).toLowerCase()}</div>
                     })}
                 </div>
             </div>
@@ -41,7 +41,7 @@ module.exports = {
             }
         }
         return {
-            taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-center text-xxs`,
+            taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-xxs`,
             taskStyle: `overflow:hidden; opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
         }
     }, getCustomFieldDate(task) {
