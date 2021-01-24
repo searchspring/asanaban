@@ -1,5 +1,6 @@
 const m = require('mithril')
 const Asana = require('../model/asana')
+const x = require('../utils/xhr-with-auth')(m)
 const QuillTextarea = require('./QuillTextarea')
 const Tags = require('./Tags')
 const taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
@@ -8,12 +9,13 @@ const TaskEditor = {
     new: true,
     taskId: null,
     task: null,
-    sectionId: '1149690437186601',
-    name: 'test',
-    date: '2021-12-12',
-    assignee: '1140147937013713',
-    description: 'TEST',
-    comment: 'my comment',
+    sectionId: '',
+    name: '',
+    date: '',
+    assignee: '',
+    description: '',
+    comment: '',
+    comments: [],
     tagsQueue: [],
     tags: [],
     memberships: [],
@@ -62,11 +64,22 @@ const TaskEditor = {
                     </div>
                     {!TaskEditor.new ?
                         <div>
-                            <div id="comments" class="mt-2"></div>
+                            <div id="comments" class="mt-2">
+                                {TaskEditor.comments.map((story) => {
+                                    return <div>
+                                        <div class="clear-fix">
+                                            <span class="inline-block float-right p-1 px-2 text-gray-600 text-xs">{story.created_at.substring(0, 10)}</span>
+                                        </div>
+                                        <div class="comment w-full bg-gray-200 mb-1 p-1 px-2 rounded-lg text-xs">
+                                            {story.created_by.name} says: {m.trust(story.html_text)}
+                                        </div>
+                                    </div>
+                                })}
+                            </div>
                             <div id="newCommentHolder" class="mt-2">
                                 <div class="text-xs">new comment</div>
 
-                                <QuillTextarea id="comment" onchange={(value) => {
+                                <QuillTextarea value={TaskEditor.comment} id="comment" onchange={(value) => {
                                     TaskEditor.comment = value
                                 }} />
                             </div>
@@ -96,6 +109,7 @@ const TaskEditor = {
         TaskEditor.sectionId = sectionId
         TaskEditor.tags = []
         TaskEditor.tagsQueue = []
+        TaskEditor.comment = ''
         TaskEditor.memberships = [{
             project: { gid: Asana.projectId },
             section: Asana.sections[sectionId]
@@ -109,10 +123,19 @@ const TaskEditor = {
         TaskEditor.sectionId = sectionId
         TaskEditor.assignee = task.assignee.gid
         TaskEditor.name = task.name
+        TaskEditor.date = task.due_on
         TaskEditor.description = task.html_notes
         TaskEditor.tags = task.tags
         TaskEditor.tagsQueue = []
+        TaskEditor.comment = ''
         TaskEditor.memberships = task.memberships
+
+        let fields = `html_text,created_by.name,resource_subtype,type,created_at`
+        x.request({ url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/stories?opt_fields=${fields}` }).then((response) => {
+            TaskEditor.comments = response.data.filter((story) => {
+                return story['resource_subtype'] === 'comment_added'
+            })
+        })
     },
     addTagsQueue(method, tag) {
         TaskEditor.tagsQueue.push({ method: method, tag: tag })
@@ -125,6 +148,39 @@ const TaskEditor = {
         }
     },
     saveEdit() {
+        for (let tag of TaskEditor.tagsQueue) {
+            console.log(tag);
+            Asana.queue.push({
+                method: 'POST',
+                url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/` + tag.method + 'Tag',
+                body: {
+                    'data': {
+                        'tag': `${tag.tag.gid}`
+                    }
+                },
+                message: `${tag.method} ${tag.tag.value}`,
+                callback: (response) => {
+                    console.info(response)
+                }
+            })
+        }
+        console.log(TaskEditor.comment);
+        let rawComment = TaskEditor.comment
+        if (rawComment.replace(/<br>/g, '').trim() !== '') {
+            Asana.queue.push({
+                method: `POST`,
+                url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/stories`,
+                body: {
+                    'data': {
+                        "html_text": '<body>' + rawComment + '</body>'
+                    }
+                },
+                message: `adding comment ${TaskEditor.taskId}`,
+                callback: (response) => {
+                    console.info(response)
+                }
+            })
+        }
         Asana.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}?opt_fields=${taskFields}`,
@@ -145,38 +201,6 @@ const TaskEditor = {
         })
 
         TaskEditor.open = false
-        // for (let job of tagsQueue) {
-        //     queue.push(job)
-        // }
-        // let currentlyEditingTask = TaskEditor.task
-        // let hasPhoto = currentlyEditingTask.assignee && currentlyEditingTask.assignee.photo
-        // let photoEl = $(`photo${currentlyEditingTask.gid}`)
-        // if (!hasPhoto) {
-        //     photoEl.classList.add('hidden')
-        //     photoEl.src = 'images/blank.png'
-        // } else {
-        //     photoEl.classList.remove('hidden')
-        //     photoEl.src = currentlyEditingTask.assignee.photo['image_60x60']
-        // }
-        // setTaskColor(currentlyEditingTask)
-        // $(`taskName${currentlyEditingTask.gid}`).innerHTML = currentlyEditingTask.name
-        // let rawComment = convertToAsana(quillComment.root.innerHTML)
-        // if (rawComment.replace(/<br>/g, '').trim() !== '') {
-        //     queue.push({
-        //         httpFunc: axios.post,
-        //         url: `https://app.asana.com/api/1.0/tasks/${currentlyEditingTask.gid}/stories`,
-        //         body: {
-        //             'data': {
-        //                 "html_text": '<body>' + rawComment + '</body>'
-        //             }
-        //         },
-        //         message: `adding comment ${currentlyEditingTask.gid}`,
-        //         callback: (response) => {
-        //             console.info(response)
-        //         }
-        //     })
-        // }
-        // model.tasks[currentlyEditingTask.gid] = currentlyEditingTask
     },
     saveNew() {
         let tagsToAdd = TaskEditor.debounceTags(TaskEditor.tagsQueue)

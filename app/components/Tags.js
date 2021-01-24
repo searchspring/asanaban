@@ -22,12 +22,12 @@ const Tags = {
             enforceWhitelist: true,
             editTags: null
         })
+        tagify.addTags(vnode.attrs.tags.map(tag => { return { value: tag.name, gid: tag.gid, color: tag.color } }))
         tagify.on('add', (e) => {
             vnode.attrs.onchange(`add`, e.detail.data)
         }).on('remove', (e) => {
             vnode.attrs.onchange(`remove`, e.detail.data)
         })
-        tagify.addTags(vnode.attrs.tags.map(tag => { return { value: tag.name, gid: tag.gid, color: tag.color } }))
     },
     view(vnode) {
         return (
