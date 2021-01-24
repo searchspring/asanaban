@@ -1,14 +1,14 @@
 {
-  "name": "nerdherder.io",
-  "description": "nerdherder.io application",
+  "name": "asanaban",
+  "description": "Kanban using Asana as the db",
   "private": true,
   "author": "codeallthethingz",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "repository": "",
   "scripts": {
     "test": "jest",
     "start": "brunch watch --server",
-    "now-build": "brunch build"
+    "now-build": "brunch build --production"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",
@@ -20,7 +20,7 @@
     "clean-css-brunch": "^2",
     "postcss-brunch": "^2",
     "tailwindcss": "^1.6.0",
-    "uglify-js-brunch": "^2"
+    "terser-brunch": "^4.0.0"
   },
   "dependencies": {
     "@yaireo/tagify": "^3.7.3",
