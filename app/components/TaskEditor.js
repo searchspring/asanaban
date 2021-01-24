@@ -110,6 +110,7 @@ const TaskEditor = {
         TaskEditor.tags = []
         TaskEditor.tagsQueue = []
         TaskEditor.comment = ''
+        TaskEditor.name = ''
         TaskEditor.memberships = [{
             project: { gid: Asana.projectId },
             section: Asana.sections[sectionId]
