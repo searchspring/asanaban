@@ -27,7 +27,7 @@ let quillConfig = {
         mention: {
             allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
             mentionDenotationChars: ["@"],
-            source: function (searchTerm, renderList) {
+            source: (searchTerm, renderList) => {
                 let values = Asana.atValues;
                 if (searchTerm.length === 0) {
                     renderList(values, searchTerm);
@@ -50,7 +50,7 @@ const QuillTextarea = {
     oncreate(vnode) {
         let quill = new Quill(`#${vnode.attrs.id}`, quillConfig);
         quill.root.innerHTML = vnode.attrs.value || ''
-        quill.on('text-change', function () {
+        quill.on('text-change', () => {
             vnode.attrs.onchange(QuillTextarea.convertToAsana(quill.root.innerHTML))
         })
     },

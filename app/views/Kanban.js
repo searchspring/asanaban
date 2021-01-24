@@ -31,10 +31,10 @@ module.exports = {
         Asana.startSyncLoops()
         m.redraw()
     },
-    view: function () {
+    view() {
         return (
             <div>
-                <TaskEditor/>
+                <TaskEditor />
                 <div class="p-1 flex title-bar mb-1 rounded-b shadow">
                     <div>
                         <img alt="logo" class="h-8 inline-block" style="filter:grayscale(100%) brightness(40%)" src="images/icon.png" />

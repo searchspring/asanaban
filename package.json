@@ -8,7 +8,7 @@
   "scripts": {
     "test": "jest",
     "start": "brunch watch --server",
-    "now-build": "echo brunch build --production"
+    "now-build": "brunch build"
   },
   "devDependencies": {
     "@babel/polyfill": "^7.12.1",

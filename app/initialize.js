@@ -6,9 +6,9 @@ const Kanban = require('./views/Kanban')
 const Setup = require('./views/Setup')
 const Asana = require('./model/asana')
 
-const Auth = function (view) {
+const Auth = (view) => {
   return {
-    onmatch: function () {
+    onmatch() {
       if (!Asana.isSetup()) {
         m.route.set('/setup')
       }

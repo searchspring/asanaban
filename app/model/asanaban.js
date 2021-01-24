@@ -35,7 +35,7 @@ const Asanaban = {
         for (let sectionId of Asana.sectionsOrder) {
             drags.push(document.getElementById(`section${sectionId}`))
         }
-        dragula(drags).on('drop', function (el, target, source, sibling) {
+        dragula(drags).on('drop', (el, target, source, sibling) => {
             let taskId = el.getAttribute('id').substring(4)
             let siblingTaskId = sibling === null ? null : sibling.getAttribute('id').substring(4)
             let targetSectionId = target.getAttribute('id').substring(7)
