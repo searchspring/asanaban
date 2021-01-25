@@ -2,21 +2,15 @@
 Kanban on Asana
 
 ## Requirements
-- Node.
-- Vercel - `npm -g i vercel`
-- Vercel account - signup at vercel.com
-- Asana account - signup at asana.com
+- Node
+- Brunch - `npm i -g brunch`
 
 ## Running locally
 
-You have to associated with a vercel project
+Install the bits
 
-`vercel`
+`npm i`
 
-The run dev mode
+Run the server
 
-`vercel dev`
-
-## Deployment
-
-run `./deployProduction.sh`
+`npm start`
