@@ -23,7 +23,7 @@ module.exports = {
                         href="https://app.asana.com/api/1.0/workspaces">here</a>
                         <input placeholder="workspace id" id="workspaceId" type="text"
                             onchange={this.storeWorkspaceId} value={Asana.workspaceId} oninput={(e) => { Asana.setWorkspaceId(e.target.value) }}
-                            class="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" value={Asana.workspaceId} />
+                            class="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" />
                     </div>
                     <div class="flex">
                         <div class="flex-1">
