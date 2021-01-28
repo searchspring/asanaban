@@ -15,6 +15,7 @@ const Asanaban = {
         this.backgroundImage = backgroundImage
         document.body.style.backgroundImage = `url('${this.backgroundImage}')`
         document.body.style.backgroundSize = 'cover'
+        document.body.style.backgroundAttachment = 'fixed'
     },
     toggleColumn(columnName) {
         let key = `collapsed-${columnName}`
