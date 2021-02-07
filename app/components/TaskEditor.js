@@ -25,7 +25,7 @@ const TaskEditor = {
             <div id="taskTemplate" style="top:0;overflow-y:scroll;z-index: 9999; background-color:rgba(255,255,255,0.9)" class="absolute w-full h-full">
                 <div id="taskTemplateClick" style="width:40%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow-2xl">
                     <div>
-                        <div class="text-xs">name {this.new ? null : <a target="_blank" href={`https://app.asana.com/0/${Asana.projectId}/${this.taskId}`} class="float-right" id="asanaLink"><img style="height:10px" class="inline-block" src="images/asana.png" /></a>} </div>
+                        <div class="text-xs">name {this.new ? null : <a target="_blank" rel="noopener" href={`https://app.asana.com/0/${Asana.projectId}/${this.taskId}`} class="float-right" id="asanaLink"><img style="height:10px" class="inline-block" src="images/asana.png" /></a>} </div>
                         <input value={this.name} oninput={(e) => { TaskEditor.name = e.target.value }} type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
                     </div>
                     <div class="flex mt-1">
