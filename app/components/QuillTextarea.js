@@ -1,3 +1,4 @@
+const { render } = require('mithril')
 const m = require('mithril')
 const Quill = require('quill')
 const Asana = require('../model/asana')
@@ -25,20 +26,29 @@ let quillConfig = {
             ['link'],
         ],
         mention: {
+            defaultMenuOrientation: 'bottom',
             allowedChars: /^[A-Za-z\sÅÄÖåäö]*$/,
-            mentionDenotationChars: ["@"],
-            source: (searchTerm, renderList) => {
-                let values = Asana.atValues;
-                if (searchTerm.length === 0) {
-                    renderList(values, searchTerm);
+            mentionDenotationChars: ["@", "#"],
+            renderLoading: function (searchTerm, renderList, char) {
+                return '<div class="p-4">loading...</div>'
+            },
+            source: async (searchTerm, renderList, char) => {
+                if (char === '#') {
+                    let matches = await Asana.searchAsana(searchTerm.length === 0 ? '' : searchTerm)
+                    renderList(matches, searchTerm)
                 } else {
-                    const matches = [];
-                    for (let i = 0; i < values.length; i++) {
-                        if (~values[i].value.toLowerCase().indexOf(searchTerm.toLowerCase())) {
-                            matches.push(values[i]);
+                    let values = Asana.atValues;
+                    if (searchTerm.length === 0) {
+                        renderList(values, searchTerm);
+                    } else {
+                        const matches = [];
+                        for (let i = 0; i < values.length; i++) {
+                            if (~values[i].value.toLowerCase().indexOf(searchTerm.toLowerCase()) && matches.length < 5) {
+                                matches.push(values[i]);
+                            }
                         }
+                        renderList(matches, searchTerm);
                     }
-                    renderList(matches, searchTerm);
                 }
             }
         }
@@ -60,7 +70,7 @@ const QuillTextarea = {
         )
     },
     convertToAsana(text) {
-        let regMention = /<span class="mention" data-index="[0-9]*" data-denotation-char="@" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">@<\/span>([^<]+)<\/span>\s*<\/span>/g
+        let regMention = /<span class="mention" data-index="[0-9]*" data-denotation-char="[@#]" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">[@#]<\/span>([^<]+)<\/span>\s*<\/span>/g
         return text.replace(regMention, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>')
             .replace(/<\/*span>/g, '')
             .replace(/<br>/g, '\n')

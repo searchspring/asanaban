@@ -38,7 +38,7 @@ const TaskEditor = {
                                         TaskEditor.assignee = e.target.value
                                     }}
                                     class="text-xs ml-1 h-8 w-full px-2 bg-gray-300 rounded inline-block">
-                                    <option value="no value">please select</option>
+                                    <option value="">Unassigned</option>
                                     {Asana.usersInTasks.map((user) => {
                                         return <option value={`${user.gid}`}>{user.name}</option>
                                     })}
@@ -55,6 +55,7 @@ const TaskEditor = {
                         <QuillTextarea id="description" value={this.description} onchange={(value) => {
                             TaskEditor.description = value
                         }} />
+                        <div class="text-right text-xxs text-gray-400">use @ to mention people, use # to search for tasks</div>
                     </div>
                     <div class="mt-1">
                         <div class="text-xs">tags</div>
@@ -123,7 +124,7 @@ const TaskEditor = {
         TaskEditor.taskId = task.gid
         TaskEditor.task = task
         TaskEditor.sectionId = sectionId
-        TaskEditor.assignee = task.assignee ? task.assignee.gid : null
+        TaskEditor.assignee = task.assignee ? task.assignee.gid : ''
         TaskEditor.name = task.name
         TaskEditor.date = task.due_on
         TaskEditor.description = task.html_notes === '<body></body>' ? '' : task.html_notes
