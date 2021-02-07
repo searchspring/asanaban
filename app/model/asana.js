@@ -27,6 +27,7 @@ const Asana = {
     tags: [],
     createNew: false,
     testing: false,
+    searchXhr: null,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -292,7 +293,20 @@ const Asana = {
             }
         }
     },
-
+    async searchAsana(searchValue) {
+        if (Asana.searchXhr !== null) {
+            Asana.searchXhr.abort()
+        }
+        Asana.searchXhr = null
+        return await x.request({
+            config: function (xhr) { Asana.searchXhr = xhr },
+            url: `https://app.asana.com/api/1.0/workspaces/${this.workspaceId}/typeahead?resource_type=task&query=${encodeURIComponent(searchValue)}&count=5&opt_fields=completed,name`
+        }).then((response) => {
+            return response.data.map((item) => {
+                return { id: item.gid, value: (item.completed ? '✓ ' : '') + item.name }
+            })
+        })
+    },
     async loadTags(bustCache) {
         if (jsonstore.has('tags') && !bustCache) {
             this.tags = jsonstore.get('tags')
