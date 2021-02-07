@@ -26,7 +26,9 @@ test('get defaults', () => {
 
 test('edges', () => {
     localStorage.setItem('key', 'value')
-    expect(jsonstore.get('key', 'default')).toBe('default')
-    expect(jsonstore.has('key')).toBe(false)
+    expect(jsonstore.get('key', 'default')).toBe('value')
+    expect(localStorage.getItem('key')).toBe('"value"')
+    expect(jsonstore.has('key')).toBe(true)
+    localStorage.removeItem('key')
     expect(() => { jsonstore.get('key', null) }).toThrow('no entry for key, and no default given')
 })

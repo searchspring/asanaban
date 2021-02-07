@@ -8,7 +8,9 @@ module.exports = {
                 return JSON.parse(localStorage.getItem(key))
             } catch (exception) {
                 console.warn(exception)
-                // do nothing, bad json value in storage.
+                let value = localStorage.getItem(key)
+                this.set(key, value)
+                return value
             }
         }
         if (defaultValue) {
@@ -18,16 +20,7 @@ module.exports = {
         }
     },
     has(key) {
-
-        if (localStorage.getItem(key) !== null) {
-            try {
-                JSON.parse(localStorage.getItem(key))
-                return true
-            } catch (exception) {
-                return false
-            }
-        }
-        return false
+        return localStorage.getItem(key) !== null
     },
     remove(key) {
         localStorage.removeItem(key)
