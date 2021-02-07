@@ -6,7 +6,7 @@
   "version": "0.0.2",
   "repository": "",
   "scripts": {
-    "test": "jest",
+    "test": "node node_modules/jest/bin/jest.js",
     "start": "brunch watch --server",
     "now-build": "brunch build --production"
   },
@@ -21,6 +21,7 @@
     "babel-preset-latest": "^6",
     "brunch": "^2",
     "clean-css-brunch": "^2",
+    "jest": "^26.6.3",
     "postcss-brunch": "^2",
     "tailwindcss": "^1.6.0",
     "terser-brunch": "^4.0.0"
