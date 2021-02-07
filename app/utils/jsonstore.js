@@ -4,7 +4,12 @@ module.exports = {
     },
     get(key, defaultValue) {
         if (this.has(key)) {
-            return JSON.parse(localStorage.getItem(key))
+            try {
+                return JSON.parse(localStorage.getItem(key))
+            } catch (exception) {
+                console.warn(exception)
+                // do nothing, bad json value in storage.
+            }
         }
         if (defaultValue) {
             return defaultValue
@@ -13,12 +18,21 @@ module.exports = {
         }
     },
     has(key) {
-        return localStorage.getItem(key) !== null
+
+        if (localStorage.getItem(key) !== null) {
+            try {
+                JSON.parse(localStorage.getItem(key))
+                return true
+            } catch (exception) {
+                return false
+            }
+        }
+        return false
     },
-    remove(key){
+    remove(key) {
         localStorage.removeItem(key)
     },
-    clear(){
+    clear() {
         localStorage.clear()
     }
 }

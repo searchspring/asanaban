@@ -19,11 +19,14 @@ test('set/get', () => {
 
 test('get defaults', () => {
     expect(jsonstore.get('bob', 'roger')).toBe('roger')
-    expect(() => {
-        jsonstore.get('bob', null)
-    }).toThrow('no entry for bob, and no default given')
+    expect(() => { jsonstore.get('bob', null) }).toThrow('no entry for bob, and no default given')
     var undef
-    expect(() => {
-        jsonstore.get('bob', undef)
-    }).toThrow('no entry for bob, and no default given')
+    expect(() => { jsonstore.get('bob', undef) }).toThrow('no entry for bob, and no default given')
+})
+
+test('edges', () => {
+    localStorage.setItem('key', 'value')
+    expect(jsonstore.get('key', 'default')).toBe('default')
+    expect(jsonstore.has('key')).toBe(false)
+    expect(() => { jsonstore.get('key', null) }).toThrow('no entry for key, and no default given')
 })
