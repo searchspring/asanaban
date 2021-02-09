@@ -73,13 +73,12 @@ module.exports = {
                         happens when you click go?</span>
                         <div id="explain" class="text-gray-600 text-xs">
                             <ul>
-                                <li>1. The system checks if you have a custom field called "column-change" and creates
-                                it if it
-                                doesn't exist.</li>
-                                <li>2. The custom field "column-change" is added to the selected project.</li>
-                                <li>3. The project is loaded in to the Kanban view and no other changes happen until you
-                                start
-                                editing tasks. </li>
+                                <li>
+                                    1. The system checks if you have a custom fields called "column-change" or "color" and creates
+                                    them if they don't exist - this will only happen for the paid version of Asana.  Then the custom
+                                    fields "column-change" and "colorz' are added to the selected project.
+                                </li>
+                                <li>2. The project is loaded in to the Kanban view and no other changes happen until you start editing tasks.</li>
                             </ul>
                         </div>
                     </div>

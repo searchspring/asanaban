@@ -2,12 +2,14 @@ const m = require('mithril')
 const Status = require('../components/Status')
 const jsonstore = require('../utils/jsonstore')
 const x = require('../utils/xhr-with-auth')(m)
-
+const columnChangeColumnName = 'column-change'
+const columnColorName = 'color'
 const Asana = {
     workspaceId: '',
     pat: '',
     projects: [],
     customFieldId: '',
+    colorFieldId: '',
     projectId: '',
     sectionMeta: {},
     sections: {},
@@ -38,6 +40,9 @@ const Asana = {
         if (jsonstore.has('customFieldId')) {
             this.customFieldId = jsonstore.get('customFieldId')
         }
+        if (jsonstore.has('colorFieldId')) {
+            this.colorFieldId = jsonstore.get('colorFieldId')
+        }
         if (jsonstore.has('projectId')) {
             this.projectId = jsonstore.get('projectId')
         }
@@ -46,7 +51,8 @@ const Asana = {
         return jsonstore.has('pat') &&
             jsonstore.has('workspaceId') &&
             jsonstore.has('projectId') &&
-            jsonstore.has('customFieldId')
+            jsonstore.has('customFieldId') &&
+            jsonstore.has('colorFieldId')
     },
     async loadAllProjects(offset) {
 
@@ -87,55 +93,55 @@ const Asana = {
         this.projectId = projectId
         jsonstore.set('projectId', projectId)
     },
-    setCustomFieldId(customFieldId) {
+    setChangeFieldId(customFieldId) {
         this.customFieldId = customFieldId
         jsonstore.set('customFieldId', customFieldId)
     },
-    async setupProject() {
-        await x.request({
+    setColorFieldId(customFieldId) {
+        this.colorFieldId = customFieldId
+        jsonstore.set('colorFieldId', customFieldId)
+    },
+    async createCustomField(name) {
+        let value = await x.request({
             url: `https://app.asana.com/api/1.0/custom_fields`,
             method: 'POST',
             data: {
                 'data': {
-                    'name': 'column-change',
+                    'name': name,
                     'type': 'text',
                     'workspace': this.workspaceId
                 }
             },
             background: true
         }).then((response) => {
-            console.info(response)
+            return response.data.gid
         }).catch(() => {
-            // do nothing
+            return 'already created'
         })
-
-        let customFieldId = await x.request({
-            url: `https://app.asana.com/api/1.0/workspaces/${this.workspaceId}/custom_fields`,
-            background: true
-        }).then((response) => {
-            for (let cf of response.data) {
-                if (cf.name === 'column-change') {
-                    return cf.gid
-                }
-            }
-            return '-1'
-        }).catch(() => {
-            return '-1'
-        })
-        if (customFieldId === '-1') {
-            await x.request({
-                url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
-                'data': {
-                    'custom_field': `${customFieldId}`
-                },
+        if (value === 'already created') {
+            value = await x.request({
+                url: `https://app.asana.com/api/1.0/workspaces/${this.workspaceId}/custom_fields`,
                 background: true
             }).then((response) => {
-                console.info(response)
+                for (let cf of response.data) {
+                    if (cf.name === name) {
+                        return cf.gid
+                    }
+                }
+                return '-1'
             }).catch(() => {
-                // do nothing.
+                return '-1'
             })
         }
-        this.setCustomFieldId(customFieldId)
+        // Add to project
+        
+        return value
+    },
+    async setupProject() {
+        let changeColumnId = await this.createCustomField(columnChangeColumnName)
+        let colorColumnId = await this.createCustomField(columnColorName)
+        this.setChangeFieldId(changeColumnId)
+        this.setColorFieldId(colorColumnId)
     },
     async loadSections() {
         let response = ''
@@ -251,6 +257,12 @@ const Asana = {
                     text_value: ''
                 });
             }
+            if (task.custom_fields.length === 1 || task.custom_fields[1].gid !== this.colorFieldId) {
+                task.custom_fields.splice(1, 0, {
+                    gid: this.colorFieldId,
+                    text_value: ''
+                });
+            }
             if (task.tags) {
                 for (let tag of task.tags) {
                     this.addProjectTag(tag)
@@ -344,6 +356,11 @@ const Asana = {
                 console.info(response)
             }
         })
+        this.updateCustomFields(taskId, '')
+        Status.set('yellow', `syncing ${this.queue.length} items`)
+    },
+    updateCustomFields(taskId, color) {
+
         let customFieldBody = {
             'data': {
                 "custom_fields": {
@@ -354,17 +371,22 @@ const Asana = {
         if (this.customFieldId !== '-1') {
             customFieldBody.data.custom_fields[`${this.customFieldId}`] = new Date().toISOString()
             this.tasks[taskId].custom_fields[0].text_value = new Date().toISOString()
-            this.queue.push({
-                method: 'PUT',
-                url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
-                body: customFieldBody,
-                message: `updating last modified ${taskId}`,
-                callback: (response) => {
-                    console.info(response)
-                }
-            })
         }
-        Status.set('yellow', `syncing ${this.queue.length} items`)
+        if (this.colorFieldId !== '-1' && color !== '') {
+            customFieldBody.data.custom_fields[`${this.colorFieldId}`] = color
+            this.tasks[taskId].custom_fields[1].text_value = color
+        }
+        console.log(this.colorFieldId, color)
+        console.log(customFieldBody)
+        this.queue.push({
+            method: 'PUT',
+            url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
+            body: customFieldBody,
+            message: `updating last modified ${taskId}`,
+            callback: (response) => {
+                console.info(response)
+            }
+        })
     },
     startSyncLoops() {
         self.setTimeout(Asana.syncLoop, 1000)
