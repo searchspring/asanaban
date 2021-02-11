@@ -4,7 +4,7 @@ const Asana = require('../model/asana')
 const x = require('../utils/xhr-with-auth')(m)
 const QuillTextarea = require('./QuillTextarea')
 const Tags = require('./Tags')
-const taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+const taskFields = 'custom_fields.text_value,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
 const TaskEditor = {
     open: false,
     new: true,
@@ -21,20 +21,23 @@ const TaskEditor = {
     tags: [],
     memberships: [],
     color: '',
-    onupdate() {
-        console.log('connecting');
-        let parent = document.querySelector('#parent');
-        var picker = new Picker(parent)
-        picker.onChange =  (color)=> {
+    onbeforeupdate() {
+        let parent = document.querySelector('#colorSelector')
+        var picker = new Picker({
+            parent: parent,
+            alpha: false, editor: false, cancelButton: false, 
+            color: TaskEditor.color
+        })
+        picker.onChange = (color) => {
             parent.style.background = color.rgbaString;
         };
-        picker.onDone = (color)=>{
+        picker.onDone = (color) => {
             TaskEditor.color = color.hex
-            console.log(TaskEditor.color)
         }
     },
     view() {
         if (!this.open) return null
+        let colorSelectorStyle = `background-color:${TaskEditor.color}`
         return (
             <div id="taskTemplate" style="top:0;overflow-y:scroll;z-index: 9999; background-color:rgba(255,255,255,0.9)" class="absolute w-full h-full">
                 <div id="taskTemplateClick" style="width:40%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow-2xl">
@@ -45,7 +48,7 @@ const TaskEditor = {
                                 <input value={this.name} oninput={(e) => { TaskEditor.name = e.target.value }} type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
                             </div>
                             <div>
-                                <div id="parent" class="border-2 hover:border-gray-400 border-gray-500 rounded cursor-pointer flex-initial ml-2 mt-1 w-6 h-6 inline-block">&nbsp;</div>
+                                <div id="colorSelector" style={colorSelectorStyle} class="border-2 hover:border-gray-400 border-gray-500 rounded cursor-pointer flex-initial ml-2 mt-1 w-4 h-6 inline-block">&nbsp;</div>
                             </div>
                         </div>
                     </div>
@@ -155,7 +158,7 @@ const TaskEditor = {
         TaskEditor.tagsQueue = []
         TaskEditor.comment = ''
         TaskEditor.memberships = task.memberships
-
+        TaskEditor.color = task.custom_fields[1].text_value
         let fields = `html_text,created_by.name,resource_subtype,type,created_at`
         x.request({ url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/stories?opt_fields=${fields}` }).then((response) => {
             TaskEditor.comments = response.data.filter((story) => {
@@ -209,6 +212,8 @@ const TaskEditor = {
                 }
             })
         }
+        Asana.updateCustomFields(TaskEditor.taskId, TaskEditor.color)
+
         Asana.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}?opt_fields=${taskFields}`,
@@ -224,10 +229,10 @@ const TaskEditor = {
             callback: (response) => {
                 Object.assign(TaskEditor.task, response.data)
                 Asana.tasks[response.data.gid] = TaskEditor.task
+                Asana.rejiggerFields(Asana.tasks[response.data.gid])
             }
         })
 
-        Asana.updateCustomFields(TaskEditor.taskId, TaskEditor.color)
     },
     saveNew() {
         let tagsToAdd = TaskEditor.debounceTags(TaskEditor.tagsQueue)
@@ -274,6 +279,7 @@ const TaskEditor = {
                         // do nothing
                     }
                 })
+                Asana.rejiggerFields(rt)
                 Asana.updateCustomFields(rt.gid, TaskEditor.color)
             }
         })

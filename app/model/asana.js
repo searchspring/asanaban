@@ -28,7 +28,7 @@ const Asana = {
     atValues: [],
     tags: [],
     createNew: false,
-    testing: false,
+    testing: true,
     searchXhr: null,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
@@ -134,7 +134,22 @@ const Asana = {
             })
         }
         // Add to project
-        
+        if (value !== '-1') {
+            await x.request({
+                method: 'POST',
+                url: `https://app.asana.com/api/1.0/projects/${this.projectId}/addCustomFieldSetting`,
+                data: {
+                    'data': {
+                        'custom_field': `${value}`
+                    }
+                },
+                background: true
+            }).then((response) => {
+                console.info(response)
+            }).catch(() => {
+                // do nothing.
+            })
+        }
         return value
     },
     async setupProject() {
@@ -232,41 +247,44 @@ const Asana = {
         }
         for (let key in this.tasks) {
             let task = this.tasks[key]
-            if (!task.custom_fields) {
-                task.custom_fields = []
-            }
-            if (task.memberships.length > 1) {
-                task.memberships = task.memberships.sort((a, b) => {
-                    if (a.project.gid === this.projectId) {
-                        return -1
-                    } else {
-                        return 1
-                    }
-                })
-            }
-            task.custom_fields = task.custom_fields.sort((a, b) => {
-                if (a.gid.gid === this.customFieldId) {
+            this.rejiggerFields(task)
+        }
+    },
+    rejiggerFields(task){
+        if (!task.custom_fields) {
+            task.custom_fields = []
+        }
+        if (task.memberships.length > 1) {
+            task.memberships = task.memberships.sort((a, b) => {
+                if (a.project.gid === this.projectId) {
                     return -1
                 } else {
                     return 1
                 }
             })
-            if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== this.customFieldId) {
-                task.custom_fields.splice(0, 0, {
-                    gid: this.customFieldId,
-                    text_value: ''
-                });
+        }
+        task.custom_fields = task.custom_fields.sort((a, b) => {
+            if (a.gid.gid === this.customFieldId) {
+                return -1
+            } else {
+                return 1
             }
-            if (task.custom_fields.length === 1 || task.custom_fields[1].gid !== this.colorFieldId) {
-                task.custom_fields.splice(1, 0, {
-                    gid: this.colorFieldId,
-                    text_value: ''
-                });
-            }
-            if (task.tags) {
-                for (let tag of task.tags) {
-                    this.addProjectTag(tag)
-                }
+        })
+        if (task.custom_fields.length === 0 || task.custom_fields[0].gid !== this.customFieldId) {
+            task.custom_fields.splice(0, 0, {
+                gid: this.customFieldId,
+                text_value: ''
+            });
+        }
+        if (task.custom_fields.length === 1 || task.custom_fields[1].gid !== this.colorFieldId) {
+            task.custom_fields.splice(1, 0, {
+                gid: this.colorFieldId,
+                text_value: ''
+            });
+        }
+        if (task.tags) {
+            for (let tag of task.tags) {
+                this.addProjectTag(tag)
             }
         }
     },
@@ -376,8 +394,6 @@ const Asana = {
             customFieldBody.data.custom_fields[`${this.colorFieldId}`] = color
             this.tasks[taskId].custom_fields[1].text_value = color
         }
-        console.log(this.colorFieldId, color)
-        console.log(customFieldBody)
         this.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
@@ -407,7 +423,6 @@ const Asana = {
                 message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
             }
             Status.set('yellow', `syncing ${Asana.queue.length} items${message}`)
-
             await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method }).then(queueItem.callback).catch((error) => {
                 console.log(error)
                 let message = error.message

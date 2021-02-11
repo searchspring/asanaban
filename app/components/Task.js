@@ -33,16 +33,20 @@ module.exports = {
             daysSinceMove = 30
         }
         let taskBg = ''
+        let taskBg2 = ''
         if (task.due_on) {
             if (dateFns.differenceInDays(dateFns.parse(task.due_on), new Date()) < 5) {
                 taskBg = 'bg-red-600 text-white'
             } else {
                 taskBg = 'bg-purple-600 text-white'
             }
+        } else {
+            if (task.custom_fields[1].text_value)
+            taskBg2 = `background-color: ${task.custom_fields[1].text_value};`
         }
         return {
             taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-xxs`,
-            taskStyle: `overflow:hidden; opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
+            taskStyle: `${taskBg2} overflow:hidden; opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
         }
     }, getCustomFieldDate(task) {
         if (Asana.customFieldId !== '-1') {
