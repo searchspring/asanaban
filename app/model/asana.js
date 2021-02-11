@@ -54,6 +54,10 @@ const Asana = {
             jsonstore.has('customFieldId') &&
             jsonstore.has('colorFieldId')
     },
+    isSectionComplete(section) {
+        let name = this.getSectionAndSwimlane(section).sectionName
+        return name === 'done' || name.startsWith('complete') || name.startsWith('finish')
+    },
     async loadAllProjects(offset) {
 
         if (this.testing && jsonstore.has('projects')) {
@@ -250,7 +254,7 @@ const Asana = {
             this.rejiggerFields(task)
         }
     },
-    rejiggerFields(task){
+    rejiggerFields(task) {
         if (!task.custom_fields) {
             task.custom_fields = []
         }

@@ -11,6 +11,7 @@ module.exports = {
         let style = `flex-1 ml-1 ${this.collapsed ? 'collapsed' : ''}`
         let count = Asana.sectionMeta[c.sectionName].count
         let tasks = Asana.columnTasks[c.sectionId] || []
+        let section = Asana.sections[c.sectionId]
         let styles = this.getColumnStyle(c)
         let id = c.sectionId
         return (
@@ -27,7 +28,7 @@ module.exports = {
                             data-section-id="${id}" class="flex-shrink text-gray-400 hover:underline hover:text-white inline-block ml-1 mr-1 pt-1 text-xs text-left">add task</span>
                         <span class="flex-grow whitespace-no-wrap text-center">{c.sectionNameDisplay}</span>
                         <span class="flex-shrink text-right">{c.maximum === 1000 ? null : <span class="ml-4 mr-1 text-xs text-gray-600"><span class="count${name}">{count}</span> of {c.maximum}</span>}
-                            {c.sectionName === 'done' || c.sectionName.startsWith('complete') || c.sectionName.startsWith('finish') ?
+                            {Asana.isSectionComplete(section) ?
                                 <span
                                     onclick={(e) => {
                                         e.preventDefault(); e.stopPropagation()
