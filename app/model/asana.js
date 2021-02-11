@@ -28,7 +28,7 @@ const Asana = {
     atValues: [],
     tags: [],
     createNew: false,
-    testing: true,
+    testing: false,
     searchXhr: null,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
