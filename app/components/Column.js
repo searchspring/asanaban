@@ -27,7 +27,7 @@ module.exports = {
                             }}
                             data-section-id="${id}" class="flex-shrink text-gray-400 hover:underline hover:text-white inline-block ml-1 mr-1 pt-1 text-xs text-left">add task</span>
                         <span class="flex-grow whitespace-no-wrap text-center">{c.sectionNameDisplay}</span>
-                        <span class="flex-shrink text-right">{c.maximum === 1000 ? null : <span class="ml-4 mr-1 text-xs text-gray-600"><span class="count${name}">{count}</span> of {c.maximum}</span>}
+                        <span class="flex-shrink text-right"><span class="ml-4 mr-1 text-xs text-gray-600"><span class="count${name}">{count}</span>{c.maximum === 1000 ? null : ` of ${c.maximum}`}</span>
                             {Asana.isSectionComplete(section) ?
                                 <span
                                     onclick={(e) => {
