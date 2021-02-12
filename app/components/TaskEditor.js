@@ -260,7 +260,6 @@ const TaskEditor = {
                 rt.memberships = TaskEditor.memberships
                 let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
                 Asana.tasks[rt.gid] = rt
-                Asana.tasksOrder.push(rt.gid)
                 if (!Asana.columnTasks[TaskEditor.sectionId]) {
                     Asana.columnTasks[TaskEditor.sectionId] = []
                 }
@@ -323,7 +322,6 @@ const TaskEditor = {
     removeFromView() {
         let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
         delete Asana.tasks[TaskEditor.taskId]
-        Asana.tasksOrder = Asana.tasksOrder.filter(e => e.gid !== TaskEditor.taskId)
         Asana.sectionMeta[ss.sectionName].count--
         Asana.columnTasks[TaskEditor.sectionId] = Asana.columnTasks[TaskEditor.sectionId].filter(e => e.gid !== TaskEditor.taskId)
     }

@@ -33,7 +33,7 @@ const Asanaban = {
     },
     setupDragula() {
         let drags = []
-        for (let sectionId of Asana.sectionsOrder) {
+        for (let sectionId in Asana.sections) {
             drags.push(document.getElementById(`section${sectionId}`))
         }
         dragula(drags).on('drop', (el, target, source, sibling) => {
