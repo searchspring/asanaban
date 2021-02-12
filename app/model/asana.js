@@ -168,7 +168,7 @@ const Asana = {
     processSections(response) {
         for (let section of response.data) {
             if (section.name.toLowerCase() === '(no section)') {
-                return
+                continue
             }
             let ss = this.getSectionAndSwimlane(section)
             if (!ss) {
