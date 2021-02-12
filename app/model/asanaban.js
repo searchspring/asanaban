@@ -49,7 +49,7 @@ const Asanaban = {
             Asana.sectionMeta[targetSectionName].count++
             let task = Asana.tasks[taskId]
             task.memberships[0].section = targetSection
-            Asana.taskMoved(targetSectionId, taskId, siblingTaskId)
+            Asana.taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId)
             m.redraw()
         });
     }

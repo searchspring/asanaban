@@ -363,10 +363,10 @@ const Asana = {
             return 'background-color:' + c
         }
     },
-    taskMoved(sectionId, taskId, siblingTaskId) {
+    taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId) {
         this.queue.push({
             method: 'POST',
-            url: `https://app.asana.com/api/1.0/sections/${sectionId}/addTask`,
+            url: `https://app.asana.com/api/1.0/sections/${targetSectionId}/addTask`,
             body: {
                 "data": {
                     "task": taskId,
@@ -378,7 +378,9 @@ const Asana = {
                 console.info(response)
             }
         })
-        this.updateCustomFields(taskId, '')
+        if (sourceSectionId !== targetSectionId) {
+            this.updateCustomFields(taskId, '')
+        }
         Status.set('yellow', `syncing ${this.queue.length} items`)
     },
     updateCustomFields(taskId, color) {
