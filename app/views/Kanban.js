@@ -56,7 +56,7 @@ module.exports = {
                             classNames="mr-4 mt-1 float-right px-4 border-gray-500 text-gray-800 border rounded-full inline-block" />
                     </div>
                 </div>
-                <div id="wrapper" class="mb-10">
+                <div id="wrapper" class="pb-10">
                     {
                         Asana.swimlanes.map((swimlaneName, index) => {
                             return <Swimlane key={index} swimlaneName={swimlaneName} />

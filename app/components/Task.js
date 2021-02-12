@@ -8,7 +8,7 @@ module.exports = {
         let sectionId = vnode.attrs.task.memberships[0].section.gid
         let hasImage = task.assignee && task.assignee.photo
         let imageClasses = `${hasImage ? '' : 'hidden'} h-6 w-6 rounded-lg inline-block mr-2`
-        let styles = this.getTaskStyles(task)
+        let styles = this.getTaskStyles(task, sectionId)
         let wrapperStyles = `${task.hidden ? 'hidden' : ''} border-1`
         return <div style="width:50%; max-width:15rem" onclick={() => { openEditTaskEditor(task, sectionId) }} id={`task${task.gid}`} class={wrapperStyles}>
             <div style={styles.taskStyle} class={styles.taskClass}>
@@ -26,23 +26,30 @@ module.exports = {
             </div>
         </div>
     },
-    getTaskStyles(task) {
+    getTaskStyles(task, sectionId) {
         let lastMod = this.getCustomFieldDate(task)
         let daysSinceMove = dateFns.differenceInDays(new Date(), lastMod)
         if (daysSinceMove > 30) {
             daysSinceMove = 30
         }
         let taskBg = ''
+        let taskBg2 = ''
         if (task.due_on) {
             if (dateFns.differenceInDays(dateFns.parse(task.due_on), new Date()) < 5) {
                 taskBg = 'bg-red-600 text-white'
             } else {
                 taskBg = 'bg-purple-600 text-white'
             }
+        } else if (task.custom_fields[1].text_value) {
+            taskBg2 = `background-color: ${task.custom_fields[1].text_value};`
+        }
+        let opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.2
+        if (Asana.isSectionComplete(Asana.sections[sectionId])) {
+            opacity = 1
         }
         return {
             taskClass: `${taskBg} hover:shadow border rounded ml-1 bg-white mb-1 pt-1 px-1 cursor-pointer text-xxs`,
-            taskStyle: `overflow:hidden; opacity:${(100 - (daysSinceMove * 2.3)) / 100}`
+            taskStyle: `${taskBg2} overflow:hidden; opacity:${opacity}`
         }
     }, getCustomFieldDate(task) {
         if (Asana.customFieldId !== '-1') {

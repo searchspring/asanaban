@@ -1,9 +1,10 @@
 const m = require('mithril')
+const Picker = require('vanilla-picker')
 const Asana = require('../model/asana')
 const x = require('../utils/xhr-with-auth')(m)
 const QuillTextarea = require('./QuillTextarea')
 const Tags = require('./Tags')
-const taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+const taskFields = 'custom_fields.text_value,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
 const TaskEditor = {
     open: false,
     new: true,
@@ -19,14 +20,37 @@ const TaskEditor = {
     tagsQueue: [],
     tags: [],
     memberships: [],
+    color: '',
+    onbeforeupdate() {
+        let parent = document.querySelector('#colorSelector')
+        var picker = new Picker({
+            parent: parent,
+            alpha: false, editor: false, cancelButton: false, 
+            color: TaskEditor.color
+        })
+        picker.onChange = (color) => {
+            parent.style.background = color.rgbaString;
+        };
+        picker.onDone = (color) => {
+            TaskEditor.color = color.hex
+        }
+    },
     view() {
         if (!this.open) return null
+        let colorSelectorStyle = `background-color:${TaskEditor.color}`
         return (
             <div id="taskTemplate" style="top:0;overflow-y:scroll;z-index: 9999; background-color:rgba(255,255,255,0.9)" class="absolute w-full h-full">
                 <div id="taskTemplateClick" style="width:40%" class="mx-auto bg-white mb-4 mt-4 p-4 rounded-lg shadow-2xl">
                     <div>
                         <div class="text-xs">name {this.new ? null : <a target="_blank" rel="noopener" href={`https://app.asana.com/0/${Asana.projectId}/${this.taskId}`} class="float-right" id="asanaLink"><img style="height:10px" class="inline-block" src="images/asana.png" /></a>} </div>
-                        <input value={this.name} oninput={(e) => { TaskEditor.name = e.target.value }} type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
+                        <div class="flex">
+                            <div class="flex-grow">
+                                <input value={this.name} oninput={(e) => { TaskEditor.name = e.target.value }} type="text" id="name" class="mr-1 h-8 w-full px-2 bg-gray-300 rounded inline-block" />
+                            </div>
+                            <div>
+                                <div id="colorSelector" style={colorSelectorStyle} class="border-2 hover:border-gray-400 border-gray-500 rounded cursor-pointer flex-initial ml-2 mt-1 w-4 h-6 inline-block">&nbsp;</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="flex mt-1">
                         <div class="flex-grow">
@@ -63,29 +87,31 @@ const TaskEditor = {
                             TaskEditor.addTagsQueue(method, tag)
                         }} value={this.tags} />
                     </div>
-                    {!TaskEditor.new ?
-                        <div>
-                            <div id="comments" class="mt-2">
-                                {TaskEditor.comments.map((story) => {
-                                    return <div>
-                                        <div class="clear-fix">
-                                            <span class="inline-block float-right p-1 px-2 text-gray-600 text-xs">{story.created_at.substring(0, 10)}</span>
+                    {
+                        !TaskEditor.new ?
+                            <div>
+                                <div id="comments" class="mt-2">
+                                    {TaskEditor.comments.map((story) => {
+                                        return <div>
+                                            <div class="clear-fix">
+                                                <span class="inline-block float-right p-1 px-2 text-gray-600 text-xs">{story.created_at.substring(0, 10)}</span>
+                                            </div>
+                                            <div class="comment w-full bg-gray-200 mb-1 p-1 px-2 rounded-lg text-xs">
+                                                {story.created_by.name} says: {m.trust(story.html_text)}
+                                            </div>
                                         </div>
-                                        <div class="comment w-full bg-gray-200 mb-1 p-1 px-2 rounded-lg text-xs">
-                                            {story.created_by.name} says: {m.trust(story.html_text)}
-                                        </div>
-                                    </div>
-                                })}
-                            </div>
-                            <div id="newCommentHolder" class="mt-2">
-                                <div class="text-xs">new comment</div>
+                                    })}
+                                </div>
+                                <div id="newCommentHolder" class="mt-2">
+                                    <div class="text-xs">new comment</div>
 
-                                <QuillTextarea value={TaskEditor.comment} id="comment" onchange={(value) => {
-                                    TaskEditor.comment = value
-                                }} />
+                                    <QuillTextarea value={TaskEditor.comment} id="comment" onchange={(value) => {
+                                        TaskEditor.comment = value
+                                    }} />
+                                </div>
                             </div>
-                        </div>
-                        : null}
+                            : null
+                    }
                     <div class="clearfix mt-4 flex">
                         <div>
                             <a href="javascript:;" onclick={() => { TaskEditor.open = false }} id="cancel" class="hover:bg-gray-500 rounded-lg bg-gray-300 p-1 px-2 inline-block">cancel</a>
@@ -100,8 +126,8 @@ const TaskEditor = {
                             <a href="javascript:;" onclick={this.save} class="hover:bg-gray-700 rounded-lg bg-gray-500 p-1 px-2 float-right inline-block">save</a>
                         </div>
                     </div>
-                </div>
-            </div>
+                </div >
+            </div >
         )
     },
     openNewTaskEditor(sectionId) {
@@ -132,7 +158,7 @@ const TaskEditor = {
         TaskEditor.tagsQueue = []
         TaskEditor.comment = ''
         TaskEditor.memberships = task.memberships
-
+        TaskEditor.color = task.custom_fields[1].text_value
         let fields = `html_text,created_by.name,resource_subtype,type,created_at`
         x.request({ url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}/stories?opt_fields=${fields}` }).then((response) => {
             TaskEditor.comments = response.data.filter((story) => {
@@ -149,6 +175,7 @@ const TaskEditor = {
         } else {
             TaskEditor.saveEdit()
         }
+        TaskEditor.open = false
     },
     saveEdit() {
         TaskEditor.debounceTags(TaskEditor.tagsQueue).map((tag) => {
@@ -185,6 +212,8 @@ const TaskEditor = {
                 }
             })
         }
+        Asana.updateCustomFields(TaskEditor.taskId, TaskEditor.color)
+
         Asana.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}?opt_fields=${taskFields}`,
@@ -200,10 +229,10 @@ const TaskEditor = {
             callback: (response) => {
                 Object.assign(TaskEditor.task, response.data)
                 Asana.tasks[response.data.gid] = TaskEditor.task
+                Asana.rejiggerFields(Asana.tasks[response.data.gid])
             }
         })
 
-        TaskEditor.open = false
     },
     saveNew() {
         let tagsToAdd = TaskEditor.debounceTags(TaskEditor.tagsQueue)
@@ -250,10 +279,10 @@ const TaskEditor = {
                         // do nothing
                     }
                 })
+                Asana.rejiggerFields(rt)
+                Asana.updateCustomFields(rt.gid, TaskEditor.color)
             }
         })
-
-        TaskEditor.open = false
     },
     debounceTags(tags) {
         return tags.filter(item => { return item.method === 'add' }).map((item) => { return item.tag })
@@ -273,7 +302,7 @@ const TaskEditor = {
             TaskEditor.open = false
         }
     },
-    completeTask(){
+    completeTask() {
         Asana.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}`,
@@ -290,13 +319,13 @@ const TaskEditor = {
 
         TaskEditor.removeFromView()
         TaskEditor.open = false
-    }, 
-    removeFromView(){
+    },
+    removeFromView() {
         let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
         delete Asana.tasks[TaskEditor.taskId]
         Asana.tasksOrder = Asana.tasksOrder.filter(e => e.gid !== TaskEditor.taskId)
         Asana.sectionMeta[ss.sectionName].count--
-        Asana.columnTasks[TaskEditor.sectionId] =  Asana.columnTasks[TaskEditor.sectionId].filter(e => e.gid !== TaskEditor.taskId)
+        Asana.columnTasks[TaskEditor.sectionId] = Asana.columnTasks[TaskEditor.sectionId].filter(e => e.gid !== TaskEditor.taskId)
     }
 }
 
