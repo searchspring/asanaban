@@ -13,12 +13,10 @@ const Asana = {
     projectId: '',
     sectionMeta: {},
     sections: {},
-    sectionsOrder: [],
     swimlanes: [],
     swimlanesDisplay: [],
     swimlaneColumns: {},
     tasks: {},
-    tasksOrder: [],
     columnTasks: {},
     projectTags: {},
     queue: [],
@@ -54,36 +52,41 @@ const Asana = {
             jsonstore.has('customFieldId') &&
             jsonstore.has('colorFieldId')
     },
+    startSyncLoops() {
+        self.setTimeout(Asana.syncLoop, 1000)
+        self.setInterval(async () => {
+            // if the queue is empty
+            // Asana.loadTasks()
+        }, 3600)
+    },
     isSectionComplete(section) {
         let name = this.getSectionAndSwimlane(section).sectionName
         return name === 'done' || name.startsWith('complete') || name.startsWith('finish')
     },
     async loadAllProjects(offset) {
 
-        if (this.testing && jsonstore.has('projects')) {
+        if (jsonstore.has('projects')) {
             this.projects = jsonstore.get('projects')
-            return
         }
         if (!offset) {
             offset = ''
         } else {
             offset = '&offset=' + offset
         }
-        await x.request({ background: true, url: `https://app.asana.com/api/1.0/projects?limit=100${offset}&archived=false&workspace=${this.workspaceId}` }).then(async (response) => {
+        x.request({ background: true, url: `https://app.asana.com/api/1.0/projects?limit=100${offset}&archived=false&workspace=${this.workspaceId}` }).then(async (response) => {
             this.projects.push(...response.data)
             if (response.next_page) {
                 await this.loadAllProjects(response.next_page.offset)
             }
-        })
-        this.projects = this.projects.sort((a, b) => {
-            return a.name.localeCompare(b.name)
-        })
-        this.projects.unshift({ name: 'Please select', gid: '-1' })
+            this.projects = this.projects.sort((a, b) => {
+                return a.name.localeCompare(b.name)
+            })
+            this.projects.unshift({ name: 'Please select', gid: '-1' })
 
-        if (this.testing) {
-            jsonstore.set('projects', this.projects)
-        }
-        m.redraw(true)
+            if (this.testing) {
+                jsonstore.set('projects', this.projects)
+            }
+        })
     },
     setWorkspaceId(workspaceId) {
         this.workspaceId = workspaceId
@@ -162,19 +165,10 @@ const Asana = {
         this.setChangeFieldId(changeColumnId)
         this.setColorFieldId(colorColumnId)
     },
-    async loadSections() {
-        let response = ''
-        if (this.testing && jsonstore.has('sections')) {
-            response = jsonstore.get('sections')
-        } else {
-            response = await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
-                return response;
-            })
-            jsonstore.set('sections', response)
-        }
+    processSections(response) {
         for (let section of response.data) {
             if (section.name.toLowerCase() === '(no section)') {
-                continue
+                return
             }
             let ss = this.getSectionAndSwimlane(section)
             if (!ss) {
@@ -189,10 +183,30 @@ const Asana = {
                 this.swimlaneColumns[ss.swimlaneName] = []
             }
             ss.sectionId = section.gid
-            this.swimlaneColumns[ss.swimlaneName].push(ss)
+            if (!this.containsSS(this.swimlaneColumns[ss.swimlaneName], ss)) {
+                this.swimlaneColumns[ss.swimlaneName].push(ss)
+            }
             this.sections[`${section.gid}`] = section
-            this.sectionsOrder.push(section.gid)
         }
+    },
+    containsSS(haystack, needle) {
+        for (let n of haystack) {
+            if (n.sectionName === needle.sectionName && n.swimlaneName === needle.swimlaneName) {
+                return true
+            }
+        }
+        return false
+    },
+    async loadSections() {
+        if (jsonstore.has('sections')) {
+            let response = jsonstore.get('sections')
+            this.processSections(response)
+        }
+        x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+
+            jsonstore.set('sections', response)
+            this.processSections(response)
+        })
     },
     contains(haystack, needle) {
         for (const n of haystack) {
@@ -242,9 +256,10 @@ const Asana = {
                         if (!this.columnTasks[membership.section.gid]) {
                             this.columnTasks[membership.section.gid] = []
                         }
-                        this.columnTasks[membership.section.gid].push(task)
-                        this.tasksOrder.push(task.gid)
-                        this.sectionMeta[ss.sectionName].count++
+                        if (!this.columnHasTask(this.columnTasks[membership.section.gid], task)) {
+                            this.columnTasks[membership.section.gid].push(task)
+                            this.sectionMeta[ss.sectionName].count++
+                        }
                     }
                 }
             }
@@ -253,6 +268,14 @@ const Asana = {
             let task = this.tasks[key]
             this.rejiggerFields(task)
         }
+    },
+    columnHasTask(columnTasks, task) {
+        for (let ct of columnTasks) {
+            if (ct.gid === task.gid) {
+                return true
+            }
+        }
+        return false
     },
     rejiggerFields(task) {
         if (!task.custom_fields) {
@@ -342,14 +365,13 @@ const Asana = {
         })
     },
     async loadTags(bustCache) {
-        if (jsonstore.has('tags') && !bustCache) {
+        if (jsonstore.has('tags')) {
             this.tags = jsonstore.get('tags')
-        } else {
-            await x.request({ url: `https://app.asana.com/api/1.0/tags?workspace=${this.workspaceId}&opt_fields=color,name` }).then((response) => {
-                jsonstore.set('tags', response.data)
-                this.tags = response.data
-            })
         }
+        x.request({ url: `https://app.asana.com/api/1.0/tags?workspace=${this.workspaceId}&opt_fields=color,name` }).then((response) => {
+            jsonstore.set('tags', response.data)
+            this.tags = response.data
+        })
     },
     convertTagColor(c) {
         if (!c) {
@@ -410,15 +432,6 @@ const Asana = {
             }
         })
     },
-    startSyncLoops() {
-        self.setTimeout(Asana.syncLoop, 1000)
-        // self.setInterval(async () => {
-        //     if (!currentlyEditingTask) {
-        //         await loadUsers(true)
-        //         setupTaskTemplateUsers()
-        //     }
-        // }, 3600000)
-    },
     async syncLoop() {
         let didSomeSyncing = false
         let errorFree = true
@@ -430,7 +443,7 @@ const Asana = {
             }
             Status.set('yellow', `syncing ${Asana.queue.length} items${message}`)
             await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method }).then(queueItem.callback).catch((error) => {
-                console.log(error)
+                console.error(error)
                 let message = error.message
                 if (error.response && error.response.data && error.response.data.errors) {
                     message = error.response.data.errors[0].message
@@ -471,23 +484,20 @@ const Asana = {
                     let taskEl = document.getElementById(`task${key}`)
                     taskEl.parentNode.removeChild(taskEl)
                     delete this.tasks[key]
-                    this.tasksOrder = this.tasksOrder.filter(e => e !== key)
                     this.sectionMeta[sectionName].count--
                     Status.set('yellow', `syncing ${this.queue.length} items`)
                 }
             }
         }
     },
-    async loadUsers(bustCache) {
-        if (jsonstore.has('users') && !bustCache) {
+    async loadUsers() {
+        if (jsonstore.has('users')) {
             this.processUsers(jsonstore.get('users'))
-            m.redraw()
-        } else {
-            await x.request({ url: `https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email` }).then((response) => {
-                jsonstore.set('users', response)
-                this.processUsers(response)
-            })
         }
+        x.request({ url: `https://app.asana.com/api/1.0/users?opt_fields=name,photo.image_60x60,resource_type,email` }).then((response) => {
+            jsonstore.set('users', response)
+            this.processUsers(response)
+        })
     },
     processUsers(data) {
         let users = {}
