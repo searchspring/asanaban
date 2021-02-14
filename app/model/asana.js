@@ -550,7 +550,17 @@ const Asana = {
         for (let key in usersInTasks) {
             this.usersInTasks.unshift(usersInTasks[key])
         }
-    }
+    },
+    convertToAsana(text) {
+        let regMention = /<span class="mention" data-index="[0-9]*" data-denotation-char="[@#]" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">[@#]<\/span>([^<]+)<\/span>\s*<\/span>/g
+        return text.replace(regMention, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>')
+            .replace(/<span>/g, '')
+            .replace(/<\/span>/g, '\n')
+            .replace(/<br>/g, '\n').trim()
+    },
+    convertFromAsana(text) {
+        return text
+    } 
 }
 
 module.exports = Asana

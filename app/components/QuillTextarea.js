@@ -1,4 +1,3 @@
-const { render } = require('mithril')
 const m = require('mithril')
 const Quill = require('quill')
 const Asana = require('../model/asana')
@@ -59,23 +58,16 @@ let quillConfig = {
 const QuillTextarea = {
     oncreate(vnode) {
         let quill = new Quill(`#${vnode.attrs.id}`, quillConfig);
-        quill.root.innerHTML = vnode.attrs.value || ''
+        quill.root.innerHTML = vnode.attrs.value ? Asana.convertFromAsana(vnode.attrs.value) : ''
         quill.on('text-change', () => {
-            vnode.attrs.onchange(QuillTextarea.convertToAsana(quill.root.innerHTML))
+            vnode.attrs.onchange(Asana.convertToAsana(quill.root.innerHTML))
         })
     },
     view(vnode) {
         return (
             <div id={vnode.attrs.id} class="text-xs h-32 w-full bg-gray-300 rounded-b inline-block"></div>
         )
-    },
-    convertToAsana(text) {
-        let regMention = /<span class="mention" data-index="[0-9]*" data-denotation-char="[@#]" data-id="([0-9]+)" data-value="[^"]*">\s*<span contenteditable="false">\s*<span class="ql-mention-denotation-char">[@#]<\/span>([^<]+)<\/span>\s*<\/span>/g
-        return text.replace(regMention, '<a href="https://app.asana.com/0/$1/" data-asana-dynamic="true" data-asana-gid="$1" data-asana-accessible="true" data-asana-type="user">$2</a>')
-            .replace(/<span>/g, '')
-            .replace(/<\/span>/g, '')
-            .replace(/<br>/g, '\n').trim()
     }
 }
 
-module.exports = QuillTextarea
+module.exports = QuillTextarea 
