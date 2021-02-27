@@ -3,14 +3,10 @@ const Asana = require('../model/asana')
 const jsonstore = require('../utils/jsonstore')
 const Projects = require('../components/Projects')
 module.exports = {
-    loading: false,
     async oninit() {
-        Asana.initFromStorage()
+        await Asana.initFromStorage()
         if (jsonstore.has('pat') && jsonstore.has('workspaceId')) {
-            this.loading = true
-            await Asana.loadAllProjects().then(() => {
-                this.loading = false
-            })
+            await Asana.loadAllProjects()
         }
     },
     view() {
@@ -51,13 +47,13 @@ module.exports = {
                             <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-8">Step 4</div>
                             <div class="clearfix"> Enter your token here
                     <input placeholder="personal access token" id="pat" type="text"
-                                    onchange={() => { Asana.loadAllProjects() }} value={Asana.pat} oninput={(e) => { Asana.setPat(e.target.value) }}
+                                    value={Asana.pat} oninput={(e) => { Asana.setPat(e.target.value); Asana.loadAllProjects() }}
                                     class="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" />
                                 <div id="patError" class="hidden text-xs block text-red-600"></div>
                             </div>
                         </div>
                         <div class="flex-1 ml-8">
-                            <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-8">Step 5 {this.loading ? <span class="mt-1 float-right mr-2 text-sm">loading...</span> : null}</div>
+                            <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-8">Step 5 {Asana.loadingProjects ? <span class="mt-1 float-right mr-2 text-sm">loading...</span> : null}</div>
                             <div>Select the name of your project.
                                     <Projects classNames="float-right w-3/5 px-4 text-blue-500 border rounded-full inline-block" callback={(projectId) => {
                                     Asana.setProjectId(projectId)
@@ -67,8 +63,9 @@ module.exports = {
                     </div>
                     <div class="block bg-gray-300 rounded-full text-xl bold pl-4 mb-2 mt-8">Step 6</div>
                     <div class="mb-8">Hit go
-                    <a class="focus:bg-blue-600 focus:outline-none float-right w-64 text-center hover:bg-blue-600 bg-blue-500 text-blue-100 px-4 py-2 rounded-full inline-block"
-                            href="javascript:;" onclick={this.go}>Go</a>
+                    {!this.showGo() ? '' :
+                            <a class="focus:bg-blue-600 focus:outline-none float-right w-64 text-center hover:bg-blue-600 bg-blue-500 text-blue-100 px-4 py-2 rounded-full inline-block"
+                                href="javascript:;" onclick={this.go}>Go</a>}
                         <span class="block text-gray-500 text-xs">What
                         happens when you click go?</span>
                         <div id="explain" class="text-gray-600 text-xs">
@@ -84,6 +81,15 @@ module.exports = {
                     </div>
                 </div>
             </div>)
+    },
+    showGo() {
+        return jsonstore.has('pat') &&
+            jsonstore.get('pat') !== '' &&
+            jsonstore.has('workspaceId') &&
+            jsonstore.get('workspaceId') !== '' &&
+            jsonstore.has('projectId') &&
+            jsonstore.get('projectId') !== '-1' &&
+            jsonstore.get('projectId') !== ''
     },
     async go() {
         await Asana.setupProject()

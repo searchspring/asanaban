@@ -28,6 +28,7 @@ const Asana = {
     createNew: false,
     testing: false,
     searchXhr: null,
+    loadingProjects: false,
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -63,30 +64,39 @@ const Asana = {
         let name = this.getSectionAndSwimlane(section).sectionName
         return name === 'done' || name.startsWith('complete') || name.startsWith('finish')
     },
-    async loadAllProjects(offset) {
-
-        if (jsonstore.has('projects')) {
-            this.projects = jsonstore.get('projects')
-        }
+    async loadProject(offset) {
         if (!offset) {
             offset = ''
         } else {
             offset = '&offset=' + offset
         }
-        x.request({ background: true, url: `https://app.asana.com/api/1.0/projects?limit=100${offset}&archived=false&workspace=${this.workspaceId}` }).then(async (response) => {
+        x.request({ url: `https://app.asana.com/api/1.0/projects?limit=100${offset}&archived=false&workspace=${this.workspaceId}` }).then(async (response) => {
             this.projects.push(...response.data)
             if (response.next_page) {
-                await this.loadAllProjects(response.next_page.offset)
+                await this.loadProject(response.next_page.offset)
             }
             this.projects = this.projects.sort((a, b) => {
                 return a.name.localeCompare(b.name)
             })
             this.projects.unshift({ name: 'Please select', gid: '-1' })
-
-            if (this.testing) {
-                jsonstore.set('projects', this.projects)
-            }
+            this.loadingProjects = false
+        }).catch((e) => {
+            console.error(e)
+            this.loadingProjects = false
         })
+    },
+    async loadAllProjects() {
+        if (!this.pat) {
+            return
+        }
+        this.projects = []
+        this.loadingProjects = true
+        if (jsonstore.has('projects')) {
+            this.projects = jsonstore.get('projects')
+            this.loadingProjects = false
+            m.redraw()
+        }
+        this.loadProject('')
     },
     setWorkspaceId(workspaceId) {
         this.workspaceId = workspaceId
@@ -406,7 +416,9 @@ const Asana = {
         Status.set('yellow', `syncing ${this.queue.length} items`)
     },
     updateCustomFields(taskId, color) {
-
+        if (this.customFieldId === '-1' && this.colorFieldId === '-1'){
+            return
+        }
         let customFieldBody = {
             'data': {
                 "custom_fields": {
@@ -560,7 +572,7 @@ const Asana = {
     },
     convertFromAsana(text) {
         return text
-    } 
+    }
 }
 
 module.exports = Asana
