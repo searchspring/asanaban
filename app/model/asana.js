@@ -208,10 +208,6 @@ const Asana = {
         return false
     },
     async loadSections() {
-        if (jsonstore.has('sections')) {
-            let response = jsonstore.get('sections')
-            this.processSections(response)
-        }
         x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
 
             jsonstore.set('sections', response)
