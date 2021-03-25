@@ -207,13 +207,26 @@ const Asana = {
         }
         return false
     },
-    async loadSections() {
-        x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+    async loadSectionsFrom(locationOfData) {
+        this.clearSwimlaneData()
+        if (jsonstore.has('sections') && locationOfData === 'cache') {
+            let response = jsonstore.get('sections')
+            this.processSections(response)
+        } 
 
+        x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+            
             jsonstore.set('sections', response)
             this.processSections(response)
         })
+        
     },
+    clearSwimlaneData() {
+        this.swimlaneColumns = []
+        this.swimlanes = []
+        this.swimlanesDisplay = []
+    }
+    ,
     contains(haystack, needle) {
         for (const n of haystack) {
             if (n === needle) {
@@ -249,10 +262,16 @@ const Asana = {
         }
     },
     async loadTasks() {
+        
         let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
         let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
             return response
         })
+        // resetting tasks and tags before adding ones from the new project
+        this.tasks = {}
+        this.columnTasks = {}
+        this.projectTags = {}
+
         for (let task of response.data) {
             for (let membership of task.memberships) {
                 if (membership.project.gid === this.projectId) {
