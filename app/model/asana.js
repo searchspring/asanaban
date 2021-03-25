@@ -207,26 +207,28 @@ const Asana = {
         }
         return false
     },
-    async loadSectionsFrom(locationOfData) {
-        this.clearSwimlaneData()
-        if (jsonstore.has('sections') && locationOfData === 'cache') {
+    async loadSections(withCache) {
+        this.clearSectionsData()
+        if (jsonstore.has('sections') && withCache) {
             let response = jsonstore.get('sections')
             this.processSections(response)
         } 
 
-        x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+        await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
             
             jsonstore.set('sections', response)
             this.processSections(response)
         })
         
     },
-    clearSwimlaneData() {
-        this.swimlaneColumns = []
+    clearSectionsData() {
+        this.swimlaneColumns = {}
         this.swimlanes = []
         this.swimlanesDisplay = []
-    }
-    ,
+        this.sections = {}
+        this.sectionMeta = {}
+        
+    },
     contains(haystack, needle) {
         for (const n of haystack) {
             if (n === needle) {
@@ -267,10 +269,7 @@ const Asana = {
         let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
             return response
         })
-        // resetting tasks and tags before adding ones from the new project
-        this.tasks = {}
-        this.columnTasks = {}
-        this.projectTags = {}
+        this.clearTaskData()
 
         for (let task of response.data) {
             for (let membership of task.memberships) {
@@ -293,6 +292,12 @@ const Asana = {
             let task = this.tasks[key]
             this.rejiggerFields(task)
         }
+
+    },
+    clearTaskData() {
+        this.tasks = {}
+        this.columnTasks = {}
+        this.projectTags = {}
     },
     columnHasTask(columnTasks, task) {
         for (let ct of columnTasks) {
