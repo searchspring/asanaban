@@ -16,20 +16,23 @@ module.exports = {
         await Asana.loadTags(!Asana.testing)
     },
     async oncreate() {
+        this.loadData(true)
+        Asana.startSyncLoops()
+        m.redraw()
+    },
+    async loadData(withCache) {
         Status.set('green', 'loading...')
         await Asana.loadAllProjects()
         Status.set('green', 'loading... sections')
-        await Asana.loadSections()
+        await Asana.loadSections(withCache)
         Status.set('green', ` loading... tasks`)
-        await Asana.loadTasks()
+        await Asana.loadTasks(withCache)
         if (jsonstore.has('search')) {
             Asanaban.doSearch(jsonstore.get('search'))
         }
         Status.set('green', `loading... users`)
         Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()
-        Asana.startSyncLoops()
-        m.redraw()
     },
     view() {
         return (
@@ -51,7 +54,7 @@ module.exports = {
                         <Projects
                             callback={(projectId) => {
                                 Asana.setProjectId(projectId)
-                                location.reload()
+                                this.loadData(false)
                             }}
                             classNames="mr-4 mt-1 float-right px-4 border-gray-500 text-gray-800 border rounded-full inline-block" />
                     </div>

@@ -29,6 +29,16 @@ const Asana = {
     testing: false,
     searchXhr: null,
     loadingProjects: false,
+    clearSwimlaneData() {
+        this.swimlaneColumns = {}
+        this.swimlanesDisplay = []
+        this.swimlanes = []
+    }, 
+    clearTaskData() {
+        this.tasks = {}
+        this.columnTasks = {}
+        this.projectTags = {}
+    }, 
     initFromStorage() {
         if (jsonstore.has('workspaceId')) {
             this.workspaceId = jsonstore.get('workspaceId')
@@ -207,16 +217,25 @@ const Asana = {
         }
         return false
     },
-    async loadSections() {
-        if (jsonstore.has('sections')) {
+    async loadSections(withCache) {
+        if (!withCache) {
+            this.clearSwimlaneData()
+            this.sectionMeta = {}
+            this.sections = {}
+        }
+        //this.sectionMeta = {}
+        //this.sections = {}
+        //this.clearSwimlaneData()
+        if (jsonstore.has('sections') && withCache) {
             let response = jsonstore.get('sections')
             this.processSections(response)
         }
         x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
-
+            
             jsonstore.set('sections', response)
             this.processSections(response)
         })
+        
     },
     contains(haystack, needle) {
         for (const n of haystack) {
@@ -252,11 +271,14 @@ const Asana = {
             count: 0
         }
     },
-    async loadTasks() {
+    async loadTasks(withCache) {
         let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
         let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
             return response
         })
+        if (!withCache) {
+            this.clearTaskData()
+        }
         for (let task of response.data) {
             for (let membership of task.memberships) {
                 if (membership.project.gid === this.projectId) {

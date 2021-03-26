@@ -33,10 +33,13 @@ const Asanaban = {
     },
     setupDragula() {
         let drags = []
+        console.log("Sections: ", Asana.sections)
         for (let sectionId in Asana.sections) {
             drags.push(document.getElementById(`section${sectionId}`))
+            console.log("Number of elements with id: ", document.querySelectorAll(`#section${sectionId}`).length)
         }
         dragula(drags).on('drop', (el, target, source, sibling) => {
+            console.log("being dropped")
             let taskId = el.getAttribute('id').substring(4)
             let siblingTaskId = sibling === null ? null : sibling.getAttribute('id').substring(4)
             let targetSectionId = target.getAttribute('id').substring(7)
@@ -50,6 +53,14 @@ const Asanaban = {
             let task = Asana.tasks[taskId]
             task.memberships[0].section = targetSection
             Asana.taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId)
+            //console.log("SectionMeta: ", Asana.sectionMeta)
+            console.log("TargetSection: ", targetSectionName)
+            console.log("SourceSection: ", sourceSectionName)
+
+            console.log("TaskID: ", taskId)
+            console.log("SiblingTaskId: ", siblingTaskId)
+
+            //console.log("Tasks: ", Asana.tasks)
             m.redraw()
         });
     }
