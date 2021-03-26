@@ -16,13 +16,13 @@ module.exports = {
         await Asana.loadTags(!Asana.testing)
     },
     async oncreate() {
+        Status.set('green', 'loading...')
+        await Asana.loadAllProjects()
         this.loadData(true)
         Asana.startSyncLoops()
         m.redraw()
     },
     async loadData(withCache) {
-        Status.set('green', 'loading...')
-        await Asana.loadAllProjects()
         Status.set('green', 'loading... sections')
         await Asana.loadSections(withCache)
         Status.set('green', ` loading... tasks`)
