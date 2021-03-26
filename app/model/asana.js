@@ -223,9 +223,7 @@ const Asana = {
             this.sectionMeta = {}
             this.sections = {}
         }
-        //this.sectionMeta = {}
-        //this.sections = {}
-        //this.clearSwimlaneData()
+
         if (jsonstore.has('sections') && withCache) {
             let response = jsonstore.get('sections')
             this.processSections(response)
