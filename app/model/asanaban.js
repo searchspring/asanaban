@@ -50,6 +50,7 @@ const Asanaban = {
             let task = Asana.tasks[taskId]
             task.memberships[0].section = targetSection
             Asana.taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId)
+            Asana.moveTask(task, sourceSectionId, targetSectionId, true)
             m.redraw()
         });
     }

@@ -33,6 +33,9 @@ module.exports = {
         Status.set('green', `loading... users`)
         Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()
+
+        console.log("ColumnTasks AT INITIAL LOAD : ", JSON.stringify(Asana.columnTasks, null, 4));
+
     },
     view() {
         return (

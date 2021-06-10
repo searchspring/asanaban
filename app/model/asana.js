@@ -2,6 +2,7 @@ const m = require('mithril')
 const Status = require('../components/Status')
 const jsonstore = require('../utils/jsonstore')
 const x = require('../utils/xhr-with-auth')(m)
+const _ = require('underscore');
 const columnChangeColumnName = 'column-change'
 const columnColorName = 'color'
 const Asana = {
@@ -29,6 +30,9 @@ const Asana = {
     testing: false,
     searchXhr: null,
     loadingProjects: false,
+    updatingTasks: false,
+    t1: performance.now(),
+    t2: performance.now(),
     clearSwimlaneData() {
         this.swimlaneColumns = {}
         this.swimlanesDisplay = []
@@ -64,11 +68,88 @@ const Asana = {
             jsonstore.has('colorFieldId')
     },
     startSyncLoops() {
-        self.setTimeout(Asana.syncLoop, 1000)
-        self.setInterval(async () => {
-            // if the queue is empty
-            // Asana.loadTasks()
-        }, 3600)
+        self.setTimeout(this.syncLoop, 1000);
+    },
+    async updateTasks() {
+        if (!this.updatingTasks) {
+            this.t2 = performance.now()
+            //console.log("Starting task update...")
+            this.updatingTasks = true;
+            let timePassedSinceLastUpdate = this.t2 - this.t1;
+            //console.log("Time passed since update: " + timePassedSinceLastUpdate)
+            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+            let url = `https://app.asana.com/api/1.0/tasks?modified_since=${new Date(Date.now() - timePassedSinceLastUpdate).toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`
+            let response = await x.request({ url: url }).then((response) => {
+                return response
+            })
+            for (let task of response.data) {
+                for (let membership of task.memberships) {
+                    if (membership.project.gid === this.projectId) {
+                        let ss = this.getSectionAndSwimlane(membership.section)
+                        if (ss) {
+                        
+                            const outgoingColID = this.tasks[task.gid].memberships[0].section.gid;
+                            const incomingColID = membership.section.gid;
+
+                            if (outgoingColID === incomingColID) {
+                                this.tasks[task.gid] = task;
+                            } else {
+                                this.moveTask(task, outgoingColID, incomingColID, false);
+                            }                            
+                        }
+                    }
+                }
+            }
+            for (let key in this.tasks) {
+                let task = this.tasks[key]
+                this.rejiggerFields(task)
+            }
+            this.updatingTasks = false;
+            //console.log("Finished Task Update")
+            this.t1 = performance.now()
+        }
+    },
+    moveTask(task, outgoingColID, incomingColID, fromLocal) {
+        console.log("ColumnTasks Before: ", JSON.stringify(this.columnTasks, null, 4));
+
+        console.log("Outgoing col ID: ", outgoingColID)
+        console.log("Incoming col ID: ", incomingColID)
+
+        if (!this.columnTasks[task.memberships[0].section.gid]) {
+            this.columnTasks[task.memberships[0].section.gid] = []
+        }
+
+        let taskExistsInColumn = false;
+        this.columnTasks[incomingColID].forEach(colTask => {
+            if (colTask.gid === task.gid) {
+                console.log("Task already exists in incoming column")
+                taskExistsInColumn = true;
+            }
+        })
+        if (!taskExistsInColumn) {
+            console.log("pushed task")
+            this.columnTasks[incomingColID].push(task)
+            if (!fromLocal) {
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[incomingColID][0].memberships[0].section).sectionName].count++
+            }
+        }
+
+        let taskIndex = -1;
+        this.columnTasks[outgoingColID].forEach((colTask, i) => {
+            if (colTask.gid === task.gid) {
+                console.log("Task exists in outgoing col")
+                taskIndex = i;
+            }
+        })
+        if (taskIndex != -1) {
+            console.log("deleted task")
+            if (!fromLocal) {
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[outgoingColID][0].memberships[0].section).sectionName].count--
+            }
+            this.columnTasks[outgoingColID].splice(taskIndex, 1);
+        }
+
+        console.log("ColumnTasks After: ", JSON.stringify(this.columnTasks, null, 4));
     },
     isSectionComplete(section) {
         let name = this.getSectionAndSwimlane(section).sectionName
@@ -489,6 +570,7 @@ const Asana = {
         if (didSomeSyncing && errorFree) {
             Status.set('green', `sync'd`)
         }
+        await Asana.updateTasks();
         if (errorFree) {
             self.setTimeout(Asana.syncLoop, 500)
         }
