@@ -34,10 +34,9 @@ module.exports = {
         Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()
 
-        console.log("ColumnTasks AT INITIAL LOAD : ", JSON.stringify(Asana.columnTasks, null, 4));
-
     },
     view() {
+        //Asana.printColInfo()
         return (
             <div>
                 <TaskEditor />

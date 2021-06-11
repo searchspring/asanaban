@@ -70,6 +70,14 @@ const Asana = {
     startSyncLoops() {
         self.setTimeout(this.syncLoop, 1000);
     },
+    printColInfo() {
+        for (let column in this.columnTasks) {
+            console.log("Col ID: " + column)
+            this.columnTasks[column].forEach(task => {
+                console.log("\tTask Name: " + task.name)
+            })
+        }
+    },
     async updateTasks() {
         if (!this.updatingTasks) {
             this.t2 = performance.now()
@@ -87,8 +95,10 @@ const Asana = {
                     if (membership.project.gid === this.projectId) {
                         let ss = this.getSectionAndSwimlane(membership.section)
                         if (ss) {
-                        
+                            
                             const outgoingColID = this.tasks[task.gid].memberships[0].section.gid;
+                            console.log("Old task: ", this.tasks[task.gid])
+                            console.log("Outgoing ID from update: ", outgoingColID)
                             const incomingColID = membership.section.gid;
 
                             if (outgoingColID === incomingColID) {
@@ -110,10 +120,10 @@ const Asana = {
         }
     },
     moveTask(task, outgoingColID, incomingColID, fromLocal) {
-        console.log("ColumnTasks Before: ", JSON.stringify(this.columnTasks, null, 4));
+        //console.log("ColumnTasks Before: ", JSON.stringify(this.columnTasks, null, 4));
 
-        console.log("Outgoing col ID: ", outgoingColID)
-        console.log("Incoming col ID: ", incomingColID)
+        //console.log("Outgoing col ID: ", outgoingColID)
+        //console.log("Incoming col ID: ", incomingColID)
 
         if (!this.columnTasks[task.memberships[0].section.gid]) {
             this.columnTasks[task.memberships[0].section.gid] = []
@@ -130,12 +140,16 @@ const Asana = {
             console.log("pushed task")
             this.columnTasks[incomingColID].push(task)
             if (!fromLocal) {
+                this.tasks[task.gid] = task;
                 this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[incomingColID][0].memberships[0].section).sectionName].count++
             }
         }
 
+        //console.log("ColumnTasks In Between: ", JSON.stringify(this.columnTasks, null, 4));
+
         let taskIndex = -1;
         this.columnTasks[outgoingColID].forEach((colTask, i) => {
+            //console.log(`Col Task: ${colTask.gid} Moving Task: ${task.gid}`)
             if (colTask.gid === task.gid) {
                 console.log("Task exists in outgoing col")
                 taskIndex = i;
@@ -149,7 +163,7 @@ const Asana = {
             this.columnTasks[outgoingColID].splice(taskIndex, 1);
         }
 
-        console.log("ColumnTasks After: ", JSON.stringify(this.columnTasks, null, 4));
+        //console.log("ColumnTasks After: ", JSON.stringify(this.columnTasks, null, 4));
     },
     isSectionComplete(section) {
         let name = this.getSectionAndSwimlane(section).sectionName
@@ -497,6 +511,7 @@ const Asana = {
         }
     },
     taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId) {
+        console.log("Sibling: ", siblingTaskId)
         this.queue.push({
             method: 'POST',
             url: `https://app.asana.com/api/1.0/sections/${targetSectionId}/addTask`,
