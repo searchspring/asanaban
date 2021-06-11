@@ -36,7 +36,6 @@ module.exports = {
 
     },
     view() {
-        //Asana.printColInfo()
         return (
             <div>
                 <TaskEditor />

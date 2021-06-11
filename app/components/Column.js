@@ -46,9 +46,7 @@ module.exports = {
                     {tasks.map((task, index) => {
                         return <Task task={task} key={task.gid} />
                     })}
-                    
                 </div>
-                <span>{tasks.length}</span>
             </div>
         )
     },
