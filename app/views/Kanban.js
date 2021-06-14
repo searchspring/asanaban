@@ -33,6 +33,7 @@ module.exports = {
         Status.set('green', `loading... users`)
         Asana.loadUsers(!Asana.testing)
         Asanaban.setupDragula()
+
     },
     view() {
         return (
