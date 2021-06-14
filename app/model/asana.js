@@ -70,14 +70,6 @@ const Asana = {
     startSyncLoops() {
         self.setTimeout(this.syncLoop, 1000);
     },
-    printColInfo() {
-        for (let column in this.columnTasks) {
-            console.log("Col ID: " + column)
-            this.columnTasks[column].forEach(task => {
-                console.log("\tTask Name: " + task.name)
-            })
-        }
-    },
     async updateTasks() {
         if (!this.updatingTasks) {
             this.t2 = performance.now()
@@ -113,37 +105,29 @@ const Asana = {
             this.t1 = performance.now()
         }
     },
-    moveTask(task, outgoingColID, incomingColID, fromLocal) {
+    moveTask(task, sourceColID, targetColID, fromLocal) {
 
         if (!this.columnTasks[task.memberships[0].section.gid]) {
             this.columnTasks[task.memberships[0].section.gid] = []
         }
 
-        let taskExistsInColumn = false;
-        this.columnTasks[incomingColID].forEach(colTask => {
-            if (colTask.gid === task.gid) {
-                taskExistsInColumn = true;
-            }
-        })
-        if (!taskExistsInColumn) {
-            this.columnTasks[incomingColID].push(task)
+        let taskIndex = _.findIndex(this.columnTasks[targetColID], function(colTask) { return colTask.gid === task.gid });
+        if (taskIndex === -1) {
+            this.columnTasks[targetColID].push(task)
+            // fromLocal is a boolean which represents whether this function is being run for a local change, made by the user (true)
+            // or is being used to update the users board from changes in the asana cloud (false) 
             if (!fromLocal) {
                 this.tasks[task.gid] = task;
-                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[incomingColID][0].memberships[0].section).sectionName].count++
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[targetColID][0].memberships[0].section).sectionName].count++
             }
         }
 
-        let taskIndex = -1;
-        this.columnTasks[outgoingColID].forEach((colTask, i) => {
-            if (colTask.gid === task.gid) {
-                taskIndex = i;
-            }
-        })
-        if (taskIndex != -1) {
+        taskIndex = _.findIndex(this.columnTasks[sourceColID], function(colTask) { return colTask.gid === task.gid });
+        if (taskIndex !== -1) {
             if (!fromLocal) {
-                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[outgoingColID][0].memberships[0].section).sectionName].count--
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[sourceColID][0].memberships[0].section).sectionName].count--
             }
-            this.columnTasks[outgoingColID].splice(taskIndex, 1);
+            this.columnTasks[sourceColID].splice(taskIndex, 1);
         }
     },
     isSectionComplete(section) {
@@ -492,7 +476,6 @@ const Asana = {
         }
     },
     taskMoved(sourceSectionId, targetSectionId, taskId, siblingTaskId) {
-        console.log("Sibling: ", siblingTaskId)
         this.queue.push({
             method: 'POST',
             url: `https://app.asana.com/api/1.0/sections/${targetSectionId}/addTask`,

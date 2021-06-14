@@ -41,7 +41,6 @@ const Asanaban = {
             let siblingTaskId = sibling === null ? null : sibling.getAttribute('id').substring(4)
             let targetSectionId = target.getAttribute('id').substring(7)
             let sourceSectionId = source.getAttribute('id').substring(7)
-            console.log(`TaskID: ${taskId} SiblingID: ${siblingTaskId} `)
             let sourceSection = Asana.sections[sourceSectionId]
             let sourceSectionName = Asana.getSectionAndSwimlane(sourceSection).sectionName
             Asana.sectionMeta[sourceSectionName].count--
