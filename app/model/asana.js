@@ -561,7 +561,7 @@ const Asana = {
         }
         await Asana.updateTasks();
         if (errorFree) {
-            self.setTimeout(Asana.syncLoop, 500)
+            self.setTimeout(Asana.syncLoop, 5000)
         }
     },
     release(sectionName) {
