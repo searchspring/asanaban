@@ -85,14 +85,24 @@ const Asana = {
                     if (membership.project.gid === this.projectId) {
                         let ss = this.getSectionAndSwimlane(membership.section)
                         if (ss) {
-                            const outgoingColID = this.tasks[task.gid].memberships[0].section.gid;
-                            const incomingColID = membership.section.gid;
+                            const targetColID = membership.section.gid;
+                            if (this.tasks[task.gid] === undefined) {
+                                this.tasks[task.gid] = task;
+                                if (this.columnTasks[targetColID] === undefined) {
+                                    this.columnTasks[targetColID] = [];
+                                }
+                                this.columnTasks[targetColID].push(task)
+                                this.sectionMeta[this.getSectionAndSwimlane(membership.section).sectionName].count++
+                            }
 
-                            if (outgoingColID === incomingColID) {
+                            const sourceColID = this.tasks[task.gid].memberships[0].section.gid;
+
+                            if (sourceColID === targetColID) {
                                 this.tasks[task.gid] = task;
                             } else {
-                                this.moveTask(task, outgoingColID, incomingColID, false);
-                            }                            
+                                this.moveTask(task, sourceColID, targetColID, false);
+                            }  
+                                                  
                         }
                     }
                 }
@@ -551,7 +561,7 @@ const Asana = {
         }
         await Asana.updateTasks();
         if (errorFree) {
-            self.setTimeout(Asana.syncLoop, 500)
+            self.setTimeout(Asana.syncLoop, 5000)
         }
     },
     release(sectionName) {
