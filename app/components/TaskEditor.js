@@ -21,6 +21,12 @@ const TaskEditor = {
     tags: [],
     memberships: [],
     color: '',
+    oncreate() {
+        document.addEventListener("keydown", TaskEditor.escFunction)
+    },
+    onremove() {
+        document.removeEventListener("keydown", TaskEditor.escFunction)
+    },
     onbeforeupdate() {
         let parent = document.querySelector('#colorSelector')
         var picker = new Picker({
@@ -318,6 +324,12 @@ const TaskEditor = {
 
         TaskEditor.removeFromView()
         TaskEditor.open = false
+    },
+    escFunction(e) {
+        if (e.key === "Escape") {
+            TaskEditor.open = false
+            m.redraw()
+        }
     },
     removeFromView() {
         let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
