@@ -2,6 +2,7 @@ const m = require('mithril')
 const Status = require('../components/Status')
 const jsonstore = require('../utils/jsonstore')
 const x = require('../utils/xhr-with-auth')(m)
+const _ = require('underscore');
 const columnChangeColumnName = 'column-change'
 const columnColorName = 'color'
 const Asana = {
@@ -29,6 +30,9 @@ const Asana = {
     testing: false,
     searchXhr: null,
     loadingProjects: false,
+    updatingTasks: false,
+    t1: performance.now(),
+    t2: performance.now(),
     clearSwimlaneData() {
         this.swimlaneColumns = {}
         this.swimlanesDisplay = []
@@ -64,11 +68,77 @@ const Asana = {
             jsonstore.has('colorFieldId')
     },
     startSyncLoops() {
-        self.setTimeout(Asana.syncLoop, 1000)
-        self.setInterval(async () => {
-            // if the queue is empty
-            // Asana.loadTasks()
-        }, 3600)
+        self.setTimeout(this.syncLoop, 1000);
+    },
+    async updateTasks() {
+        if (!this.updatingTasks) {
+            this.t2 = performance.now()
+            this.updatingTasks = true;
+            let timePassedSinceLastUpdate = this.t2 - this.t1;
+            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+            let url = `https://app.asana.com/api/1.0/tasks?modified_since=${new Date(Date.now() - timePassedSinceLastUpdate).toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`
+            let response = await x.request({ url: url }).then((response) => {
+                return response
+            })
+            for (let task of response.data) {
+                for (let membership of task.memberships) {
+                    if (membership.project.gid === this.projectId) {
+                        let ss = this.getSectionAndSwimlane(membership.section)
+                        if (ss) {
+                            const targetColID = membership.section.gid;
+                            if (this.tasks[task.gid] === undefined) {
+                                this.tasks[task.gid] = task;
+                                if (this.columnTasks[targetColID] === undefined) {
+                                    this.columnTasks[targetColID] = [];
+                                }
+                                this.columnTasks[targetColID].push(task)
+                                this.sectionMeta[this.getSectionAndSwimlane(membership.section).sectionName].count++
+                            }
+
+                            const sourceColID = this.tasks[task.gid].memberships[0].section.gid;
+
+                            if (sourceColID === targetColID) {
+                                this.tasks[task.gid] = task;
+                            } else {
+                                this.moveTask(task, sourceColID, targetColID, false);
+                            }  
+                                                  
+                        }
+                    }
+                }
+            }
+            for (let key in this.tasks) {
+                let task = this.tasks[key]
+                this.rejiggerFields(task)
+            }
+            this.updatingTasks = false;
+            this.t1 = performance.now()
+        }
+    },
+    moveTask(task, sourceColID, targetColID, fromLocal) {
+
+        if (!this.columnTasks[task.memberships[0].section.gid]) {
+            this.columnTasks[task.memberships[0].section.gid] = []
+        }
+
+        let taskIndex = _.findIndex(this.columnTasks[targetColID], function(colTask) { return colTask.gid === task.gid });
+        if (taskIndex === -1) {
+            this.columnTasks[targetColID].push(task)
+            // fromLocal is a boolean which represents whether this function is being run for a local change, made by the user (true)
+            // or is being used to update the users board from changes in the asana cloud (false) 
+            if (!fromLocal) {
+                this.tasks[task.gid] = task;
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[targetColID][0].memberships[0].section).sectionName].count++
+            }
+        }
+
+        taskIndex = _.findIndex(this.columnTasks[sourceColID], function(colTask) { return colTask.gid === task.gid });
+        if (taskIndex !== -1) {
+            if (!fromLocal) {
+                this.sectionMeta[this.getSectionAndSwimlane(this.columnTasks[sourceColID][0].memberships[0].section).sectionName].count--
+            }
+            this.columnTasks[sourceColID].splice(taskIndex, 1);
+        }
     },
     isSectionComplete(section) {
         let name = this.getSectionAndSwimlane(section).sectionName
@@ -489,8 +559,9 @@ const Asana = {
         if (didSomeSyncing && errorFree) {
             Status.set('green', `sync'd`)
         }
+        await Asana.updateTasks();
         if (errorFree) {
-            self.setTimeout(Asana.syncLoop, 500)
+            self.setTimeout(Asana.syncLoop, 5000)
         }
     },
     release(sectionName) {

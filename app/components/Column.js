@@ -41,7 +41,7 @@ module.exports = {
                 </a>
                 <div style="min-height:50px;" class={styles.column} id={`section${id}`}>
                     {tasks.map((task, index) => {
-                        return <Task task={task} key={index} />
+                        return <Task task={task} key={task.gid} />
                     })}
                 </div>
             </div>
