@@ -101,8 +101,7 @@ const Asana = {
                                 this.tasks[task.gid] = task;
                             } else {
                                 this.moveTask(task, sourceColID, targetColID, false);
-                            }  
-                                                  
+                            }                   
                         }
                     }
                 }
@@ -116,6 +115,11 @@ const Asana = {
         }
     },
     moveTask(task, sourceColID, targetColID, fromLocal) {
+
+        if (sourceColID == targetColID) {
+            this.tasks[task.gid] = task;
+            return
+        }
 
         if (!this.columnTasks[task.memberships[0].section.gid]) {
             this.columnTasks[task.memberships[0].section.gid] = []
