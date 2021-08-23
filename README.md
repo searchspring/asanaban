@@ -14,3 +14,7 @@ Install the bits
 Run the server
 
 `npm start`
+
+## Production
+
+This app is hosted in Vercel on Will Warrens personal account so he is currently the only one who can deploy this.
