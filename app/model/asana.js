@@ -31,8 +31,7 @@ const Asana = {
     searchXhr: null,
     loadingProjects: false,
     updatingTasks: false,
-    t1: performance.now(),
-    t2: performance.now(),
+    lastUpdateTime: (new Date()).toISOString(),
     clearSwimlaneData() {
         this.swimlaneColumns = {}
         this.swimlanesDisplay = []
@@ -72,17 +71,13 @@ const Asana = {
     },
     async updateTasks() {
         if (!this.updatingTasks) {
-            this.t2 = performance.now()
             this.updatingTasks = true;
-            let timePassedSinceLastUpdate = this.t2 - this.t1;
             let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories,completed'
-            let url = `https://app.asana.com/api/1.0/tasks?modified_since=${new Date(Date.now() - timePassedSinceLastUpdate).toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`
+            let url = `https://app.asana.com/api/1.0/tasks?modified_since=${this.lastUpdateTime}&project=${this.projectId}&opt_fields=${taskFields}`
+            this.lastUpdateTime = (new Date()).toISOString()
             try {
-                let response = await x.request({ url: url, timeout: 3000 }).then((response) => {
-                    return response
-                }).catch(e => {
-                    console.log(e)
-                })
+                let response = await x.request({ url: url, timeout: 3000 })
+                console.log("Inbound data: ", response.data)
                 for (let task of response.data) {
                     if (task.completed === true) {
                         this.removeTaskFromBoard(task)
@@ -110,6 +105,8 @@ const Asana = {
                                 } else {
                                     this.moveTask(task, sourceColID, targetColID, false);
                                 }                   
+                            } else {
+                                console.error("Could not handle task: ", task)
                             }
                         }
                     }
@@ -125,7 +122,6 @@ const Asana = {
                 Status.set('red', "Error with updating board: Cannot connect to Asana, request timed out")
             }
             this.updatingTasks = false;
-            this.t1 = performance.now()
         }
     },
     moveTask(task, sourceColID, targetColID, fromLocal) {
@@ -316,7 +312,7 @@ const Asana = {
             let response = jsonstore.get('sections')
             this.processSections(response)
         }
-        x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
+        await x.request({ url: `https://app.asana.com/api/1.0/projects/${this.projectId}/sections` }).then((response) => {
             
             jsonstore.set('sections', response)
             this.processSections(response)
@@ -368,11 +364,7 @@ const Asana = {
     async loadTasks(withCache) {
         let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
         try {
-            let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`, timeout: 3000 }).then((response) => {
-                return response
-            }).catch(e => {
-                console.log(e)
-            })
+            let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`, timeout: 3000 })
             if (!withCache) {
                 this.clearTaskData()
             }
@@ -398,7 +390,8 @@ const Asana = {
                 this.rejiggerFields(task)
             }
         } catch(e) {
-            console.log('Error with loading tasks: Asana failed to get tasks')
+            console.error('Error with loading tasks: Asana failed to get tasks')
+            console.error(e)
             Status.set('red', "Error with loading tasks: Asana failed to get tasks")
         }
     },
@@ -594,6 +587,8 @@ const Asana = {
         }
 
         await Asana.updateTasks();
+        m.redraw()
+        // removed this error catch so if update request times out, it can retry to reconnect instead of just ending the sync cycle.
         //if (errorFree) {
             self.setTimeout(Asana.syncLoop, 5000)
         //}
@@ -602,6 +597,7 @@ const Asana = {
         let count = this.sectionMeta[sectionName].count
         let confirmed = confirm(`Release ${count} task${count > 1 ? 's' : ''} and mark as complete?`)
         if (confirmed) {
+            console.log("Tasks: ", this.tasks)
             for (let key in this.tasks) {
                 let task = this.tasks[key]
                 if (sectionName === this.getSectionAndSwimlane(task.memberships[0].section).sectionName) {
@@ -698,6 +694,7 @@ const Asana = {
     removeTaskFromBoard(task) {
         let taskKey = task.gid
         let ss = this.getSectionAndSwimlaneWithTask(task)
+        console.log("section name: ", ss.sectionName)
         let taskEl = document.getElementById(`task${taskKey}`)
         if (taskEl !== null) {
             taskEl.parentNode.removeChild(taskEl)
