@@ -75,40 +75,54 @@ const Asana = {
             this.t2 = performance.now()
             this.updatingTasks = true;
             let timePassedSinceLastUpdate = this.t2 - this.t1;
-            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
+            let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories,completed'
             let url = `https://app.asana.com/api/1.0/tasks?modified_since=${new Date(Date.now() - timePassedSinceLastUpdate).toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`
-            let response = await x.request({ url: url }).then((response) => {
-                return response
-            })
-            for (let task of response.data) {
-                for (let membership of task.memberships) {
-                    if (membership.project.gid === this.projectId) {
-                        let ss = this.getSectionAndSwimlane(membership.section)
-                        if (ss) {
-                            const targetColID = membership.section.gid;
-                            if (this.tasks[task.gid] === undefined) {
-                                this.tasks[task.gid] = task;
-                                if (this.columnTasks[targetColID] === undefined) {
-                                    this.columnTasks[targetColID] = [];
+            try {
+                let response = await x.request({ url: url, timeout: 3000 }).then((response) => {
+                    return response
+                }).catch(e => {
+                    console.log(e)
+                })
+                for (let task of response.data) {
+                    if (task.completed === true) {
+                        this.removeTaskFromBoard(task)
+                        continue
+                    }
+                    for (let membership of task.memberships) {
+                        if (membership.project.gid === this.projectId) {
+                            let ss = this.getSectionAndSwimlane(membership.section)
+                            if (ss) {
+
+                                const targetColID = membership.section.gid;
+                                if (this.tasks[task.gid] === undefined) {
+                                    this.tasks[task.gid] = task;
+                                    if (this.columnTasks[targetColID] === undefined) {
+                                        this.columnTasks[targetColID] = [];
+                                    }
+                                    this.columnTasks[targetColID].push(task)
+                                    this.sectionMeta[ss.sectionName].count++
                                 }
-                                this.columnTasks[targetColID].push(task)
-                                this.sectionMeta[this.getSectionAndSwimlane(membership.section).sectionName].count++
+
+                                const sourceColID = this.tasks[task.gid].memberships[0].section.gid;
+
+                                if (sourceColID === targetColID) {
+                                    this.tasks[task.gid] = task;
+                                } else {
+                                    this.moveTask(task, sourceColID, targetColID, false);
+                                }                   
                             }
-
-                            const sourceColID = this.tasks[task.gid].memberships[0].section.gid;
-
-                            if (sourceColID === targetColID) {
-                                this.tasks[task.gid] = task;
-                            } else {
-                                this.moveTask(task, sourceColID, targetColID, false);
-                            }                   
                         }
                     }
                 }
-            }
-            for (let key in this.tasks) {
-                let task = this.tasks[key]
-                this.rejiggerFields(task)
+                for (let key in this.tasks) {
+                    let task = this.tasks[key]
+                    this.rejiggerFields(task)
+                }
+                if (document.getElementById('status').classList.contains('text-red-900')) {
+                    Status.set('green', "Connection with Asana restored")
+                }
+            } catch(e) {
+                Status.set('red', "Error with updating board: Cannot connect to Asana, request timed out")
             }
             this.updatingTasks = false;
             this.t1 = performance.now()
@@ -343,34 +357,49 @@ const Asana = {
             count: 0
         }
     },
+    getSectionAndSwimlaneWithTask(task) {
+        for (let membership of task.memberships) {
+            if (membership.project.gid === this.projectId) {
+                return this.getSectionAndSwimlane(membership.section)
+            }
+        }
+        return undefined
+    },
     async loadTasks(withCache) {
         let taskFields = 'custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories'
-        let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}` }).then((response) => {
-            return response
-        })
-        if (!withCache) {
-            this.clearTaskData()
-        }
-        for (let task of response.data) {
-            for (let membership of task.memberships) {
-                if (membership.project.gid === this.projectId) {
-                    let ss = this.getSectionAndSwimlane(membership.section)
-                    if (ss) {
-                        this.tasks[task.gid] = task
-                        if (!this.columnTasks[membership.section.gid]) {
-                            this.columnTasks[membership.section.gid] = []
-                        }
-                        if (!this.columnHasTask(this.columnTasks[membership.section.gid], task)) {
-                            this.columnTasks[membership.section.gid].push(task)
-                            this.sectionMeta[ss.sectionName].count++
+        try {
+            let response = await x.request({ url: `https://app.asana.com/api/1.0/tasks?completed_since=${new Date().toISOString()}&project=${this.projectId}&opt_fields=${taskFields}`, timeout: 3000 }).then((response) => {
+                return response
+            }).catch(e => {
+                console.log(e)
+            })
+            if (!withCache) {
+                this.clearTaskData()
+            }
+            for (let task of response.data) {
+                for (let membership of task.memberships) {
+                    if (membership.project.gid === this.projectId) {
+                        let ss = this.getSectionAndSwimlane(membership.section)
+                        if (ss) {
+                            this.tasks[task.gid] = task
+                            if (!this.columnTasks[membership.section.gid]) {
+                                this.columnTasks[membership.section.gid] = []
+                            }
+                            if (!this.columnHasTask(this.columnTasks[membership.section.gid], task)) {
+                                this.columnTasks[membership.section.gid].push(task)
+                                this.sectionMeta[ss.sectionName].count++
+                            }
                         }
                     }
                 }
             }
-        }
-        for (let key in this.tasks) {
-            let task = this.tasks[key]
-            this.rejiggerFields(task)
+            for (let key in this.tasks) {
+                let task = this.tasks[key]
+                this.rejiggerFields(task)
+            }
+        } catch(e) {
+            console.log('Error with loading tasks: Asana failed to get tasks')
+            Status.set('red', "Error with loading tasks: Asana failed to get tasks")
         }
     },
     columnHasTask(columnTasks, task) {
@@ -507,7 +536,7 @@ const Asana = {
         if (sourceSectionId !== targetSectionId) {
             this.updateCustomFields(taskId, '')
         }
-        Status.set('yellow', `syncing ${this.queue.length} items`)
+        Status.set('yellow', `queueing ${this.queue.length} new items`)
     },
     updateCustomFields(taskId, color) {
         if (this.customFieldId === '-1' && this.colorFieldId === '-1'){
@@ -532,7 +561,7 @@ const Asana = {
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${taskId}`,
             body: customFieldBody,
-            message: `updating last modified ${taskId}`,
+            message: `updating custom fields ${taskId}`,
             callback: (response) => {
                 console.info(response)
             }
@@ -547,14 +576,14 @@ const Asana = {
             if (queueItem.message) {
                 message = `<span style="font-size:7px" class="ml-4 opacity-50">${queueItem.message}<span>`
             }
-            Status.set('yellow', `syncing ${Asana.queue.length} items${message}`)
-            await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method }).then(queueItem.callback).catch((error) => {
+            Status.set('yellow', `syncing 1 item : ${Asana.queue.length} items left ${message}`)
+            await x.request({ url: queueItem.url, data: queueItem.body, method: queueItem.method, timeout: 3000 }).then(queueItem.callback).catch((error) => {
                 console.error(error)
                 let message = error.message
                 if (error.response && error.response.data && error.response.data.errors) {
                     message = error.response.data.errors[0].message
                 }
-                Status.set('red', message)
+                Status.set('red', "Error with syncing queue: Asana task sync failed " + message)
                 errorFree = false
             })
             Asana.queue.shift()
@@ -563,10 +592,11 @@ const Asana = {
         if (didSomeSyncing && errorFree) {
             Status.set('green', `sync'd`)
         }
+
         await Asana.updateTasks();
-        if (errorFree) {
+        //if (errorFree) {
             self.setTimeout(Asana.syncLoop, 5000)
-        }
+        //}
     },
     release(sectionName) {
         let count = this.sectionMeta[sectionName].count
@@ -588,10 +618,7 @@ const Asana = {
                             console.info(response)
                         }
                     })
-                    let taskEl = document.getElementById(`task${key}`)
-                    taskEl.parentNode.removeChild(taskEl)
-                    delete this.tasks[key]
-                    this.sectionMeta[sectionName].count--
+                    this.removeTaskFromBoard(task)
                     Status.set('yellow', `syncing ${this.queue.length} items`)
                 }
             }
@@ -667,6 +694,20 @@ const Asana = {
     },
     convertFromAsana(text) {
         return text
+    },
+    removeTaskFromBoard(task) {
+        let taskKey = task.gid
+        let ss = this.getSectionAndSwimlaneWithTask(task)
+        let taskEl = document.getElementById(`task${taskKey}`)
+        if (taskEl !== null) {
+            taskEl.parentNode.removeChild(taskEl)
+            for( let i = 0; i < this.tasks.length; i++){ 
+                if ( this.tasks[i] === taskKey) { 
+                    this.tasks.splice(i, 1); 
+                }
+            }
+            this.sectionMeta[ss.sectionName].count--
+        }
     }
 }
 
