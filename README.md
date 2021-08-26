@@ -36,7 +36,17 @@ When you choose a new board, it will request all the tasks from Asana and update
 
 A sync loop is also running to make sure your Asanaban is always up to date from changes others make. Every 5 seconds, Asanaban will check to see if any tasks have changed state or location and will update your board with those changes if found.
 
+## Custom fields
 
+Asanaban uses custom fields in Asana to store information such as
+- Colors
+- Timestamp of when the state of a task is changed (location, data)
+
+Everytime you move, or edit a task, 2 actions will be added to the queue, first is the task being moved, and the second is the timestamp custom field being updated.
+
+## Asana timeouts
+
+From time-to-time if you leave Asanaban open for a long period of time, or your computer goes to sleep, the update requests to Asana might time out. In this case you will get a red error message on the UI that says "Cannot connect to Asana" until the connection is restored, in which case you'll get a green status message.
 
 ## Requirements
 - Node
