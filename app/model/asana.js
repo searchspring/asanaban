@@ -586,10 +586,7 @@ const Asana = {
 
         await Asana.updateTasks();
         m.redraw()
-        // removed this error catch so if update request times out, it can retry to reconnect instead of just ending the sync cycle.
-        //if (errorFree) {
-            self.setTimeout(Asana.syncLoop, 5000)
-        //}
+        self.setTimeout(Asana.syncLoop, 5000)
     },
     release(sectionName) {
         let count = this.sectionMeta[sectionName].count
