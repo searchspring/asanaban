@@ -105,8 +105,6 @@ const Asana = {
                                 } else {
                                     this.moveTask(task, sourceColID, targetColID, false);
                                 }                   
-                            } else {
-                                console.error("Could not handle task: ", task)
                             }
                         }
                     }
