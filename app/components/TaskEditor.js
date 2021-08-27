@@ -219,7 +219,7 @@ const TaskEditor = {
             })
         }
         Asana.updateCustomFields(TaskEditor.taskId, TaskEditor.color)
-
+        let localTask = TaskEditor.task
         Asana.queue.push({
             method: 'PUT',
             url: `https://app.asana.com/api/1.0/tasks/${TaskEditor.taskId}?opt_fields=${taskFields}`,
@@ -233,8 +233,8 @@ const TaskEditor = {
             },
             message: `updating ${TaskEditor.taskId}`,
             callback: (response) => {
-                Object.assign(TaskEditor.task, response.data)
-                Asana.tasks[response.data.gid] = TaskEditor.task
+                Object.assign(localTask, response.data)
+                Asana.tasks[response.data.gid] = localTask
                 Asana.rejiggerFields(Asana.tasks[response.data.gid])
             }
         })
@@ -247,6 +247,8 @@ const TaskEditor = {
             Asana.addProjectTag({ name: tag.value, color: tag.color, gid: tag.gid })
             return tag.gid
         })
+        let localMemberships = TaskEditor.memberships
+        let localSectionId = TaskEditor.sectionId
         Asana.queue.push({
             method: 'POST',
             url: `https://app.asana.com/api/1.0/tasks?opt_fields=${taskFields}`,
@@ -263,17 +265,17 @@ const TaskEditor = {
             message: `creating new task`,
             callback: (response) => {
                 let rt = response.data
-                rt.memberships = TaskEditor.memberships
-                let ss = Asana.getSectionAndSwimlane(Asana.sections[TaskEditor.sectionId])
+                rt.memberships = localMemberships
+                let ss = Asana.getSectionAndSwimlane(Asana.sections[localSectionId])
                 Asana.tasks[rt.gid] = rt
-                if (!Asana.columnTasks[TaskEditor.sectionId]) {
-                    Asana.columnTasks[TaskEditor.sectionId] = []
+                if (!Asana.columnTasks[localSectionId]) {
+                    Asana.columnTasks[localSectionId] = []
                 }
-                Asana.columnTasks[TaskEditor.sectionId].push(rt)
+                Asana.columnTasks[localSectionId].push(rt)
                 Asana.sectionMeta[ss.sectionName].count++
                 Asana.queue.push({
                     method: 'POST',
-                    url: `https://app.asana.com/api/1.0/sections/${TaskEditor.sectionId}/addTask`,
+                    url: `https://app.asana.com/api/1.0/sections/${localSectionId}/addTask`,
                     body: {
                         "data": {
                             "task": rt.gid
