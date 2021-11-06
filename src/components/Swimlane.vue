@@ -1,7 +1,9 @@
 <template>
   <div class="swimlane">
-    <h2>{{ swimlane.name }}</h2>
-    <slot></slot>
+    <div class="swimlane-content">
+      <h2>{{ swimlane.name }}</h2>
+      <slot></slot>
+    </div>
   </div>
 </template>
 
@@ -16,16 +18,22 @@ export default defineComponent({
 </script>
 
 <style scoped>
+.swimlane {
+  margin-bottom: 0.1rem;
+}
 h2 {
   font-size: 1rem;
   display: inline-block;
   writing-mode: vertical-rl;
-  margin:0;
   background-color: #f0f0f0;
-  padding-top:2em;
-  padding-bottom:2em;
+  text-align: center;
+  margin: 0;
 }
-.swimlane {
-  white-space: nowrap;
+/* column min width 100 but extend past screen size no wrap */
+.swimlane-content {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  min-width: 100%;
 }
 </style>
