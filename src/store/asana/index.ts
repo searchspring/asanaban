@@ -32,11 +32,9 @@ export default {
     sections: jsonstore.get("sections", []),
   },
   getters: {
-    // eslint-disable-next-line
-    swimlanes: (state) => {
-      const swimlanes: Record<string, unknown>[] = [];
+    swimlanes: (state): any[] => {
+      const swimlanes: any[] = [];
       const found: Set<string> = new Set();
-      // eslint-disable-next-line
       state.sections.forEach((section: any) => {
         if (section.name.indexOf(":") !== -1) {
           const swimlaneName = section.name.split(":")[0];
@@ -50,8 +48,7 @@ export default {
     },
   },
   mutations: {
-    // eslint-disable-next-line
-    tokenReceived(state, payload: any) {
+    tokenReceived(state, payload: any): void {
       const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
       Cookies.set("access_token", payload.access_token, {
         expires: oneHourFromNow,
@@ -60,7 +57,6 @@ export default {
       jsonstore.set("user", payload.data);
       asanaClient = createClient(payload.access_token, payload.refresh_token);
     },
-    // eslint-disable-next-line
     signOut(state): void {
       Cookies.remove("access_token");
       jsonstore.remove("refresh_token");
@@ -74,41 +70,34 @@ export default {
       state.tasks = [];
       state.selectedProject = null;
     },
-    // eslint-disable-next-line
     setProjects(state, payload: unknown[]): void {
       state.projects = payload;
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
     },
-    // eslint-disable-next-line
     addProjects(state, payload: unknown[]): void {
       state.projects.push(...payload);
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
     },
-    //eslint-disable-next-line
     setSelectedProject(state, payload: unknown): void {
       state.selectedProject = payload;
       jsonstore.set("selectedProject", state.selectedProject);
     },
-    // eslint-disable-next-line
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
       state.tasks = unique(state.tasks);
     },
-    // eslint-disable-next-line
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
       state.tasks = unique(state.tasks);
     },
-    // eslint-disable-next-line
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
       jsonstore.set("sections", state.sections);
     },
   },
   actions: {
-    // eslint-disable-next-line
     tokenReceived({ commit, rootState }, payload: any): void {
       commit("tokenReceived", payload);
       rootState.signedIn = true; // can't figure out how to get root state inside the mutation.
@@ -130,8 +119,7 @@ export default {
         codeChallenge;
       self.location.href = url;
     },
-    // eslint-disable-next-line
-    checkSignedIn({ commit, dispatch }): void {
+    checkSignedIn({ dispatch }): void {
       if (asanaClient !== null) {
         asanaClient.users
           .me()
@@ -145,12 +133,10 @@ export default {
           });
       }
     },
-    // eslint-disable-next-line
     signOut({ commit, rootState }): void {
       commit("signOut");
       rootState.signedIn = false; // can't figure out how to get root state inside the mutation.
     },
-    // eslint-disable-next-line
     loadProjects({ commit }): void {
       if (asanaClient) {
         asanaClient.workspaces.findAll().then((workspaceResponse) => {
@@ -160,20 +146,17 @@ export default {
         });
       }
     },
-    // eslint-disable-next-line
     setSelectedProject({ commit, dispatch }, project: unknown): void {
       commit("setSelectedProject", project);
       dispatch("loadTasks");
       dispatch("loadSections");
     },
-    // eslint-disable-next-line
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
       if (asanaClient && state.selectedProject) {
         loadTasksWithOffset("", state.selectedProject, commit);
       }
     },
-    // eslint-disable-next-line
     loadSections({ commit, state }): void {
       if (asanaClient && state.selectedProject) {
         asanaClient.sections
@@ -190,7 +173,6 @@ export default {
 function loadTasksWithOffset(
   offset: string,
   project: string,
-  // eslint-disable-next-line
   commit: any
 ): void {
   const options = {
@@ -220,7 +202,6 @@ function loadTasksWithOffset(
 function loadProjectsWithOffset(
   offset: string,
   workspaceGid: string,
-  // eslint-disable-next-line
   commit: any
 ): void {
   const options = {
@@ -233,19 +214,16 @@ function loadProjectsWithOffset(
   }
 
   if (asanaClient) {
-    asanaClient.projects
-      .findAll(options)
-      // eslint-disable-next-line
-      .then((projectResponse: any) => {
-        commit("addProjects", projectResponse.data);
-        if (projectResponse._response.next_page) {
-          loadProjectsWithOffset(
-            projectResponse._response.next_page.offset,
-            workspaceGid,
-            commit
-          );
-        }
-      });
+    asanaClient.projects.findAll(options).then((projectResponse: any) => {
+      commit("addProjects", projectResponse.data);
+      if (projectResponse._response.next_page) {
+        loadProjectsWithOffset(
+          projectResponse._response.next_page.offset,
+          workspaceGid,
+          commit
+        );
+      }
+    });
   }
 }
 
@@ -257,25 +235,18 @@ function base64URL(string) {
     .replace(/\//g, "_");
 }
 
-// eslint-disable-next-line
 function sortAndUnique(stuff: any[]): any[] {
   const uniqueStuff = unique(stuff);
-  // eslint-disable-next-line
   uniqueStuff.sort((a: any, b: any) => {
     return a.name.localeCompare(b.name);
   });
 
   return uniqueStuff;
 }
-// eslint-disable-next-line
 function unique(stuff: any[]): any[] {
-  // unique by gid
-  // eslint-disable-next-line
   stuff.sort((a: any, b: any) => {
     return a.gid.localeCompare(b.gid);
   });
-  // eslint-disable-next-line
-  // remove duplicates
   const uniqueStuff = stuff.filter(
     (thing, index, self) => index === self.findIndex((t) => t.gid === thing.gid)
   );
