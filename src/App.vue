@@ -1,26 +1,47 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div id="nav">
+    <router-link to="/">asanaban</router-link>
+    <project-selector />
+    <sign-in />
+  </div>
+  <router-view />
 </template>
 
-<script>
-import HelloWorld from './components/HelloWorld.vue'
+<script lang="ts">
+import { defineComponent } from "vue";
+import SignIn from "@/components/SignIn.vue";
+import ProjectSelector from "@/components/ProjectSelector.vue";
 
-export default {
-  name: 'App',
+export default defineComponent({
   components: {
-    HelloWorld
-  }
-}
+    SignIn,
+    ProjectSelector,
+  },
+});
 </script>
 
-<style>
+<style lang="scss">
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
+}
+
+#nav {
+  padding: 30px;
+  a {
+    font-weight: bold;
+    color: #2c3e50;
+
+    &.router-link-exact-active {
+      color: #42b983;
+    }
+  }
+}
+#nav div {
+  display: inline-block;
+  margin-left: 2rem;
 }
 </style>
