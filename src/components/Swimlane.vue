@@ -1,6 +1,6 @@
 <template>
   <div class="swimlane">
-    <div>swimlane: {{ swimlane.name }}</div>
+    <h2>{{ swimlane.name }}</h2>
     <slot></slot>
   </div>
 </template>
@@ -16,6 +16,15 @@ export default defineComponent({
 </script>
 
 <style scoped>
+h2 {
+  font-size: 1rem;
+  display: inline-block;
+  writing-mode: vertical-rl;
+  margin:0;
+  background-color: #f0f0f0;
+  padding-top:2em;
+  padding-bottom:2em;
+}
 .swimlane {
   white-space: nowrap;
 }

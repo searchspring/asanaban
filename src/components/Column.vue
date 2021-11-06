@@ -41,6 +41,7 @@ export default defineComponent({
   width: 300px;
   white-space: normal;
   background-color: aliceblue;
-  margin: 0.3rem;
+  margin: 0.2rem;
+  min-height: 200px;
 }
 </style>
