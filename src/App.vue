@@ -21,6 +21,9 @@ export default defineComponent({
 </script>
 
 <style lang="scss">
+body {
+  margin:0;
+}
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -30,7 +33,8 @@ export default defineComponent({
 }
 
 #nav {
-  padding: 30px;
+  padding: 0.5rem;
+  text-align: left;
   a {
     font-weight: bold;
     color: #2c3e50;
