@@ -1,5 +1,6 @@
 import { createStore } from "vuex";
 import asana from "./asana";
+import preferences from "./preferences";
 import jsonstore from "../utils/jsonstore";
 
 export default createStore({
@@ -8,5 +9,6 @@ export default createStore({
   },
   modules: {
     asana: asana,
+    preferences: preferences,
   },
 });

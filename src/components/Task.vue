@@ -20,7 +20,7 @@ export default defineComponent({
   margin: 0.1rem;
   background-color: white;
   display: inline-block;
-  width: 42%;
+  max-width: 20rem;
   vertical-align: top;
   font-size: 10px;
   min-height: 2rem;
