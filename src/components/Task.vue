@@ -1,6 +1,6 @@
 <template>
-  <div>
-    <div>task: {{ task.name }}</div>
+  <div class="task">
+    <div>{{ task.name }}</div>
   </div>
 </template>
 
@@ -13,3 +13,16 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.task {
+  padding: 0.3rem;
+  margin: 0.1rem;
+  background-color: white;
+  display: inline-block;
+  width: 42%;
+  vertical-align: top;
+  font-size: 10px;
+  min-height: 2rem;
+}
+</style>
