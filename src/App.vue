@@ -3,26 +3,29 @@
     <router-link to="/">asanaban</router-link>
     <project-selector />
     <sign-in />
+    <actions />
   </div>
   <router-view />
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
-import SignIn from "@/components/SignIn.vue";
 import ProjectSelector from "@/components/ProjectSelector.vue";
+import SignIn from "@/components/SignIn.vue";
+import Actions from "@/components/Actions.vue";
+import { defineComponent } from "vue";
 
 export default defineComponent({
   components: {
     SignIn,
     ProjectSelector,
+    Actions,
   },
 });
 </script>
 
 <style lang="scss">
 body {
-  margin:0;
+  margin: 0;
 }
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
