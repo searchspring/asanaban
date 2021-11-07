@@ -11,7 +11,6 @@ import store from "@/store";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  name: "SignIn",
   data() {
     return { signingIn: false };
   },

@@ -30,6 +30,8 @@ export default {
     selectedProject: jsonstore.get("selectedProject", null),
     tasks: jsonstore.get("tasks", []),
     sections: jsonstore.get("sections", []),
+    actions: [] as any[],
+    errors: [] as any[],
   },
   getters: {
     swimlanes: (state): any[] => {
@@ -86,15 +88,53 @@ export default {
     },
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
-      state.tasks = unique(state.tasks);
+      // state.tasks = unique(state.tasks);
     },
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
-      state.tasks = unique(state.tasks);
+      // state.tasks = unique(state.tasks);
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
       jsonstore.set("sections", state.sections);
+    },
+    moveTask(state, payload: any): void {
+      // find task by taskId
+      const task = state.tasks.find((task: any) => task.gid === payload.taskId);
+      // update section gid
+      task.memberships[0].section.gid = payload.endSectionId;
+
+      // find sibling task
+      const siblingTask = state.tasks.find(
+        (task: any) => task.gid === payload.siblingTaskId
+      );
+      // move task to before sibling task in state.tasks
+      const index = state.tasks.indexOf(task);
+      const siblingIndex = state.tasks.indexOf(siblingTask);
+      state.tasks.splice(index, 1);
+      state.tasks.splice(siblingIndex, 0, task);
+
+      state.actions.push(() => {
+        return asanaClient.sections.addTask(payload.endSectionId, {
+          task: payload.taskId,
+          insert_after: payload.siblingTaskId,
+        });
+      });
+    },
+    processAction(state): void {
+      if (state.actions.length > 0) {
+        const action = state.actions.shift();
+        action()
+          .then(() => {
+            console.info("completed", action.toString());
+          })
+          .catch((error) => {
+            state.errors.push(error);
+            if (error.status !== 400) {
+              state.actions.push(action);
+            }
+          });
+      }
     },
   },
   actions: {
@@ -164,6 +204,14 @@ export default {
           .then((sectionResponse) => {
             commit("setSections", sectionResponse);
           });
+      }
+    },
+    moveTask({ commit }, payload) {
+      commit("moveTask", payload);
+    },
+    processAction({ commit, state }): void {
+      if (state.actions.length > 0) {
+        commit("processAction");
       }
     },
   },
