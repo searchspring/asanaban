@@ -37,9 +37,9 @@ export default defineComponent({
   margin: 0.1rem;
   background-color: white;
   display: inline-block;
-  max-width: 20rem;
+  max-width: 10rem;
   vertical-align: top;
-  font-size: 10px;
+  font-size: 0.6rem;
   min-height: 2rem;
   cursor: move;
 }

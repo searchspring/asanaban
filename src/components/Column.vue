@@ -106,16 +106,22 @@ function removeDragOverClass() {
     columns[i].classList.remove("drag-over");
   }
 }
-
 </script>
 
 <style scoped>
+/* make text unselectable */
+.column-name {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .column {
-  display: inline-block;
   vertical-align: top;
   text-align: left;
   min-width: 10rem;
-  white-space: normal;
   background-color: aliceblue;
   margin-left: 0.2rem;
   min-height: 200px;
