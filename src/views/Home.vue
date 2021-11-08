@@ -28,7 +28,6 @@ export default defineComponent({
   },
   setup() {
     onMounted(async () => {
-      await store.dispatch("asana/checkSignedIn");
       store.dispatch("asana/loadProjects");
       store.dispatch("asana/loadTasks");
       store.dispatch("asana/loadSections");

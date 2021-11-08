@@ -2,7 +2,7 @@ import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import jsonstore from "../../utils/jsonstore";
-
+import store from "@/store";
 let asanaClient: AsanaSdk = null;
 if (jsonstore.has("refresh_token")) {
   asanaClient = createClient(
@@ -13,6 +13,13 @@ if (jsonstore.has("refresh_token")) {
 
 function createClient(accessToken: string, refreshToken: string) {
   const client = AsanaSdk.Client.create();
+  client.dispatcher.handleUnauthorized = () => {
+    console.error("failed to perform action - signing in again");
+    store.commit("asana/clearActions");
+    store.commit("asana/clearErrors");
+    store.dispatch("asana/signIn");
+  };
+  client.dispatcher.retryOnRateLimit = true;
   const credentials = {
     access_token: accessToken,
     refresh_token: refreshToken,
@@ -88,11 +95,9 @@ export default {
     },
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
-      // state.tasks = unique(state.tasks);
     },
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
-      // state.tasks = unique(state.tasks);
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
@@ -126,15 +131,21 @@ export default {
         const action = state.actions.shift();
         action()
           .then(() => {
-            console.info("completed", action.toString());
+            console.info();
           })
           .catch((error) => {
             state.errors.push(error);
-            if (error.status !== 400) {
+            if (error.status !== 400 && error.status !== 403) {
               state.actions.push(action);
             }
           });
       }
+    },
+    clearErrors(state): void {
+      state.errors = [];
+    },
+    clearActions(state): void {
+      state.actions = [];
     },
   },
   actions: {
@@ -158,20 +169,6 @@ export default {
         "&code_challenge=" +
         codeChallenge;
       self.location.href = url;
-    },
-    checkSignedIn({ dispatch }): void {
-      if (asanaClient !== null) {
-        asanaClient.users
-          .me()
-          .then(function () {
-            // do nothing
-          })
-          .catch(function (err) {
-            if (err.status === 401) {
-              dispatch("signIn"); // TODO replace with refresh token endpoint
-            }
-          });
-      }
     },
     signOut({ commit, rootState }): void {
       commit("signOut");
@@ -213,6 +210,9 @@ export default {
       if (state.actions.length > 0) {
         commit("processAction");
       }
+    },
+    clearErrors({ commit }): void {
+      commit("clearErrors");
     },
   },
 };
