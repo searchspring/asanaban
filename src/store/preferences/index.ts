@@ -7,7 +7,7 @@ export default {
   },
   getters: {},
   mutations: {
-    toggleColumn(state, gid) {
+    toggleColumn(state: any, gid: string) {
       if (!state.columnStates[gid]) {
         state.columnStates[gid] = { collapsed: false };
       }
