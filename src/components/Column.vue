@@ -62,9 +62,7 @@ export default defineComponent({
       const siblingTaskId = el
         ? el.getAttribute("id")
         : getLastTaskId(endSectionId);
-      document.getElementById(taskId)?.classList.remove("dragging");
       removeDragOverClass();
-      removeDraggingClass();
       store.dispatch("asana/moveTask", {
         startSectionId: startSectionId,
         endSectionId: endSectionId,
@@ -78,7 +76,6 @@ export default defineComponent({
     },
     onDragEnd(event) {
       const taskId = event.dataTransfer.getData("taskId");
-      document.getElementById(taskId)?.classList.remove("dragging");
       removeDragOverClass();
     },
   },
@@ -93,29 +90,28 @@ function getLastTaskId(sectionId: string) {
   return taskId;
 }
 
-function removeDraggingClass() {
-  const dragging = document.getElementsByClassName("dragging");
-  for (let i = 0; i < dragging.length; i++) {
-    dragging[i].classList.remove("dragging");
-  }
-}
-
 function removeDragOverClass() {
   const columns = document.getElementsByClassName("droppable");
   for (let i = 0; i < columns.length; i++) {
     columns[i].classList.remove("drag-over");
   }
 }
-
 </script>
 
 <style scoped>
+/* make text unselectable */
+.column-name {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
 .column {
-  display: inline-block;
   vertical-align: top;
   text-align: left;
   min-width: 10rem;
-  white-space: normal;
   background-color: aliceblue;
   margin-left: 0.2rem;
   min-height: 200px;

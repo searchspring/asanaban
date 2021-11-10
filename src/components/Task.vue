@@ -4,6 +4,7 @@
     class="task"
     draggable="true"
     @dragstart="startDrag($event, task)"
+    @dragend="endDrag($event, task)"
   >
     <div>{{ task.name }}</div>
   </div>
@@ -27,6 +28,9 @@ export default defineComponent({
       event.srcElement.classList.add("dragging");
       event.dataTransfer.setData("taskId", task.gid);
     },
+    endDrag(event) {
+      event.srcElement.classList.remove("dragging");
+    },
   },
 });
 </script>
@@ -37,9 +41,9 @@ export default defineComponent({
   margin: 0.1rem;
   background-color: white;
   display: inline-block;
-  max-width: 20rem;
+  max-width: 10rem;
   vertical-align: top;
-  font-size: 10px;
+  font-size: 0.6rem;
   min-height: 2rem;
   cursor: move;
 }

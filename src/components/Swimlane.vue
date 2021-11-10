@@ -22,8 +22,13 @@ export default defineComponent({
   margin-bottom: 0.1rem;
 }
 h2 {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
   font-size: 1rem;
-  display: inline-block;
   writing-mode: vertical-rl;
   background-color: #f0f0f0;
   text-align: center;
@@ -32,8 +37,6 @@ h2 {
 /* column min width 100 but extend past screen size no wrap */
 .swimlane-content {
   display: flex;
-  flex-direction: row;
   flex-wrap: nowrap;
-  min-width: 100%;
 }
 </style>
