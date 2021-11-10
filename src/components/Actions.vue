@@ -23,11 +23,6 @@ import store from "@/store";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  setup() {
-    self.setTimeout(() => {
-      processActions();
-    }, 1000);
-  },
   data() {
     return {
       showErrors: false,
@@ -61,13 +56,6 @@ export default defineComponent({
   },
 });
 
-function processActions() {
-  store.dispatch("asana/processAction").finally(() => {
-    self.setTimeout(() => {
-      processActions();
-    }, 1000);
-  });
-}
 </script>
 
 <style scoped>

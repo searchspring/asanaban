@@ -1,6 +1,5 @@
 <template>
   <div id="nav">
-    <router-link to="/">asanaban</router-link>
     <project-selector />
     <sign-in />
     <actions />
@@ -41,6 +40,6 @@ body {
 }
 #nav div {
   display: inline-block;
-  margin-left: 2rem;
+  margin-right: 2rem;
 }
 </style>

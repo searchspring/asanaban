@@ -3,6 +3,7 @@ import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
+import { startWorkers } from "./worker"
 let asanaClient: AsanaSdk = null;
 if (jsonstore.has("refresh_token")) {
   asanaClient = createClient(
@@ -10,6 +11,7 @@ if (jsonstore.has("refresh_token")) {
     jsonstore.get("refresh_token")
   );
 }
+startWorkers();
 
 function createClient(accessToken: string, refreshToken: string) {
   const client = AsanaSdk.Client.create();
@@ -125,21 +127,6 @@ export default {
           insert_after: payload.siblingTaskId,
         });
       });
-    },
-    processAction(state): void {
-      if (state.actions.length > 0) {
-        const action = state.actions.shift();
-        action()
-          .then(() => {
-            console.info();
-          })
-          .catch((error) => {
-            state.errors.push(error);
-            if (error.status !== 400 && error.status !== 403) {
-              state.actions.push(action);
-            }
-          });
-      }
     },
     clearErrors(state): void {
       state.errors = [];
