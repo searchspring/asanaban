@@ -62,9 +62,7 @@ export default defineComponent({
       const siblingTaskId = el
         ? el.getAttribute("id")
         : getLastTaskId(endSectionId);
-      document.getElementById(taskId)?.classList.remove("dragging");
       removeDragOverClass();
-      removeDraggingClass();
       store.dispatch("asana/moveTask", {
         startSectionId: startSectionId,
         endSectionId: endSectionId,
@@ -78,7 +76,6 @@ export default defineComponent({
     },
     onDragEnd(event) {
       const taskId = event.dataTransfer.getData("taskId");
-      document.getElementById(taskId)?.classList.remove("dragging");
       removeDragOverClass();
     },
   },
@@ -91,13 +88,6 @@ function getLastTaskId(sectionId: string) {
 
   const taskId = tasks.length === 0 ? null : tasks[tasks.length - 1].gid;
   return taskId;
-}
-
-function removeDraggingClass() {
-  const dragging = document.getElementsByClassName("dragging");
-  for (let i = 0; i < dragging.length; i++) {
-    dragging[i].classList.remove("dragging");
-  }
 }
 
 function removeDragOverClass() {
