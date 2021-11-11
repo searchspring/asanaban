@@ -6,4 +6,12 @@ function getPrettyColumnName(columnName: string): string {
   return columnName;
 }
 
-export { getPrettyColumnName };
+function getColumnCount(columnName: string): string {
+  const parts = columnName.split(/[:|]/);
+  if (parts && parts.length === 3) {
+    return parts[2];
+  }
+  return "-1";
+}
+
+export { getPrettyColumnName, getColumnCount };

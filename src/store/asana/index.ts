@@ -1,9 +1,10 @@
+import store from "@/store";
+import { getColumnCount } from "@/utils/name-converter";
 import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import jsonstore from "../../utils/jsonstore";
-import store from "@/store";
-import { startWorkers } from "./worker"
+import { startWorkers } from "./worker";
 let asanaClient: AsanaSdk = null;
 if (jsonstore.has("refresh_token")) {
   asanaClient = createClient(
@@ -103,6 +104,11 @@ export default {
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
+      // iterate over sections and add maxTaskCount
+      state.sections.forEach((section: any) => {
+        section.maxTaskCount = getColumnCount(section.name);
+      });
+
       jsonstore.set("sections", state.sections);
     },
     moveTask(state, payload: any): void {
