@@ -1,10 +1,11 @@
 <template>
   <div class="column" :class="classObject">
-    <div class="column-name" @click="toggleColumn(section.gid)">
-      {{ columnName }}
-      <span class="count" v-if="!columnCollapsed(section.gid)"
-        >{{ taskCount(section.gid) }} of {{ maxTaskCount() }}</span
-      >
+    <div class="column-nav" @click="toggleColumn(section.gid)">
+      <div class="nav-item" v-if="!columnCollapsed(section.gid)"></div>
+      <div class="nav-title">{{ columnName }}</div>
+      <div class="count nav-item" v-if="!columnCollapsed(section.gid)">
+        {{ taskCount(section.gid) }} of {{ maxTaskCount() }}
+      </div>
     </div>
     <div
       v-if="!columnCollapsed(section.gid)"
@@ -50,6 +51,12 @@ export default defineComponent({
     },
   },
   methods: {
+    columnCollapsed(gid: string) {
+      if (!store.state["preferences"].columnStates[gid]) {
+        return false;
+      }
+      return store.state["preferences"].columnStates[gid].collapsed;
+    },
     overBudget() {
       const section = this.$props["section"];
       if (section) {
@@ -83,12 +90,6 @@ export default defineComponent({
     },
     toggleColumn(gid: string) {
       store.dispatch("preferences/toggleColumn", gid);
-    },
-    columnCollapsed(gid: string) {
-      if (!store.state["preferences"].columnStates[gid]) {
-        return false;
-      }
-      return store.state["preferences"].columnStates[gid].collapsed;
     },
     onDrop(event, endSectionId: string) {
       const startSectionId = event.dataTransfer.getData("startSectionId");
@@ -137,14 +138,34 @@ function removeDragOverClass() {
 </script>
 
 <style scoped>
-/* make text unselectable */
-.column-name {
+.column-nav {
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   -khtml-user-select: none;
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
+  font-weight: bold;
+  text-align: center;
+  cursor: pointer;
+  white-space: nowrap;
+  display: flex;
+  flex-wrap: nowrap;
+  font-size: 0.8rem;
+}
+.nav-title {
+  flex-grow: 1;
+  padding-top:0.3rem;
+  padding-bottom:0.3rem;
+}
+.nav-item {
+  font-size: 0.5rem;
+  margin-left: 0.2rem;
+  margin-right: 0.2rem;
+}
+.column-nav div {
+  margin-top: auto;
+  margin-bottom: auto;
 }
 .column {
   vertical-align: top;
@@ -156,12 +177,6 @@ function removeDragOverClass() {
 }
 .droppable {
   min-height: 200px;
-}
-.column-name {
-  font-weight: bold;
-  margin-bottom: 0.5rem;
-  text-align: center;
-  cursor: pointer;
 }
 .column.collapsed {
   background-color: green;
@@ -178,9 +193,6 @@ function removeDragOverClass() {
 }
 .count {
   font-size: 0.5rem;
-  margin-left: 0.5rem;
-  float: right;
-  padding: 0.3rem;
 }
 .over-budget {
   background-color: red;
