@@ -1,7 +1,10 @@
 <template>
-  <div class="column" :class="{ collapsed: columnCollapsed(section.gid) }">
+  <div class="column" :class="classObject">
     <div class="column-name" @click="toggleColumn(section.gid)">
       {{ columnName }}
+      <span class="count" v-if="!columnCollapsed(section.gid)"
+        >{{ taskCount(section.gid) }} of {{ maxTaskCount() }}</span
+      >
     </div>
     <div
       v-if="!columnCollapsed(section.gid)"
@@ -35,11 +38,47 @@ export default defineComponent({
     columnName(state) {
       return getPrettyColumnName(state.section.name);
     },
+    classObject() {
+      const section = this.$props["section"];
+      if (section) {
+        return {
+          collapsed: this.columnCollapsed(section.gid),
+          "over-budget": this.overBudget(),
+        };
+      }
+      return {};
+    },
   },
   methods: {
+    overBudget() {
+      const section = this.$props["section"];
+      if (section) {
+        return (
+          section.maxTaskCount !== "-1" &&
+          this.taskCount(section.gid) > section.maxTaskCount
+        );
+      }
+      return false;
+    },
+    taskCount(sectionId: string) {
+      return this.tasks(sectionId).length;
+    },
+    maxTaskCount() {
+      const section = this.$props["section"];
+      if (section) {
+        if (section.maxTaskCount === "-1") {
+          return "∞";
+        }
+        return section.maxTaskCount;
+      }
+      return "";
+    },
     tasks(sectionId: string) {
       return store.state["asana"].tasks.filter((task) => {
-        return task.memberships[0].section.gid === sectionId;
+        // iterate over all  memberships for matching sections
+        return task.memberships.some((membership) => {
+          return membership.section.gid === sectionId;
+        });
       });
     },
     toggleColumn(gid: string) {
@@ -74,8 +113,7 @@ export default defineComponent({
       removeDragOverClass();
       event.currentTarget.classList.add("drag-over");
     },
-    onDragEnd(event) {
-      const taskId = event.dataTransfer.getData("taskId");
+    onDragEnd() {
       removeDragOverClass();
     },
   },
@@ -137,5 +175,14 @@ function removeDragOverClass() {
 }
 .drag-over {
   background-color: #f0f0f0;
+}
+.count {
+  font-size: 0.5rem;
+  margin-left: 0.5rem;
+  float: right;
+  padding: 0.3rem;
+}
+.over-budget {
+  background-color: red;
 }
 </style>
