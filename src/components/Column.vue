@@ -45,9 +45,7 @@ export default defineComponent({
         return {
           collapsed: this.columnCollapsed(section.gid),
           "over-budget": this.overBudget(),
-          "search-match":
-            this.tasks(section.gid).length > 0 &&
-            store.state["preferences"].search !== "",
+          "search-match": this.tasks(section.gid).length > 0 && !emptySearch(),
         };
       }
       return {};
@@ -72,7 +70,6 @@ export default defineComponent({
     },
     taskCount(sectionId: string) {
       return store.state["asana"].tasks.filter((task) => {
-        // iterate over all  memberships for matching sections
         return task.memberships.some((membership) => {
           return membership.section.gid === sectionId;
         });
@@ -93,7 +90,7 @@ export default defineComponent({
         return task.memberships.some((membership) => {
           const isInSection = membership.section.gid === sectionId;
           const isInSearch =
-            store.state["preferences"].search === "" ||
+            emptySearch() ||
             taskHasSearchHit(task, store.state["preferences"].search);
           return isInSection && isInSearch;
         });
@@ -130,6 +127,9 @@ export default defineComponent({
   },
 });
 
+function emptySearch() {
+  return store.state["preferences"].search.trim() === "";
+}
 function taskHasSearchHit(task: any, search: string) {
   let text = task.name + " " + task.notes;
   task.tags.forEach((tag) => {
