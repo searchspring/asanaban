@@ -189,11 +189,9 @@ function removeDragOverClass() {
   margin-bottom: auto;
 }
 .column {
-  /* vertical-align: top; */
   text-align: left;
   background-color: #dddddd;
   margin-left: 0.2rem;
-  /* min-height: 200px; */
   flex-grow: 1;
 }
 .droppable {
@@ -204,7 +202,6 @@ function removeDragOverClass() {
   max-width: 1.5rem;
   font-size: 1rem;
   writing-mode: vertical-rl;
-  /* text-align: center; */
   padding-left: 0.1rem;
   padding-right: 0.1rem;
 }
