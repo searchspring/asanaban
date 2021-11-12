@@ -41,10 +41,10 @@ export default defineComponent({
   bottom: 0;
   position: fixed;
   width: 100%;
+  gap: 1px;
 }
 .tag {
-  flex-grow: 1;
-  margin: 1px;
+  flex-basis: 100%;
   text-align: center;
   background-color: #bbbbbb;
   padding: 0.2rem;
