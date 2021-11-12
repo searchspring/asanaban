@@ -17,10 +17,15 @@ import store from "@/store";
 import { defineComponent } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      search: "",
-    };
+  computed: {
+    search: {
+      get() {
+        return store.state["preferences"].search;
+      },
+      set(value) {
+        store.dispatch("preferences/setSearch", value);
+      },
+    },
   },
   methods: {
     onChange() {
