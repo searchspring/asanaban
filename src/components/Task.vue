@@ -6,7 +6,8 @@
     @dragstart="startDrag($event, task)"
     @dragend="endDrag($event, task)"
   >
-    <div>{{ task.name }}</div>
+    <img class="photo" v-if="assignee" :src="assignee" />
+    <div class="text">{{ task.name }}</div>
   </div>
 </template>
 
@@ -16,6 +17,16 @@ import { defineComponent } from "vue";
 export default defineComponent({
   props: {
     task: Object,
+  },
+  computed: {
+    assignee() {
+      if (this.$props.task) {
+        return this.$props.task.assignee
+          ? this.$props.task.assignee.photo.image_21x21
+          : "";
+      }
+      return "";
+    },
   },
   methods: {
     startDrag(event, task: any) {
@@ -37,17 +48,27 @@ export default defineComponent({
 
 <style scoped>
 .task {
-  padding: 0.3rem;
-  margin: 0.1rem;
+  margin-left: 1px;
+  margin-bottom: 1px;
   background-color: white;
-  display: inline-block;
-  max-width: 10rem;
-  vertical-align: top;
-  font-size: 0.6rem;
+  max-width: 9rem;
+  min-width: 8rem;
   min-height: 2rem;
   cursor: move;
+  display: inline-block;
+  padding: 0.3rem;
+  vertical-align: top;
+}
+.text {
+  vertical-align: top;
+  font-size: 0.6rem;
+  display: inline-block;
 }
 .dragging {
   opacity: 0.5;
+}
+.photo {
+  border-radius: 100%;
+  display: inline-block;
 }
 </style>

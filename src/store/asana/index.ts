@@ -55,6 +55,16 @@ export default {
             swimlanes.push({ name: swimlaneName });
             found.add(swimlaneName);
           }
+        } else {
+          // count tasks in this section
+          const tasks = store.state["asana"].tasks.filter((task) => {
+            return task.memberships.some((membership) => {
+              return membership.section.gid === section.gid;
+            });
+          });
+          if (tasks.length > 0) {
+            swimlanes.push(section);
+          }
         }
       });
       return swimlanes;
