@@ -192,7 +192,7 @@ function removeDragOverClass() {
   text-align: left;
   background-color: #dddddd;
   margin-left: 0.2rem;
-  flex-grow: 1;
+  flex-basis: 100%;
 }
 .droppable {
   min-height: 200px;
