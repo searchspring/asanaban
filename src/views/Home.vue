@@ -11,6 +11,7 @@
         :key="section.gid"
       />
     </swimlane>
+    <tag-bar />
   </div>
 </template>
 
@@ -20,11 +21,13 @@ import { mapGetters } from "vuex";
 import { defineComponent, onMounted } from "vue";
 import Swimlane from "@/components/Swimlane.vue";
 import Column from "@/components/Column.vue";
+import TagBar from "@/components/TagBar.vue";
 
 export default defineComponent({
   components: {
     Swimlane,
     Column,
+    TagBar,
   },
   setup() {
     onMounted(async () => {
