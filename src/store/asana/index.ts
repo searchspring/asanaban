@@ -42,6 +42,7 @@ export default {
     sections: jsonstore.get("sections", []),
     actions: [] as any[],
     errors: [] as any[],
+    tags: jsonstore.get("tags", []),
   },
   getters: {
     swimlanes: (state): any[] => {
@@ -98,13 +99,14 @@ export default {
     },
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
+      setTags(state, getTags(state.tasks));
     },
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
+      setTags(state, getTags(state.tasks));
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
-      // iterate over sections and add maxTaskCount
       state.sections.forEach((section: any) => {
         section.maxTaskCount = getColumnCount(section.name);
       });
@@ -112,16 +114,11 @@ export default {
       jsonstore.set("sections", state.sections);
     },
     moveTask(state, payload: any): void {
-      // find task by taskId
       const task = state.tasks.find((task: any) => task.gid === payload.taskId);
-      // update section gid
       task.memberships[0].section.gid = payload.endSectionId;
-
-      // find sibling task
       const siblingTask = state.tasks.find(
         (task: any) => task.gid === payload.siblingTaskId
       );
-      // move task to before sibling task in state.tasks
       const index = state.tasks.indexOf(task);
       const siblingIndex = state.tasks.indexOf(siblingTask);
       state.tasks.splice(index, 1);
@@ -230,7 +227,7 @@ function loadTasksWithOffset(
     asanaClient.tasks.findAll(options).then((taskResponse) => {
       commit("addTasks", taskResponse.data);
       if (taskResponse._response.next_page) {
-        loadProjectsWithOffset(
+        loadTasksWithOffset(
           taskResponse._response.next_page.offset,
           project,
           commit
@@ -266,6 +263,23 @@ function loadProjectsWithOffset(
       }
     });
   }
+}
+
+function setTags(state, payload: unknown[]): void {
+  state.tags = payload;
+  jsonstore.set("tags", state.tags);
+}
+
+function getTags(tasks: any[]): string[] {
+  const tags = [] as string[];
+  tasks.forEach((task) => {
+    task.tags.forEach((tag) => {
+      if (tags.indexOf(tag.name) === -1) {
+        tags.push(tag.name);
+      }
+    });
+  });
+  return tags;
 }
 
 function base64URL(string) {
