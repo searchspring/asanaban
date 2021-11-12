@@ -1,5 +1,6 @@
 <template>
   <div id="nav">
+    <search />
     <project-selector />
     <sign-in />
     <actions />
@@ -12,12 +13,14 @@ import ProjectSelector from "@/components/ProjectSelector.vue";
 import SignIn from "@/components/SignIn.vue";
 import Actions from "@/components/Actions.vue";
 import { defineComponent } from "vue";
+import Search from "./components/Search.vue";
 
 export default defineComponent({
   components: {
     SignIn,
     ProjectSelector,
     Actions,
+    Search,
   },
 });
 </script>
