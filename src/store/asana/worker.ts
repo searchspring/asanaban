@@ -24,7 +24,12 @@ async function processAction(): Promise<void> {
         console.info();
       })
       .catch((error) => {
-        state.errors.push(error);
+        if (
+          error.value.errors[0].message.indexOf("does not exist in parent") ===
+          -1
+        ) {
+          state.errors.push(error);
+        }
         if (error.status !== 400) {
           state.actions.push(action);
         }

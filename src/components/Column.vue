@@ -45,6 +45,7 @@ export default defineComponent({
         return {
           collapsed: this.columnCollapsed(section.gid),
           "over-budget": this.overBudget(),
+          "search-match": this.tasks(section.gid).length > 0 && !emptySearch(),
         };
       }
       return {};
@@ -68,7 +69,11 @@ export default defineComponent({
       return false;
     },
     taskCount(sectionId: string) {
-      return this.tasks(sectionId).length;
+      return store.state["asana"].tasks.filter((task) => {
+        return task.memberships.some((membership) => {
+          return membership.section.gid === sectionId;
+        });
+      }).length;
     },
     maxTaskCount() {
       const section = this.$props["section"];
@@ -82,9 +87,12 @@ export default defineComponent({
     },
     tasks(sectionId: string) {
       return store.state["asana"].tasks.filter((task) => {
-        // iterate over all  memberships for matching sections
         return task.memberships.some((membership) => {
-          return membership.section.gid === sectionId;
+          const isInSection = membership.section.gid === sectionId;
+          const isInSearch =
+            emptySearch() ||
+            taskHasSearchHit(task, store.state["preferences"].search);
+          return isInSection && isInSearch;
         });
       });
     },
@@ -94,7 +102,6 @@ export default defineComponent({
     onDrop(event, endSectionId: string) {
       const startSectionId = event.dataTransfer.getData("startSectionId");
       const taskId = event.dataTransfer.getData("taskId");
-      // const siblingTaskId = event.target.getAttribute("id");
       let el = event.target;
       while (el && el.classList && !el.classList.contains("task")) {
         el = el.parentElement;
@@ -119,6 +126,20 @@ export default defineComponent({
     },
   },
 });
+
+function emptySearch() {
+  return store.state["preferences"].search.trim() === "";
+}
+function taskHasSearchHit(task: any, search: string) {
+  let text = task.name + " " + task.notes;
+  task.tags.forEach((tag) => {
+    text += " " + tag.name;
+  });
+  if (task.assignee) {
+    text += " " + task.assignee.name;
+  }
+  return text.toLowerCase().indexOf(search.toLowerCase()) !== -1;
+}
 
 function getLastTaskId(sectionId: string) {
   const tasks = store.state["asana"].tasks.filter((task) => {
@@ -155,8 +176,8 @@ function removeDragOverClass() {
 }
 .nav-title {
   flex-grow: 1;
-  padding-top:0.3rem;
-  padding-bottom:0.3rem;
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
 }
 .nav-item {
   font-size: 0.5rem;
@@ -168,25 +189,21 @@ function removeDragOverClass() {
   margin-bottom: auto;
 }
 .column {
-  vertical-align: top;
   text-align: left;
-  min-width: 10rem;
-  background-color: aliceblue;
+  background-color: #dddddd;
   margin-left: 0.2rem;
-  min-height: 200px;
+  flex-grow: 1;
 }
 .droppable {
   min-height: 200px;
 }
 .column.collapsed {
-  background-color: green;
   min-width: 1.5rem !important;
   max-width: 1.5rem;
   font-size: 1rem;
-  display: inline-block;
   writing-mode: vertical-rl;
-  background-color: #f0f0f0;
-  text-align: center;
+  padding-left: 0.1rem;
+  padding-right: 0.1rem;
 }
 .drag-over {
   background-color: #f0f0f0;
@@ -196,5 +213,8 @@ function removeDragOverClass() {
 }
 .over-budget {
   background-color: red;
+}
+.search-match {
+  background-color: yellow;
 }
 </style>
