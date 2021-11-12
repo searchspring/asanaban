@@ -99,11 +99,11 @@ export default {
     },
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
-      state.tags = getTags(state.tasks);
+      setTags(state, getTags(state.tasks));
     },
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
-      state.tags = getTags(state.tasks);
+      setTags(state, getTags(state.tasks));
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
@@ -263,6 +263,11 @@ function loadProjectsWithOffset(
       }
     });
   }
+}
+
+function setTags(state, payload: unknown[]): void {
+  state.tags = payload;
+  jsonstore.set("tags", state.tags);
 }
 
 function getTags(tasks: any[]): string[] {
