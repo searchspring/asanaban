@@ -59,7 +59,7 @@ export default defineComponent({
 
 <style scoped>
 .action {
-  background: linear-gradient(to right, rgba(0, 255, 0, 1), rgba(0, 0, 0, 0));
+  background: #cccccc;
   padding: 0.2rem;
   padding-right: 1rem;
   padding-left: 1rem;

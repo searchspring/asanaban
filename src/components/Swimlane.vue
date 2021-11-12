@@ -33,6 +33,9 @@ h2 {
   background-color: #f0f0f0;
   text-align: center;
   margin: 0;
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+  min-height: 10rem;
 }
 /* column min width 100 but extend past screen size no wrap */
 .swimlane-content {
