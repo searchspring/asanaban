@@ -1,16 +1,18 @@
 <template>
   <div>
-    <swimlane
-      v-for="swimlane in swimlanes"
-      :swimlane="swimlane"
-      :key="swimlane.name"
-    >
-      <column
-        v-for="section in sections(swimlane.name)"
-        :section="section"
-        :key="section.gid"
-      />
-    </swimlane>
+    <div class="swimlane-container">
+      <swimlane
+        v-for="swimlane in swimlanes"
+        :swimlane="swimlane"
+        :key="swimlane.name"
+      >
+        <column
+          v-for="section in sections(swimlane.name)"
+          :section="section"
+          :key="section.gid"
+        />
+      </swimlane>
+    </div>
     <tag-bar />
   </div>
 </template>
@@ -48,3 +50,9 @@ export default defineComponent({
   },
 });
 </script>
+
+<style scoped>
+.swimlane-container {
+  margin-bottom: 2rem;
+}
+</style>

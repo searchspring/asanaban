@@ -38,11 +38,12 @@ body {
 }
 
 #nav {
-  padding: 0.5rem;
   text-align: left;
 }
 #nav div {
   display: inline-block;
-  margin-right: 2rem;
+}
+#nav > div {
+  margin-right: 1rem;
 }
 </style>

@@ -191,7 +191,7 @@ function removeDragOverClass() {
 .column {
   text-align: left;
   background-color: #dddddd;
-  margin-left: 0.2rem;
+  margin-left: 1px;
   flex-basis: 100%;
 }
 .droppable {

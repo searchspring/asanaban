@@ -19,7 +19,7 @@ export default defineComponent({
 
 <style scoped>
 .swimlane {
-  margin-bottom: 0.1rem;
+  margin-bottom: 1px;
 }
 h2 {
   -webkit-touch-callout: none;
