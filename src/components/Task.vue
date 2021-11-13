@@ -8,8 +8,9 @@
   >
     <img class="photo" v-if="assignee" :src="assignee" />
     <div class="text">{{ task.name }}</div>
-    <div>
+    <div class="footer">
       <div class="tag" v-for="tag in tags" :key="tag">{{ tag }}</div>
+      <div class="date" v-if="dueDate">{{ dueDate }}</div>
     </div>
   </div>
 </template>
@@ -36,6 +37,14 @@ export default defineComponent({
       }
       return [];
     },
+    dueDate() {
+      if (this.$props.task) {
+        return this.$props.task.due_on
+          ? this.$props.task.due_on.substring(0, 10)
+          : "";
+      }
+      return "";
+    },
   },
   methods: {
     startDrag(event, task: any) {
@@ -61,15 +70,15 @@ export default defineComponent({
   margin-bottom: 1px;
   background-color: white;
   width: 8rem;
-  min-height: 2rem;
+  min-height: 2.1rem;
   cursor: move;
   display: inline-block;
-  padding: 0.3rem;
   vertical-align: top;
 }
 .text {
   vertical-align: top;
   font-size: 0.6rem;
+  margin: 0.3rem;
   display: inline-block;
 }
 .dragging {
@@ -87,5 +96,16 @@ export default defineComponent({
   padding-left: 0.2rem;
   padding-right: 0.2rem;
   margin-right: 1px;
+}
+.footer {
+  display: flex;
+  flex-direction: row;
+  margin-top:1px;
+  border-top: 1px solid #cccccc;
+}
+.date {
+  font-size: 0.5rem;
+  flex-grow: 1;
+  text-align: right;
 }
 </style>
