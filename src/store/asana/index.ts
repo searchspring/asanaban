@@ -1,5 +1,5 @@
 import store from "@/store";
-import { getColumnCount } from "@/utils/name-converter";
+import { convertColorToHexes, getColumnCount } from "@/utils/name-converter";
 import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
@@ -87,10 +87,12 @@ export default {
       jsonstore.remove("selectedProject");
       jsonstore.remove("sections");
       jsonstore.remove("projects");
+      jsonstore.remove("tags");
       asanaClient = null;
       state.projects = [];
       state.sections = [];
       state.tasks = [];
+      state.tags = [];
       state.selectedProject = null;
     },
     setProjects(state, payload: unknown[]): void {
@@ -109,10 +111,12 @@ export default {
     },
     addTasks(state, payload: unknown[]): void {
       state.tasks.push(...payload);
+      colorizeTaskTags(state);
       setTags(state, getTags(state.tasks));
     },
     setTasks(state, payload: unknown[]): void {
       state.tasks = payload;
+      colorizeTaskTags(state);
       setTags(state, getTags(state.tasks));
     },
     mergeTasks(state, payload: unknown[]): void {
@@ -125,6 +129,11 @@ export default {
           state.tasks.push(task);
         }
       });
+      colorizeTaskTags(state);
+      setTags(state, getTags(state.tasks));
+    },
+    setTags(state, payload: unknown[]): void {
+      setTags(state, payload);
     },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
@@ -201,6 +210,9 @@ export default {
     },
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
+      commit("setTags", []);
+      console.log(state.tags);
+
       if (asanaClient && state.selectedProject) {
         loadTasksWithOffset("", state, commit, "addTasks");
       }
@@ -225,7 +237,7 @@ export default {
     clearErrors({ commit }): void {
       commit("clearErrors");
     },
-    mergeTasks({ commit, state }, payload: any): void {
+    mergeTasks({ commit, state }): void {
       if (asanaClient && state.selectedProject) {
         loadTasksWithOffset("", state, commit, "mergeTasks");
       }
@@ -295,17 +307,25 @@ function loadProjectsWithOffset(
   }
 }
 
+function colorizeTaskTags(state: any): void {
+  state.tasks.forEach((task: any) => {
+    task.tags.forEach((tag: any) => {
+      tag.hexes = convertColorToHexes(tag.color);
+    });
+  });
+}
+
 function setTags(state, payload: unknown[]): void {
-  state.tags = payload;
+  state.tags = sortAndUnique(payload);
   jsonstore.set("tags", state.tags);
 }
 
 function getTags(tasks: any[]): string[] {
-  const tags = [] as string[];
+  const tags = [] as any[];
   tasks.forEach((task) => {
     task.tags.forEach((tag) => {
       if (tags.indexOf(tag.name) === -1) {
-        tags.push(tag.name);
+        tags.push(tag);
       }
     });
   });
