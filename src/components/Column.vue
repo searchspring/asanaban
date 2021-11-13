@@ -2,7 +2,7 @@
   <div class="column" :class="classObject">
     <div class="column-nav" @click="toggleColumn(section.gid)">
       <div class="nav-item" v-if="!columnCollapsed(section.gid)"></div>
-      <div class="nav-title">{{ columnName }}</div>
+      <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
       <div class="count nav-item" v-if="!columnCollapsed(section.gid)">
         {{ taskCount(section.gid) }} of {{ maxTaskCount() }}
       </div>
