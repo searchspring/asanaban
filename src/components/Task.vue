@@ -51,8 +51,7 @@ export default defineComponent({
   margin-left: 1px;
   margin-bottom: 1px;
   background-color: white;
-  max-width: 9rem;
-  min-width: 8rem;
+  width: 8rem;
   min-height: 2rem;
   cursor: move;
   display: inline-block;
