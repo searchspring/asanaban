@@ -25,7 +25,7 @@ async function processAction(): Promise<void> {
     await action()
       .then(() => {
         state.actions.shift();
-        console.info();
+        console.info("completed action");
       })
       .catch((error) => {
         state.actions.shift();
