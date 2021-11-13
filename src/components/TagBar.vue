@@ -1,8 +1,17 @@
 <template>
   <div>
     <div v-if="signedIn" class="tag-container">
-      <div v-for="tag in tags" class="tag" :key="tag" @click="click(tag)">
-        {{ tag }}
+      <div
+        v-for="tag in tags"
+        class="tag"
+        :key="tag"
+        @click="click(tag)"
+        :style="{
+          'background-color': tag.hexes.background,
+          color: tag.hexes.font,
+        }"
+      >
+        {{ tag.name }}
       </div>
     </div>
   </div>
@@ -22,12 +31,12 @@ export default defineComponent({
     signedIn() {
       return store.state.signedIn;
     },
-    click(tag: string) {
+    click(tag: any) {
       // unset search if alread set with this tag
-      if (store.state["preferences"].search === tag) {
+      if (store.state["preferences"].search === tag.name) {
         store.dispatch("preferences/setSearch", "");
       } else {
-        store.dispatch("preferences/setSearch", tag);
+        store.dispatch("preferences/setSearch", tag.name);
       }
     },
   },
@@ -46,7 +55,6 @@ export default defineComponent({
 .tag {
   flex-basis: 100%;
   text-align: center;
-  background-color: #bbbbbb;
   padding: 0.2rem;
   cursor: pointer;
   -webkit-touch-callout: none;

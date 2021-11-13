@@ -6,10 +6,21 @@
     @dragstart="startDrag($event, task)"
     @dragend="endDrag($event, task)"
   >
-    <img class="photo" v-if="assignee" :src="assignee" />
-    <div class="text">{{ task.name }}</div>
+    <div class="text">
+      <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
+    </div>
     <div class="footer" v-if="dueDate || tags.length > 0">
-      <div class="tag" v-for="tag in tags" :key="tag">{{ tag }}</div>
+      <div
+        class="tag"
+        v-for="tag in tags"
+        :key="tag"
+        :style="{
+          'background-color': tag.hexes.background,
+          color: tag.hexes.font,
+        }"
+      >
+        {{ tag.name }}
+      </div>
       <div class="date" v-if="dueDate">{{ dueDate }}</div>
     </div>
   </div>
@@ -24,16 +35,18 @@ export default defineComponent({
   },
   computed: {
     assignee() {
-      if (this.$props.task) {
-        return this.$props.task.assignee
-          ? this.$props.task.assignee.photo.image_21x21
-          : "";
-      }
-      return "";
+      return this.$props.task &&
+        this.$props.task.assignee &&
+        this.$props.task.assignee.photo &&
+        this.$props.task.assignee.photo.image_21x21
+        ? this.$props.task.assignee.photo.image_21x21
+        : "";
     },
     tags() {
       if (this.$props.task) {
-        return this.$props.task.tags.map((tag) => tag.name.substring(0, 1));
+        return this.$props.task.tags.map((tag) => {
+          return { name: tag.name.substring(0, 1), hexes: tag.hexes };
+        });
       }
       return [];
     },
@@ -100,8 +113,7 @@ export default defineComponent({
 .footer {
   display: flex;
   flex-direction: row;
-  margin-top:1px;
-  border-top: 1px solid #cccccc;
+  margin-top: 1px;
 }
 .date {
   font-size: 0.5rem;
