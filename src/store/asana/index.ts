@@ -115,6 +115,17 @@ export default {
       state.tasks = payload;
       setTags(state, getTags(state.tasks));
     },
+    mergeTasks(state, payload: unknown[]): void {
+      // replace individual task with each task in payload
+      payload.forEach((task: any) => {
+        const index = state.tasks.findIndex((t) => t.gid === task.gid);
+        if (index !== -1) {
+          state.tasks.splice(index, 1, task);
+        } else {
+          state.tasks.push(task);
+        }
+      });
+    },
     setSections(state, payload: unknown[]): void {
       state.sections = payload;
       state.sections.forEach((section: any) => {
@@ -191,7 +202,7 @@ export default {
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
       if (asanaClient && state.selectedProject) {
-        loadTasksWithOffset("", state.selectedProject, commit);
+        loadTasksWithOffset("", state, commit, "addTasks");
       }
     },
     loadSections({ commit, state }): void {
@@ -214,17 +225,23 @@ export default {
     clearErrors({ commit }): void {
       commit("clearErrors");
     },
+    mergeTasks({ commit, state }, payload: any): void {
+      if (asanaClient && state.selectedProject) {
+        loadTasksWithOffset("", state, commit, "mergeTasks");
+      }
+    },
   },
 };
 
 // load tasks with offset
 function loadTasksWithOffset(
   offset: string,
-  project: string,
-  commit: any
+  state: any,
+  commit: any,
+  commitAction: string
 ): void {
   const options = {
-    project: project,
+    project: state.selectedProject,
     completed_since: "now",
     limit: 100,
     fields:
@@ -235,13 +252,16 @@ function loadTasksWithOffset(
   }
   if (asanaClient) {
     asanaClient.tasks.findAll(options).then((taskResponse) => {
-      commit("addTasks", taskResponse.data);
-      if (taskResponse._response.next_page) {
-        loadTasksWithOffset(
-          taskResponse._response.next_page.offset,
-          project,
-          commit
-        );
+      if (state.actions.length === 0) {
+        commit(commitAction, taskResponse.data);
+        if (taskResponse._response.next_page) {
+          loadTasksWithOffset(
+            taskResponse._response.next_page.offset,
+            state,
+            commit,
+            commitAction
+          );
+        }
       }
     });
   }
