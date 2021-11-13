@@ -8,7 +8,7 @@
   >
     <img class="photo" v-if="assignee" :src="assignee" />
     <div class="text">{{ task.name }}</div>
-    <div class="footer">
+    <div class="footer" v-if="dueDate || tags.length > 0">
       <div class="tag" v-for="tag in tags" :key="tag">{{ tag }}</div>
       <div class="date" v-if="dueDate">{{ dueDate }}</div>
     </div>
