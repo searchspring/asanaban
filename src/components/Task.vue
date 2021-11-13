@@ -8,6 +8,9 @@
   >
     <img class="photo" v-if="assignee" :src="assignee" />
     <div class="text">{{ task.name }}</div>
+    <div>
+      <div class="tag" v-for="tag in tags" :key="tag">{{ tag }}</div>
+    </div>
   </div>
 </template>
 
@@ -26,6 +29,12 @@ export default defineComponent({
           : "";
       }
       return "";
+    },
+    tags() {
+      if (this.$props.task) {
+        return this.$props.task.tags.map((tag) => tag.name.substring(0, 1));
+      }
+      return [];
     },
   },
   methods: {
@@ -69,5 +78,14 @@ export default defineComponent({
 .photo {
   border-radius: 100%;
   display: inline-block;
+}
+.tag {
+  border-radius: 100%;
+  background-color: #cccccc;
+  display: inline-block;
+  font-size: 0.5rem;
+  padding-left: 0.2rem;
+  padding-right: 0.2rem;
+  margin-right: 1px;
 }
 </style>
