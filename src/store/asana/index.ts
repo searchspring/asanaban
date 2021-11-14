@@ -49,22 +49,13 @@ export default {
       const swimlanes: any[] = [];
       const found: Set<string> = new Set();
       state.sections.forEach((section: any) => {
-        if (section.name.indexOf(":") !== -1) {
-          const swimlaneName = section.name.split(":")[0];
-          if (!found.has(swimlaneName)) {
-            swimlanes.push({ name: swimlaneName });
-            found.add(swimlaneName);
-          }
-        } else {
-          // count tasks in this section
-          const tasks = store.state["asana"].tasks.filter((task) => {
-            return task.memberships.some((membership) => {
-              return membership.section.gid === section.gid;
-            });
-          });
-          if (tasks.length > 0) {
-            swimlanes.push(section);
-          }
+        if (section.name.indexOf(":") === -1) {
+          section.name = "no swimlane:" + section.name;
+        }
+        const swimlaneName = section.name.split(":")[0];
+        if (!found.has(swimlaneName)) {
+          swimlanes.push({ name: swimlaneName });
+          found.add(swimlaneName);
         }
       });
       return swimlanes;
