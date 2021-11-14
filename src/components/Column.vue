@@ -249,7 +249,7 @@ a.nav-item {
   font-weight: normal;
   color: black;
   display: inline-block;
-  opacity: 0;
+  opacity: 0.3;
 }
 a.nav-item.mouseInside {
   opacity: 1;
