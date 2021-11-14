@@ -1,8 +1,14 @@
 <template>
-  <div class="column" :class="classObject">
+  <div
+    class="column"
+    :class="classObject"
+    @mouseenter="mouseInside = true"
+    @mouseleave="mouseInside = false"
+  >
     <div class="column-nav" @click="toggleColumn(section.gid)">
       <a
         class="nav-item"
+        :class="{ mouseInside: mouseInside }"
         v-if="!columnCollapsed(section.gid)"
         a
         href="javascript:;"
@@ -41,6 +47,11 @@ export default defineComponent({
   components: { Task },
   props: {
     section: Object,
+  },
+  data() {
+    return {
+      mouseInside: false,
+    };
   },
   computed: {
     columnName(state) {
@@ -194,7 +205,8 @@ function removeDragOverClass() {
   margin-left: 0.2rem;
   margin-right: 0.2rem;
 }
-.column-nav div, .column-nav a {
+.column-nav div,
+.column-nav a {
   margin-top: auto;
   margin-bottom: auto;
 }
@@ -229,7 +241,7 @@ function removeDragOverClass() {
 .search-match {
   background-color: yellow;
 }
-.nav-item a:hover {
+a.nav-item:hover {
   text-decoration: underline;
 }
 a.nav-item {
@@ -237,5 +249,9 @@ a.nav-item {
   font-weight: normal;
   color: black;
   display: inline-block;
+  opacity: 0;
+}
+a.nav-item.mouseInside {
+  opacity: 1;
 }
 </style>
