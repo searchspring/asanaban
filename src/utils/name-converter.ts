@@ -31,10 +31,13 @@ function convertColorToHexes(color: string): any {
   let adjustedHex = "";
   let font = "#000000";
   if (brightness === "dark") {
-    adjustedHex = LightenDarkenColor(hex, -100);
+    adjustedHex = LightenDarkenColor(hex, -50);
     font = "#ffffff";
   } else {
     adjustedHex = LightenDarkenColor(hex, 100);
+  }
+  if (adjustedHex.length === 4) {
+    adjustedHex = "00" + adjustedHex;
   }
   return { background: "#" + adjustedHex, font: font };
 }

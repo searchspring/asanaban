@@ -14,6 +14,7 @@
       </swimlane>
     </div>
     <tag-bar />
+    <task-editor />
   </div>
 </template>
 
@@ -24,12 +25,14 @@ import { defineComponent, onMounted } from "vue";
 import Swimlane from "@/components/Swimlane.vue";
 import Column from "@/components/Column.vue";
 import TagBar from "@/components/TagBar.vue";
+import TaskEditor from "@/components/TaskEditor.vue";
 
 export default defineComponent({
   components: {
     Swimlane,
     Column,
     TagBar,
+    TaskEditor,
   },
   setup() {
     onMounted(async () => {

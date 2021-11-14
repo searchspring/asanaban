@@ -1,7 +1,7 @@
 <template>
   <div v-if="hasActions || hasErrors">
     <div class="action">
-      actions {{ actions.length }}
+      {{ actions.length }}
       <span v-if="hasErrors">, errors: {{ errors.length }}</span>
       <span v-if="hasActions" class="current">{{ currentAction }}</span>
     </div>
@@ -47,11 +47,7 @@ export default defineComponent({
       return store.state["asana"].actions.length > 0;
     },
     currentAction() {
-      const action = store.state["asana"].actions[0];
-      const lines = action.toString().split("\n");
-      const middleLines = lines.slice(1, lines.length - 1).join(" ");
-      const middleLinesTrimmed = middleLines.replace(/\s+/g, " ");
-      return middleLinesTrimmed;
+      return store.state["asana"].actions[0].description;
     },
   },
 });

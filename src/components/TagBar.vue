@@ -32,6 +32,7 @@ export default defineComponent({
       return store.state.signedIn;
     },
     click(tag: any) {
+      console.log(tag)
       // unset search if alread set with this tag
       if (store.state["preferences"].search === tag.name) {
         store.dispatch("preferences/setSearch", "");
