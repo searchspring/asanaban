@@ -22,7 +22,8 @@ async function processAction(): Promise<void> {
   const state = store.state["asana"];
   while (state.actions.length > 0) {
     const action = state.actions[0];
-    await action()
+    await action
+      .func()
       .then(() => {
         state.actions.shift();
         console.info("completed action");
