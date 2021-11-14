@@ -1,7 +1,14 @@
 <template>
   <div class="column" :class="classObject">
     <div class="column-nav" @click="toggleColumn(section.gid)">
-      <div class="nav-item" v-if="!columnCollapsed(section.gid)"></div>
+      <a
+        class="nav-item"
+        v-if="!columnCollapsed(section.gid)"
+        a
+        href="javascript:;"
+        @click.prevent.stop="showTaskEditor(section.gid)"
+        >add task</a
+      >
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
       <div class="count nav-item" v-if="!columnCollapsed(section.gid)">
         {{ taskCount(section.gid) }} of {{ maxTaskCount() }}
@@ -52,6 +59,9 @@ export default defineComponent({
     },
   },
   methods: {
+    showTaskEditor(sectionId: string) {
+      store.dispatch("preferences/showTaskEditor", sectionId);
+    },
     columnCollapsed(gid: string) {
       if (!store.state["preferences"].columnStates[gid]) {
         return false;
@@ -184,7 +194,7 @@ function removeDragOverClass() {
   margin-left: 0.2rem;
   margin-right: 0.2rem;
 }
-.column-nav div {
+.column-nav div, .column-nav a {
   margin-top: auto;
   margin-bottom: auto;
 }
@@ -218,5 +228,14 @@ function removeDragOverClass() {
 }
 .search-match {
   background-color: yellow;
+}
+.nav-item a:hover {
+  text-decoration: underline;
+}
+a.nav-item {
+  text-decoration: none;
+  font-weight: normal;
+  color: black;
+  display: inline-block;
 }
 </style>

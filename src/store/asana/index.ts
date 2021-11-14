@@ -154,11 +154,14 @@ export default {
       state.tasks.splice(index, 1);
       state.tasks.splice(siblingIndex, 0, task);
 
-      state.actions.push(() => {
-        return asanaClient.sections.addTask(payload.endSectionId, {
-          task: payload.taskId,
-          insert_after: payload.siblingTaskId,
-        });
+      state.actions.push({
+        description: "moving task",
+        func: () => {
+          return asanaClient.sections.addTask(payload.endSectionId, {
+            task: payload.taskId,
+            insert_after: payload.siblingTaskId,
+          });
+        },
       });
     },
     clearErrors(state): void {
@@ -166,6 +169,29 @@ export default {
     },
     clearActions(state): void {
       state.actions = [];
+    },
+    createTask(state, taskAndSectionId: any): void {
+      if (asanaClient) {
+        state.actions.push({
+          description: "creating task",
+          func: () => {
+            return asanaClient.tasks
+              .create({
+                ...taskAndSectionId.task,
+                projects: [state.selectedProject],
+                memberships: [
+                  {
+                    section: taskAndSectionId.sectionId,
+                    project: state.selectedProject,
+                  },
+                ],
+              })
+              .then((task: any) => {
+                state.tasks.push(task);
+              });
+          },
+        });
+      }
     },
   },
   actions: {
@@ -211,8 +237,6 @@ export default {
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
       commit("setTags", []);
-      console.log(state.tags);
-
       if (asanaClient && state.selectedProject) {
         loadTasksWithOffset("", state, commit, "addTasks");
       }
@@ -241,6 +265,9 @@ export default {
       if (asanaClient && state.selectedProject) {
         loadTasksWithOffset("", state, commit, "mergeTasks");
       }
+    },
+    createTask({ commit }, taskAndSectionId: any): void {
+      commit("createTask", taskAndSectionId);
     },
   },
 };
