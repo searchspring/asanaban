@@ -52,10 +52,22 @@ export default {
         if (section.name.indexOf(":") === -1) {
           section.name = "no swimlane:" + section.name;
         }
-        const swimlaneName = section.name.split(":")[0];
-        if (!found.has(swimlaneName)) {
-          swimlanes.push({ name: swimlaneName });
-          found.add(swimlaneName);
+        if (!section.name.startsWith("no swimlane")) {
+          const swimlaneName = section.name.split(":")[0];
+          if (!found.has(swimlaneName)) {
+            swimlanes.push({ name: swimlaneName });
+            found.add(swimlaneName);
+          }
+        } else {
+          // count tasks in this section
+          const tasks = store.state["asana"].tasks.filter((task) => {
+            return task.memberships.some((membership) => {
+              return membership.section.gid === section.gid;
+            });
+          });
+          if (tasks.length > 0) {
+            swimlanes.push({ name: section.name.split(":")[0] });
+          }
         }
       });
       return swimlanes;
@@ -184,6 +196,22 @@ export default {
         });
       }
     },
+    updateTask(state, taskAndSectionId: any): void {
+      state.actions.push({
+        description: "updating task",
+        func: () => {
+          const index = state.tasks.findIndex(
+            (t: any) => t.gid === taskAndSectionId.task.gid
+          );
+          if (index !== -1) {
+            state.tasks.splice(index, 1, taskAndSectionId.task);
+          }
+          return asanaClient.tasks.update(taskAndSectionId.task.gid, {
+            name: taskAndSectionId.task.name,
+          });
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -259,6 +287,9 @@ export default {
     },
     createTask({ commit }, taskAndSectionId: any): void {
       commit("createTask", taskAndSectionId);
+    },
+    updateTask({ commit }, taskAndSectionId: any): void {
+      commit("updateTask", taskAndSectionId);
     },
   },
 };

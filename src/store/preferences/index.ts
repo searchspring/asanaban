@@ -5,7 +5,7 @@ export default {
   state: {
     columnStates: jsonstore.get("columnStates", {}),
     search: "",
-    taskEditorSectionId: "",
+    taskEditorSectionIdAndTask: null,
   },
   getters: {},
   mutations: {
@@ -21,8 +21,8 @@ export default {
     setSearch(state: any, search: string) {
       state.search = search;
     },
-    setTaskEditorSectionId(state: any, sectionId: string) {
-      state.taskEditorSectionId = sectionId;
+    setTaskEditorSectionId(state: any, sectionIdAndTask: any) {
+      state.taskEditorSectionIdAndTask = sectionIdAndTask;
     },
   },
   actions: {
@@ -35,8 +35,8 @@ export default {
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");
     },
-    showTaskEditor({ commit }, sectionId: string) {
-      commit("setTaskEditorSectionId", sectionId);
+    showTaskEditor({ commit }, sectionIdAndTask: any) {
+      commit("setTaskEditorSectionId", sectionIdAndTask);
     },
   },
 };

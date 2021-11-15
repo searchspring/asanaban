@@ -5,6 +5,7 @@
     draggable="true"
     @dragstart="startDrag($event, task)"
     @dragend="endDrag($event, task)"
+    @click="edit()"
   >
     <div class="text">
       <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
@@ -27,6 +28,7 @@
 </template>
 
 <script lang="ts">
+import store from "@/store";
 import { defineComponent } from "vue";
 
 export default defineComponent({
@@ -73,6 +75,9 @@ export default defineComponent({
     endDrag(event) {
       event.srcElement.classList.remove("dragging");
     },
+    edit() {
+      store.dispatch("preferences/showTaskEditor", { task: this.$props.task });
+    },
   },
 });
 </script>
@@ -93,6 +98,8 @@ export default defineComponent({
   font-size: 0.6rem;
   margin: 0.3rem;
   display: inline-block;
+  overflow-wrap: break-word;
+  width: 8rem;
 }
 .dragging {
   opacity: 0.5;
