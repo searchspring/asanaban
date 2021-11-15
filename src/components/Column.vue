@@ -71,7 +71,10 @@ export default defineComponent({
   },
   methods: {
     showTaskEditor(sectionId: string) {
-      store.dispatch("preferences/showTaskEditor", sectionId);
+      store.dispatch("preferences/showTaskEditor", {
+        sectionId: sectionId,
+        task: {},
+      });
     },
     columnCollapsed(gid: string) {
       if (!store.state["preferences"].columnStates[gid]) {

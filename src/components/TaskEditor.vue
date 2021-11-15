@@ -1,18 +1,28 @@
 <template>
-  <div class="overlay" @click.stop.prevent="hide" v-if="taskEditorSectionId">
+  <div
+    class="overlay"
+    @click.stop.prevent="hide"
+    v-if="taskEditorSectionIdAndTask"
+  >
     <div
       tabindex="0"
       class="task-editor"
       @click.stop.prevent
       @keydown.esc="hide"
     >
-      <input
-        autocomplete="off"
-        id="name"
-        type="text"
-        v-model="task.name"
-        @keydown.enter="save(taskEditorSectionId)"
-      />
+      <div class="name">
+        <label for="name">name</label>
+        <input
+          autocomplete="off"
+          id="name"
+          type="text"
+          v-model="taskEditorSectionIdAndTask.task.name"
+          @keydown.enter="save(taskEditorSectionIdAndTask)"
+        />
+      </div>
+      <!-- <div style="font-size: 12px; white-space: pre; text-align: left">
+        {{ JSON.stringify(taskEditorSectionIdAndTask.task, "", "  ") }}
+      </div> -->
     </div>
   </div>
 </template>
@@ -24,15 +34,8 @@ import { createNamespacedHelpers } from "vuex";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  data() {
-    return {
-      task: {
-        name: "",
-      },
-    };
-  },
   watch: {
-    taskEditorSectionId(val) {
+    taskEditorSectionIdAndTask(val) {
       if (val) {
         window.setTimeout(() => {
           document.getElementById("name")?.focus();
@@ -41,11 +44,12 @@ export default defineComponent({
     },
   },
   methods: {
-    save(sectionId: string) {
-      store.dispatch("asana/createTask", {
-        task: this.task,
-        sectionId: sectionId,
-      });
+    save(taskEditorSectionIdAndTask: any) {
+      if (taskEditorSectionIdAndTask.task.gid) {
+        store.dispatch("asana/updateTask", taskEditorSectionIdAndTask);
+      } else {
+        store.dispatch("asana/createTask", taskEditorSectionIdAndTask);
+      }
       store.dispatch("preferences/hideTaskEditor");
     },
     hide() {
@@ -53,7 +57,7 @@ export default defineComponent({
     },
   },
   computed: {
-    ...mapState(["taskEditorSectionId"]),
+    ...mapState(["taskEditorSectionIdAndTask"]),
   },
 });
 </script>
@@ -69,6 +73,18 @@ export default defineComponent({
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
+label {
+  display: block;
+}
+.name {
+  text-align: left;
+}
+.name label {
+  font-size: 0.5rem;
+}
+.name input {
+  width: 100%;
+}
 
 .task-editor {
   position: fixed;
@@ -78,8 +94,9 @@ export default defineComponent({
   width: 50%;
   height: 50%;
   background-color: #fff;
-  border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 11;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 </style>
