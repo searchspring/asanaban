@@ -212,6 +212,20 @@ export default {
         },
       });
     },
+    deleteTask(state, taskAndSectionId: any): void {
+      state.actions.push({
+        description: "deleting task",
+        func: () => {
+          const index = state.tasks.findIndex(
+            (t: any) => t.gid === taskAndSectionId.task.gid
+          );
+          if (index !== -1) {
+            state.tasks.splice(index, 1);
+          }
+          return asanaClient.tasks.delete(taskAndSectionId.task.gid);
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -290,6 +304,9 @@ export default {
     },
     updateTask({ commit }, taskAndSectionId: any): void {
       commit("updateTask", taskAndSectionId);
+    },
+    deleteTask({ commit }, taskAndSectionId: any): void {
+      commit("deleteTask", taskAndSectionId);
     },
   },
 };

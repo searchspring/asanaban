@@ -20,6 +20,16 @@
           @keydown.enter="save(taskEditorSectionIdAndTask)"
         />
       </div>
+      <button class="primary" @click="save(taskEditorSectionIdAndTask)">
+        save
+      </button>
+      <button
+        class="secondary"
+        @click="deleteTask(taskEditorSectionIdAndTask)"
+        v-if="taskEditorSectionIdAndTask.task.gid"
+      >
+        delete
+      </button>
       <!-- <div style="font-size: 12px; white-space: pre; text-align: left">
         {{ JSON.stringify(taskEditorSectionIdAndTask.task, "", "  ") }}
       </div> -->
@@ -51,6 +61,15 @@ export default defineComponent({
         store.dispatch("asana/createTask", taskEditorSectionIdAndTask);
       }
       store.dispatch("preferences/hideTaskEditor");
+    },
+    deleteTask(taskEditorSectionIdAndTask: any) {
+      const respose = confirm(
+        `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
+      );
+      if (respose) {
+        store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
+        store.dispatch("preferences/hideTaskEditor");
+      }
     },
     hide() {
       store.dispatch("preferences/hideTaskEditor");
@@ -98,5 +117,27 @@ label {
   z-index: 11;
   overflow-x: hidden;
   overflow-y: auto;
+}
+
+button.primary {
+  width: 10rem;
+  float: left;
+  background-color: #cccccc;
+  border: none;
+  cursor: pointer;
+}
+button.primary:hover {
+  background-color: #dddddd;
+}
+
+button.secondary {
+  width: 10rem;
+  float: right;
+  background-color: #aaaaaa;
+  border: none;
+  cursor: pointer;
+}
+button.primary:hover {
+  background-color: #CCCCCCC;
 }
 </style>
