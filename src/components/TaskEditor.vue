@@ -20,11 +20,12 @@
           @keydown.enter="save(taskEditorSectionIdAndTask)"
         />
       </div>
-      <button class="primary" @click="save(taskEditorSectionIdAndTask)">
+      <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
         save
       </button>
+      <button class="secondary left" @click="hide()">cancel</button>
       <button
-        class="secondary"
+        class="secondary left"
         @click="deleteTask(taskEditorSectionIdAndTask)"
         v-if="taskEditorSectionIdAndTask.task.gid"
       >
@@ -121,7 +122,6 @@ label {
 
 button.primary {
   width: 10rem;
-  float: left;
   background-color: #cccccc;
   border: none;
   cursor: pointer;
@@ -137,7 +137,13 @@ button.secondary {
   border: none;
   cursor: pointer;
 }
-button.primary:hover {
-  background-color: #CCCCCCC;
+button.right {
+  float: right;
+}
+button.left {
+  float: left;
+}
+button.secondary:hover {
+  background-color: #cccccc;
 }
 </style>

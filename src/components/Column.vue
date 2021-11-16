@@ -210,8 +210,7 @@ function removeDragOverClass() {
 }
 .column-nav div,
 .column-nav a {
-  margin-top: auto;
-  margin-bottom: auto;
+  vertical-align: bottom;
 }
 .column {
   text-align: left;
