@@ -63,10 +63,10 @@ export default defineComponent({
       store.dispatch("preferences/hideTaskEditor");
     },
     deleteTask(taskEditorSectionIdAndTask: any) {
-      const respose = confirm(
+      const response = confirm(
         `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
       );
-      if (respose) {
+      if (response) {
         store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
         store.dispatch("preferences/hideTaskEditor");
       }
