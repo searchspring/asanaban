@@ -103,6 +103,9 @@ label {
   font-size: 0.5rem;
 }
 .name input {
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  box-sizing: border-box;
   width: 100%;
 }
 
