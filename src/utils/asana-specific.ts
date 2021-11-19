@@ -42,4 +42,14 @@ function convertColorToHexes(color: string): any {
   return { background: "#" + adjustedHex, font: font };
 }
 
-export { getPrettyColumnName, getColumnCount, convertColorToHexes };
+function xmlToHtml(xml: string): string {
+  let newXml =xml.replaceAll("<body>", "");
+  newXml = newXml.replaceAll("</body>", "");
+  const lines =  newXml.split("\n");
+  for (let i = 0; i < lines.length; i++) {
+    lines[i] = "<p>" + lines[i] + "</p>";
+  }
+  return "<div>" + lines.join("\n") + "</div>"
+}
+
+export { getPrettyColumnName, getColumnCount, convertColorToHexes, xmlToHtml };
