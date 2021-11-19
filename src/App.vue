@@ -1,5 +1,8 @@
 <template>
   <div id="nav">
+    <div>
+      <img src="img/logo.png" alt="logo" />
+    </div>
     <search />
     <project-selector />
     <sign-in />
@@ -39,8 +42,10 @@ body {
 
 #nav {
   text-align: left;
+  background-color: #3B006D;
 }
-#nav div {
+#nav div, #nav img{
+  vertical-align: middle;
   display: inline-block;
 }
 #nav > div {
