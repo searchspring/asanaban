@@ -1,9 +1,9 @@
 import store from "@/store";
-import { convertColorToHexes, getColumnCount } from "@/utils/name-converter";
+import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
 import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
-import jsonstore from "../../utils/jsonstore";
+import jsonstore from "../../utils/jsonstore"; 
 import { startWorkers } from "./worker";
 let asanaClient: AsanaSdk = null;
 if (jsonstore.has("refresh_token")) {

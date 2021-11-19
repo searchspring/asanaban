@@ -41,9 +41,9 @@
 <script lang="ts">
 import store from "@/store";
 import { defineComponent } from "vue";
-import { getPrettyColumnName } from "../utils/name-converter";
+import { getPrettyColumnName } from "../utils/asana-specific";
 import Task from "./Task.vue";
-export default defineComponent({
+export default defineComponent({ 
   components: { Task },
   props: {
     section: Object,
