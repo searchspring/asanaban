@@ -41,15 +41,29 @@ function convertColorToHexes(color: string): any {
   }
   return { background: "#" + adjustedHex, font: font };
 }
+function convertChildToHtml(child: any): string {
+  const serializer = new XMLSerializer();
+  const childHtml = serializer.serializeToString(child);
+  return childHtml;
+}
 
 function xmlToHtml(xml: string): string {
-  let newXml =xml.replaceAll("<body>", "");
-  newXml = newXml.replaceAll("</body>", "");
-  const lines =  newXml.split("\n");
-  for (let i = 0; i < lines.length; i++) {
-    lines[i] = "<p>" + lines[i] + "</p>";
+  const parser = new DOMParser();
+  xml = xml.replaceAll("\n\n", "<br/><br/>");
+  const xmlDoc = parser.parseFromString(xml, "text/xml");
+  const chlidren = xmlDoc.querySelector("body")?.childNodes;
+  let html = "";
+  if (chlidren) {
+    for (let i = 0; i < chlidren.length; i++) {
+      const child = chlidren[i];
+      const childHtml = convertChildToHtml(child);
+      html += childHtml + "\n";
+    }
   }
-  return "<div>" + lines.join("\n") + "</div>"
+
+  console.log(html);
+
+  return "<div>" + html + "</div>";
 }
 
 export { getPrettyColumnName, getColumnCount, convertColorToHexes, xmlToHtml };
