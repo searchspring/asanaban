@@ -3,7 +3,7 @@ import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
 import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
-import jsonstore from "../../utils/jsonstore"; 
+import jsonstore from "../../utils/jsonstore";
 import { startWorkers } from "./worker";
 let asanaClient: AsanaSdk = null;
 if (jsonstore.has("refresh_token")) {
@@ -208,6 +208,7 @@ export default {
           }
           return asanaClient.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
+            html_notes: taskAndSectionId.task.html_notes,
           });
         },
       });

@@ -1,8 +1,9 @@
 <template>
   <div
+      tabindex="0"
     class="overlay"
-    @click.stop.prevent="hide"
     v-if="taskEditorSectionIdAndTask"
+    @keydown.esc="hide"
   >
     <div
       tabindex="0"
@@ -22,7 +23,10 @@
       </div>
       <div class="description">
         <label for="description">description</label>
-        <asana-description :xml="taskEditorSectionIdAndTask.task.html_notes" />
+        <asana-description
+          :html="taskEditorSectionIdAndTask.task.html_notes"
+          v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
+        />
       </div>
       <div class="button-bar">
         <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
@@ -83,6 +87,10 @@ export default defineComponent({
     },
     hide() {
       store.dispatch("preferences/hideTaskEditor");
+    },
+    updateHtmlNotes(html: string, taskEditorSectionIdAndTask: any) {
+      console.log("updateHtmlNotes", html, taskEditorSectionIdAndTask);
+      taskEditorSectionIdAndTask.task.html_notes = html;
     },
   },
   computed: {
