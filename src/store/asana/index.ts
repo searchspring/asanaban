@@ -1,5 +1,5 @@
 import store from "@/store";
-import { convertColorToHexes, getColumnCount } from "@/utils/name-converter";
+import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
 import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
@@ -208,6 +208,7 @@ export default {
           }
           return asanaClient.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
+            html_notes: taskAndSectionId.task.html_notes,
           });
         },
       });

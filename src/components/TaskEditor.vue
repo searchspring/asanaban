@@ -1,8 +1,9 @@
 <template>
   <div
+      tabindex="0"
     class="overlay"
-    @click.stop.prevent="hide"
     v-if="taskEditorSectionIdAndTask"
+    @keydown.esc="hide"
   >
     <div
       tabindex="0"
@@ -20,17 +21,26 @@
           @keydown.enter="save(taskEditorSectionIdAndTask)"
         />
       </div>
-      <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
-        save
-      </button>
-      <button class="secondary left" @click="hide()">cancel</button>
-      <button
-        class="secondary left"
-        @click="deleteTask(taskEditorSectionIdAndTask)"
-        v-if="taskEditorSectionIdAndTask.task.gid"
-      >
-        delete
-      </button>
+      <div class="description">
+        <label for="description">description</label>
+        <asana-description
+          :html="taskEditorSectionIdAndTask.task.html_notes"
+          v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
+        />
+      </div>
+      <div class="button-bar">
+        <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
+          save
+        </button>
+        <button class="secondary left" @click="hide()">cancel</button>
+        <button
+          class="secondary left"
+          @click="deleteTask(taskEditorSectionIdAndTask)"
+          v-if="taskEditorSectionIdAndTask.task.gid"
+        >
+          delete
+        </button>
+      </div>
       <!-- <div style="font-size: 12px; white-space: pre; text-align: left">
         {{ JSON.stringify(taskEditorSectionIdAndTask.task, "", "  ") }}
       </div> -->
@@ -42,9 +52,12 @@
 import store from "@/store";
 import { defineComponent } from "vue";
 import { createNamespacedHelpers } from "vuex";
+import AsanaDescription from "./AsanaDescription.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
+  components: { AsanaDescription },
+
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
@@ -75,6 +88,10 @@ export default defineComponent({
     hide() {
       store.dispatch("preferences/hideTaskEditor");
     },
+    updateHtmlNotes(html: string, taskEditorSectionIdAndTask: any) {
+      console.log("updateHtmlNotes", html, taskEditorSectionIdAndTask);
+      taskEditorSectionIdAndTask.task.html_notes = html;
+    },
   },
   computed: {
     ...mapState(["taskEditorSectionIdAndTask"]),
@@ -96,17 +113,22 @@ export default defineComponent({
 label {
   display: block;
 }
-.name {
+.name,
+.description {
   text-align: left;
 }
-.name label {
+label {
   font-size: 0.5rem;
 }
-.name input {
+input,
+textarea {
   -webkit-box-sizing: border-box;
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   width: 100%;
+}
+textarea {
+  min-height: 10rem;
 }
 
 .task-editor {
@@ -115,7 +137,8 @@ label {
   left: 50%;
   transform: translate(-50%, -50%);
   width: 50%;
-  height: 50%;
+  max-height: 90%;
+  min-height: 50%;
   background-color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 11;
@@ -142,11 +165,18 @@ button.secondary {
 }
 button.right {
   float: right;
+  margin-left: 1px;
 }
 button.left {
   float: left;
+  margin-right: 1px;
 }
 button.secondary:hover {
   background-color: #cccccc;
+}
+
+.button-bar {
+  height: 1.2rem;
+  clear: both;
 }
 </style>

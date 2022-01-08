@@ -1,7 +1,7 @@
 <template>
   <div id="nav">
     <div>
-      <img src="img/logo.png" alt="logo" />
+      <img src="./assets/logo.png" alt="logo" />
     </div>
     <search />
     <project-selector />
@@ -42,9 +42,10 @@ body {
 
 #nav {
   text-align: left;
-  background-color: #3B006D;
+  background-color: #3b006d;
 }
-#nav div, #nav img{
+#nav div,
+#nav img {
   vertical-align: middle;
   display: inline-block;
 }
