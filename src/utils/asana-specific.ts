@@ -43,67 +43,77 @@ function convertColorToHexes(color: string): any {
   return { background: "#" + adjustedHex, font: font };
 }
 
-function xmlToHtml(xml: string): string {
-  console.log("xmlToHtml", xml);
-  const parser = new XMLParser({
-    // ignoreAttributes: false,
-    trimValues: false,
-    preserveOrder: true,
-  });
-  const builder = new XMLBuilder({
-    // ignoreAttributes: false,
-    preserveOrder: true,
-  });
-
-  const obj = parser.parse(xml);
-  // console.log("obj", obj[0].body);
-
-  for (let i = 0; i < obj[0].body.length; i++) {
-    console.log(obj[0].body[i]);
-  }
-  let html = "";
-  for (let i = 0; i < obj[0].body.length; i++) {
-    for (const key of Object.keys(obj[0].body[i])) {
-      const value = obj[0].body[i][key];
-
-      if (key === "#text") {
-        if (value.indexOf("\n") !== -1) {
-          const lines = value.split("\n");
-          for (let i = 0; i < lines.length; i++) {
-            html += "<p>" + lines[i] + "</p>";
-          }
-        } else {
-          html += value;
-        }
-      } else {
-        let wrap = false;
-        if (
-          (key === "strong" || key == "em" || key == "s" || key == "u") &&
-          value.indexOf("\n") !== -1
-        ) {
-          wrap = true;
-        }
-        const temp = {};
-        
-        temp[key] = value;
-        html +=
-          (wrap ? "<p>" : "") + builder.build([temp]) + (wrap ? "</p>" : "");
-      }
-    }
-  }
-  html = "<div>" + html + "</div>";
-  console.log("xmlToHtml out", html);
-  return html;
-}
-
 function htmlToXml(html: string): string {
-  console.log("htmlToXml", html);
-
-  let h = html.replaceAll("<p>", "").replaceAll("</p>", "\n");
+  let h = html
+    .replaceAll("</p></li>", "</li>")
+    .replaceAll("<p>", "")
+    .replaceAll("</p>", "\n");
   if (h.startsWith("<div>")) {
     h = h.replaceAll("<div>", "").replaceAll("</div>", "").trim();
   }
   return "<body>" + h + "</body>";
+}
+
+function xmlToHtml(xml: string): string {
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    trimValues: false,
+    preserveOrder: true,
+  });
+  const builder = new XMLBuilder({
+    ignoreAttributes: false,
+    preserveOrder: true,
+  });
+  xml = xml.replaceAll("\n", "<br/>");
+  const asanaDoc = parser.parse(xml);
+  const oldKey = "body";
+  const newKey = "div";
+  delete Object.assign(asanaDoc[0], { [newKey]: asanaDoc[0][oldKey] })[oldKey];
+  const tipTapDoc = [{ div: [] }] as any;
+  recursivePTags(tipTapDoc[0].div, asanaDoc[0].div, true);
+  return builder.build(tipTapDoc);
+}
+
+const recursiveElements = ["ul", "li", "ol"];
+function recursivePTags(
+  tipTapDoc: any,
+  currentNode: any,
+  isRootNode = false
+): void {
+  let nonRecursiveStack = [] as any[];
+  for (let i = 0; i < currentNode.length; i++) {
+    const currentTag = Object.keys(currentNode[i])[0];
+    if (currentTag === "br") {
+      tipTapDoc.push({ p: nonRecursiveStack });
+      nonRecursiveStack = [] as any[];
+    } else if (recursiveElements.indexOf(currentTag) !== -1) {
+      const recurseObj = {} as any;
+      recurseObj[currentTag] = [];
+      tipTapDoc.push(recurseObj);
+      recursivePTags(
+        tipTapDoc[tipTapDoc.length - 1][currentTag],
+        currentNode[i][currentTag]
+      );
+      nonRecursiveStack = [] as any[];
+    } else {
+      nonRecursiveStack.push(currentNode[i]);
+    }
+  }
+  if (nonRecursiveStack.length > 0) {
+    if (
+      ((nonRecursiveStack[0]["#text"] ||
+        nonRecursiveStack[0]["strong"] ||
+        nonRecursiveStack[0]["em"] ||
+        nonRecursiveStack[0]["u"] ||
+        nonRecursiveStack[0]["s"]) &&
+        nonRecursiveStack.length > 1) ||
+      isRootNode
+    ) {
+      tipTapDoc.push({ p: nonRecursiveStack });
+    } else {
+      tipTapDoc.push(...nonRecursiveStack);
+    }
+  }
 }
 
 export {
