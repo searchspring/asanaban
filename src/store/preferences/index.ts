@@ -1,4 +1,5 @@
 import jsonstore from "../../utils/jsonstore";
+import store from "@/store";
 
 export default {
   namespaced: true,
@@ -37,6 +38,13 @@ export default {
     },
     showTaskEditor({ commit }, sectionIdAndTask: any) {
       commit("setTaskEditorSectionId", sectionIdAndTask);
+      if (
+        sectionIdAndTask &&
+        sectionIdAndTask.task &&
+        sectionIdAndTask.task.gid
+      ) {
+        store.dispatch("asana/loadStories", sectionIdAndTask.task);
+      }
     },
   },
 };

@@ -36,7 +36,7 @@ it("single line and format", function (done) {
 it("block and inline href", function (done) {
   expects(
     '<body><ol><li><u>aoeu</u> <strong>aoeu</strong></li></ol>aoeu <a href="https://google.com">asdf</a>\naoeu</body>',
-    '<div><ol><li><p><u>aoeu</u> <strong>aoeu</strong></p></li></ol><p>aoeu <a href="https://google.com">asdf</a></p><p>aoeu</p></div>',
+    '<div><ol><li><p><u>aoeu</u> <strong>aoeu</strong></p></li></ol><p>aoeu <a href="https://google.com" target="_blank">asdf</a></p><p>aoeu</p></div>',
     done
   );
 });
@@ -68,7 +68,7 @@ it("newlines with styles middle combo style", function (done) {
 function expects(input: string, output: string, done: any, debug = false) {
   if (debug) {
     xmlToHtml(input);
-    console.log();
+    console.info();
     xmlToHtml(
       "<body>" +
         output.replaceAll("<div>", "").replaceAll("</div>", "") +

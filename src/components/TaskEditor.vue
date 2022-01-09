@@ -37,6 +37,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
+      <Stories></Stories>
       <div class="button-bar">
         <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
@@ -62,11 +63,11 @@ import store from "@/store";
 import { defineComponent } from "vue";
 import { createNamespacedHelpers } from "vuex";
 import AsanaDescription from "./AsanaDescription.vue";
+import Stories from "./Stories.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AsanaDescription },
-
+  components: { AsanaDescription, Stories },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
@@ -98,7 +99,6 @@ export default defineComponent({
       store.dispatch("preferences/hideTaskEditor");
     },
     updateHtmlNotes(html: string, taskEditorSectionIdAndTask: any) {
-      console.log("updateHtmlNotes", html, taskEditorSectionIdAndTask);
       taskEditorSectionIdAndTask.task.html_notes = html;
     },
   },
@@ -149,6 +149,7 @@ textarea {
   -moz-box-sizing: border-box;
   box-sizing: border-box;
   width: 100%;
+  border: 1px solid #999999;
 }
 textarea {
   min-height: 10rem;

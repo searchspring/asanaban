@@ -52,8 +52,8 @@ export default {
   font-size: 0.8rem;
   display: flex;
   flex-direction: column;
-  max-height: 26rem;
   color: #0d0d0d;
+  margin-bottom:1rem;
   &__header {
     display: flex;
     align-items: center;
@@ -63,13 +63,12 @@ export default {
     background: #dddddd;
   }
   &__content {
-    padding: 0.25rem 1rem;
     border-left: 1px solid #dddddd;
     border-right: 1px solid #dddddd;
     border-bottom: 1px solid #dddddd;
     flex: 1 1 auto;
-    overflow-x: hidden;
-    overflow-y: auto;
+    // overflow-x: hidden;
+    // overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 }
@@ -77,7 +76,6 @@ export default {
   outline: none;
 }
 .ProseMirror p {
-  margin-top: 0.5rem;
-  margin-bottom: 0.5rem;
+  margin:0;
 }
 </style>
