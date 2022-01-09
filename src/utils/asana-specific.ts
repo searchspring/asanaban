@@ -47,7 +47,9 @@ function htmlToXml(html: string): string {
   let h = html
     .replaceAll("</p></li>", "</li>")
     .replaceAll("<p>", "")
-    .replaceAll("</p>", "\n");
+    .replaceAll("</p>", "\n")
+    .replaceAll(/\starget="_blank"/g, "")
+    .replaceAll(/\srel="noopener noreferrer nofollow"/g, "");
   if (h.startsWith("<div>")) {
     h = h.replaceAll("<div>", "").replaceAll("</div>", "").trim();
   }
@@ -86,6 +88,9 @@ function recursivePTags(
   let nonRecursiveStack = [] as any[];
   for (let i = 0; i < currentNode.length; i++) {
     const currentTag = Object.keys(currentNode[i])[0];
+    if (currentTag === "a") {
+      currentNode[i][":@"][":@target"] = "_blank";
+    }
     if (currentTag === "br") {
       tipTapDoc.push({ p: nonRecursiveStack });
       nonRecursiveStack = [] as any[];

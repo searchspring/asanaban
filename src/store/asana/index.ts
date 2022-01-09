@@ -78,6 +78,21 @@ export default {
     },
   },
   mutations: {
+    setStories(state, task: any): void {
+      if (asanaClient) {
+        asanaClient.stories
+          .findByTask(task.gid, {
+            limit: 100,
+            fields:
+              "html_text,created_by.name,resource_subtype,type,created_at",
+          })
+          .then((storiesResponse: any) => {
+            task.stories = storiesResponse.data.filter((story) => {
+              return story["resource_subtype"] === "comment_added";
+            });
+          });
+      }
+    },
     tokenReceived(state, payload: any): void {
       const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
       Cookies.set("access_token", payload.access_token, {
@@ -313,6 +328,9 @@ export default {
     deleteTask({ commit }, taskAndSectionId: any): void {
       commit("deleteTask", taskAndSectionId);
     },
+    loadStories({ commit }, task: any): void {
+      commit("setStories", task);
+    },
   },
 };
 
@@ -328,7 +346,7 @@ function loadTasksWithOffset(
     completed_since: "now",
     limit: 100,
     fields:
-      "custom_fields,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories",
+      "custom_fields,created_by,created_at,created_by.name,tags.name,tags.color,memberships.section.name,memberships.project.name,name,assignee.photo,assignee.name,assignee.email,due_on,modified_at,html_notes,notes,stories",
   };
   if (offset) {
     options["offset"] = offset;
