@@ -1,17 +1,26 @@
 <template>
   <div
-      tabindex="0"
+    tabindex="0"
     class="overlay"
     v-if="taskEditorSectionIdAndTask"
     @keydown.esc="hide"
   >
-    <div
-      tabindex="0"
-      class="task-editor"
-      @click.stop.prevent
-      @keydown.esc="hide"
-    >
+    <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
+        <a
+          v-if="taskEditorSectionIdAndTask.task.gid"
+          class="tiny-link right"
+          target="_blank"
+          rel="noopener"
+          :href="
+            'https://app.asana.com/0/' +
+            projectId +
+            '/' +
+            taskEditorSectionIdAndTask.task.gid +
+            ''
+          "
+          >open in asana</a
+        >
         <label for="name">name</label>
         <input
           autocomplete="off"
@@ -95,6 +104,14 @@ export default defineComponent({
   },
   computed: {
     ...mapState(["taskEditorSectionIdAndTask"]),
+    projectId: {
+      get() {
+        return store.state["asana"].selectedProject;
+      },
+      set(val) {
+        store.dispatch("asana/setSelectedProject", val);
+      },
+    },
   },
 });
 </script>
@@ -119,6 +136,12 @@ label {
 }
 label {
   font-size: 0.5rem;
+}
+.tiny-link {
+  font-size: 0.5rem;
+}
+.right {
+  float: right;
 }
 input,
 textarea {
