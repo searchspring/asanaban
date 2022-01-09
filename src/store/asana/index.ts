@@ -66,7 +66,11 @@ export default {
             });
           });
           if (tasks.length > 0) {
-            swimlanes.push({ name: section.name.split(":")[0] });
+            const swimlaneName = section.name.split(":")[0];
+            if (!found.has(swimlaneName)) {
+              swimlanes.push({ name: swimlaneName });
+              found.add(swimlaneName);
+            }
           }
         }
       });
