@@ -55,6 +55,9 @@ function htmlToXml(html: string): string {
 }
 
 function xmlToHtml(xml: string): string {
+  if (!xml) {
+    return "";
+  }
   const parser = new XMLParser({
     ignoreAttributes: false,
     trimValues: false,

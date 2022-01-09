@@ -66,7 +66,7 @@ export default {
           title: "Ordered List",
           action: () => this.editor.chain().focus().toggleOrderedList().run(),
           isActive: () => this.editor.isActive("orderedList"),
-        }
+        },
       ],
     };
   },
