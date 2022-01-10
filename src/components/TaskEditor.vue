@@ -167,7 +167,6 @@ textarea {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 11;
   overflow-x: hidden;
-  overflow-y: auto;
 }
 
 button.primary {
