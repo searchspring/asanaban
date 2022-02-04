@@ -5,7 +5,7 @@ import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import jsonstore from "../../utils/jsonstore";
 import { startWorkers } from "./worker";
-let asanaClient: AsanaSdk = null;
+let asanaClient: AsanaSdk.Client | null = null;
 if (jsonstore.has("refresh_token")) {
   asanaClient = createClient(
     Cookies.get("access_token"),
@@ -21,6 +21,7 @@ function createClient(accessToken: string, refreshToken: string) {
     store.commit("asana/clearActions");
     store.commit("asana/clearErrors");
     store.dispatch("asana/signIn");
+    return true;
   };
   client.dispatcher.retryOnRateLimit = true;
   const credentials = {
@@ -43,6 +44,7 @@ export default {
     actions: [] as any[],
     errors: [] as any[],
     tags: jsonstore.get("tags", []),
+    users: jsonstore.get("users", []),
   },
   getters: {
     swimlanes: (state): any[] => {
@@ -83,8 +85,8 @@ export default {
         asanaClient.stories
           .findByTask(task.gid, {
             limit: 100,
-            fields:
-              "html_text,created_by.name,resource_subtype,type,created_at",
+            opt_fields:
+              "html_text,created_by.name,resource_subtype,type,created_at"
           })
           .then((storiesResponse: any) => {
             task.stories = storiesResponse.data.filter((story) => {
@@ -110,12 +112,14 @@ export default {
       jsonstore.remove("sections");
       jsonstore.remove("projects");
       jsonstore.remove("tags");
+      jsonstore.remove("users");
       asanaClient = null;
       state.projects = [];
       state.sections = [];
       state.tasks = [];
       state.tags = [];
       state.selectedProject = null;
+      state.users = [];
     },
     setProjects(state, payload: unknown[]): void {
       state.projects = payload;
@@ -126,6 +130,11 @@ export default {
       state.projects.push(...payload);
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
+    },
+    setUsers(state, payload: unknown[]): void {
+      state.users = payload;
+      state.users = sortAndUnique(state.users);
+      jsonstore.set("users", state.users);
     },
     setSelectedProject(state, payload: unknown): void {
       state.selectedProject = payload;
@@ -179,7 +188,7 @@ export default {
       state.actions.push({
         description: "moving task",
         func: () => {
-          return asanaClient.sections.addTask(payload.endSectionId, {
+          return asanaClient?.sections.addTask(payload.endSectionId, {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
           });
@@ -197,7 +206,7 @@ export default {
         state.actions.push({
           description: "creating task",
           func: () => {
-            return asanaClient.tasks
+            return asanaClient?.tasks
               .create({
                 ...taskAndSectionId.task,
                 projects: [state.selectedProject],
@@ -225,7 +234,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
-          return asanaClient.tasks.update(taskAndSectionId.task.gid, {
+          return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             html_notes: taskAndSectionId.task.html_notes,
           });
@@ -242,7 +251,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          return asanaClient.tasks.delete(taskAndSectionId.task.gid);
+          return asanaClient?.tasks.delete(taskAndSectionId.task.gid);
         },
       });
     },
@@ -279,6 +288,13 @@ export default {
           workspaceResponse.data.forEach((workspace) => {
             loadProjectsWithOffset("", workspace.gid, commit);
           });
+        });
+      }
+    },
+    loadUsers({ commit }): void {
+      if (asanaClient) {
+        asanaClient.users.findAll({ workspace: 0 }).then((userResponse) => {
+          commit("setUsers", userResponse.data);
         });
       }
     },
