@@ -42,6 +42,13 @@
         <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
         </button>
+        <button
+          class="primary right"
+          @click="completeTask(taskEditorSectionIdAndTask)"
+          v-if="taskEditorSectionIdAndTask.task.gid"
+        >
+          complete
+        </button>
         <button class="secondary left" @click="hide()">cancel</button>
         <button
           class="secondary left"
@@ -100,6 +107,10 @@ export default defineComponent({
     },
     updateHtmlNotes(html: string, taskEditorSectionIdAndTask: any) {
       taskEditorSectionIdAndTask.task.html_notes = html;
+    },
+    completeTask(taskEditorSectionIdAndTask: any) {
+      store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
+      store.dispatch("preferences/hideTaskEditor");
     },
   },
   computed: {

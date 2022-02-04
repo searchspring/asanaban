@@ -86,7 +86,7 @@ export default {
           .findByTask(task.gid, {
             limit: 100,
             opt_fields:
-              "html_text,created_by.name,resource_subtype,type,created_at"
+              "html_text,created_by.name,resource_subtype,type,created_at",
           })
           .then((storiesResponse: any) => {
             task.stories = storiesResponse.data.filter((story) => {
@@ -255,6 +255,22 @@ export default {
         },
       });
     },
+    completeTask(state, taskAndSectionId: any): void {
+      state.actions.push({
+        description: "completing task",
+        func: () => {
+          const index = state.tasks.findIndex(
+            (t: any) => t.gid === taskAndSectionId.task.gid
+          );
+          if (index !== -1) {
+            state.tasks.splice(index, 1);
+          }
+          return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+            completed: true,
+          });
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -346,6 +362,9 @@ export default {
     },
     loadStories({ commit }, task: any): void {
       commit("setStories", task);
+    },
+    completeTask({ commit }, taskAndSectionId: any): void {
+      commit("completeTask", taskAndSectionId);
     },
   },
 };
