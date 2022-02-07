@@ -42,6 +42,8 @@
   "devDependencies": {
     "@types/asana": "^0.18.5",
     "@types/chai": "^4.2.11",
+    "@types/crypto-js": "^4.1.0",
+    "@types/js-cookie": "^3.0.1",
     "@types/mocha": "^5.2.4",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
