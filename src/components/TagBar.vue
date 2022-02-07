@@ -7,8 +7,8 @@
         :key="tag"
         @click="click(tag)"
         :style="{
-          'background-color': tag.hexes.background,
-          color: tag.hexes.font,
+          'background-color': tag.hexes?.background,
+          color: tag.hexes?.font,
         }"
       >
         {{ tag.name }}

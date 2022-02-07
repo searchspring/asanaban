@@ -30,6 +30,10 @@
           @keydown.enter="save(taskEditorSectionIdAndTask)"
         />
       </div>
+      <div class="assignee">
+        <label for="assignee">assignee</label>
+        <AssigneeSelector></AssigneeSelector>
+      </div>
       <div class="description">
         <label for="description">description</label>
         <asana-description
@@ -69,12 +73,13 @@
 import store from "@/store";
 import { defineComponent } from "vue";
 import { createNamespacedHelpers } from "vuex";
+import AssigneeSelector from "./AssigneeSelector.vue";
 import AsanaDescription from "./AsanaDescription.vue";
 import Stories from "./Stories.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AsanaDescription, Stories },
+  components: { AssigneeSelector, AsanaDescription, Stories },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
