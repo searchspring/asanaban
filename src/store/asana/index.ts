@@ -377,8 +377,8 @@ export default {
     loadStories({ commit }, task: any): void {
       commit("setStories", task);
     },
-    completeTask({ commit }, taskId: any): void {
-      commit("completeTask", taskId);
+    completeTask({ commit }, taskEditorSectionIdAndTask: any): void {
+      commit("completeTask", taskEditorSectionIdAndTask);
     },
     release({ commit }, task: any): void {
       commit("release", task);
