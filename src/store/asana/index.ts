@@ -271,6 +271,20 @@ export default {
         },
       });
     },
+    release(state, task: any): void {
+      state.actions.push({
+        description: "releasing task",
+        func: () => {
+          const index = state.tasks.findIndex((t: any) => t.gid === task.gid);
+          if (index !== -1) {
+            state.tasks.splice(index, 1);
+          }
+          return asanaClient?.tasks.update(task.gid, {
+            completed: true,
+          });
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -363,8 +377,11 @@ export default {
     loadStories({ commit }, task: any): void {
       commit("setStories", task);
     },
-    completeTask({ commit }, taskAndSectionId: any): void {
-      commit("completeTask", taskAndSectionId);
+    completeTask({ commit }, taskId: any): void {
+      commit("completeTask", taskId);
+    },
+    release({ commit }, task: any): void {
+      commit("release", task);
     },
   },
 };
