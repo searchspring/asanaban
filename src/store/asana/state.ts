@@ -1,10 +1,17 @@
 import {
+  AsanaError,
   Project,
   Section,
   Task,
+  TaskTag,
   User
 } from "@/types/asana";
 import asana from "asana";
+
+export interface Action {
+  description: string,
+  func: () => any
+}
 
 export interface State {
   asanaClient: asana.Client | null,
@@ -12,8 +19,8 @@ export interface State {
   selectedProject: string | null,
   tasks: Task[],
   sections: Section[],
-  actions: any[],
-  errors: any[],
-  tags: string[],
+  actions: Action[],
+  errors: AsanaError[],
+  tags: TaskTag[],
   users: User[],
 }

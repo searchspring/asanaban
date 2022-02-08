@@ -40,13 +40,14 @@
 
 <script lang="ts">
 import store from "@/store";
-import { defineComponent } from "vue";
+import { Section, Task as TaskType } from "@/types/asana";
+import { defineComponent, PropType } from "vue";
 import { getPrettyColumnName } from "../utils/asana-specific";
 import Task from "./Task.vue";
 export default defineComponent({
   components: { Task },
   props: {
-    section: Object,
+    section: Object as PropType<Section>,
   },
   data() {
     return {
@@ -154,7 +155,7 @@ export default defineComponent({
 function emptySearch() {
   return store.state["preferences"].search.trim() === "";
 }
-function taskHasSearchHit(task: any, search: string) {
+function taskHasSearchHit(task: TaskType, search: string) {
   let text = task.name + " " + task.notes;
   task.tags.forEach((tag) => {
     text += " " + tag.name;
@@ -167,7 +168,7 @@ function taskHasSearchHit(task: any, search: string) {
 
 function getLastTaskId(sectionId: string) {
   const tasks = store.state["asana"].tasks.filter((task) => {
-    return task.memberships[0].section.gid === sectionId;
+    return task.memberships[0].section?.gid === sectionId;
   });
 
   const taskId = tasks.length === 0 ? null : tasks[tasks.length - 1].gid;

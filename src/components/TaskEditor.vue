@@ -76,6 +76,7 @@ import { createNamespacedHelpers } from "vuex";
 import AssigneeSelector from "./AssigneeSelector.vue";
 import AsanaDescription from "./AsanaDescription.vue";
 import Stories from "./Stories.vue";
+import { TaskAndSectionId } from "@/types/asana";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
@@ -90,7 +91,7 @@ export default defineComponent({
     },
   },
   methods: {
-    save(taskEditorSectionIdAndTask: any) {
+    save(taskEditorSectionIdAndTask: TaskAndSectionId) {
       if (taskEditorSectionIdAndTask.task.gid) {
         store.dispatch("asana/updateTask", taskEditorSectionIdAndTask);
       } else {
@@ -98,7 +99,7 @@ export default defineComponent({
       }
       store.dispatch("preferences/hideTaskEditor");
     },
-    deleteTask(taskEditorSectionIdAndTask: any) {
+    deleteTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       const response = confirm(
         `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
       );
@@ -110,10 +111,10 @@ export default defineComponent({
     hide() {
       store.dispatch("preferences/hideTaskEditor");
     },
-    updateHtmlNotes(html: string, taskEditorSectionIdAndTask: any) {
+    updateHtmlNotes(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
       taskEditorSectionIdAndTask.task.html_notes = html;
     },
-    completeTask(taskEditorSectionIdAndTask: any) {
+    completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
       store.dispatch("preferences/hideTaskEditor");
     },
@@ -124,7 +125,7 @@ export default defineComponent({
       get() {
         return store.state["asana"].selectedProject;
       },
-      set(val) {
+      set(val: string) {
         store.dispatch("asana/setSelectedProject", val);
       },
     },

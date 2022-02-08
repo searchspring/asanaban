@@ -1,6 +1,6 @@
 import asana from "asana";
 
-type Resource = asana.resources.Resource;
+export type Resource = asana.resources.Resource;
 
 export type Project = asana.resources.Projects.Type;
 export type Section = asana.resources.Sections.Type & { maxTaskCount: string };
@@ -11,7 +11,6 @@ export type User = asana.resources.Users.Type & {
   photo: { image_60x60: string} | null
 };
 export type Stories = asana.resources.Stories.Type;
-
 export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
   created_by: Resource
   html_notes: string | undefined,
@@ -21,6 +20,8 @@ export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
 
 export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
+
+export type AsanaError = asana.errors.AsanaError;
 
 export type TaskAndSectionId = {
   task: Task,
