@@ -1,6 +1,6 @@
 <template>
   <div>
-    <select v-model="assignee" @change="onChange">
+    <select v-model="assignee">
       <option value="null">No Assignee</option>
       <option
         v-for="user in users"
@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import store from "@/store";
-import { defineComponent, onMounted, ref } from "vue";
+import { defineComponent, onMounted, ref, watch } from "vue";
 import { createNamespacedHelpers } from "vuex";
 const { mapState } = createNamespacedHelpers("asana");
 
@@ -28,14 +28,12 @@ export default defineComponent({
       assignee.value = store.state["preferences"].taskEditorSectionIdAndTask.task.assignee?.gid ?? null;
     })
 
-    const onChange = (event: Event) => {
-      const assignee = (event.target as HTMLSelectElement).value;
-      store.dispatch("preferences/setTaskAssignee", assignee);
-    }
+    watch([assignee], () => {
+      store.dispatch("preferences/setTaskAssignee", assignee.value);
+    })
 
     return {
-      assignee,
-      onChange
+      assignee
     };
   },
 });

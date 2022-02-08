@@ -12,11 +12,13 @@
 </template>
 
 <script lang="ts">
-import { PropType } from '@vue/runtime-core';
+import { defineComponent, PropType } from "vue";
 import { Editor } from "@tiptap/vue-3";
+import {} from "@tiptap/starter-kit";
+import {} from "@tiptap/extension-underline";
 import MenuItem from "./MenuItem.vue";
 
-export default {
+export default defineComponent({
   components: {
     MenuItem,
   },
@@ -28,51 +30,65 @@ export default {
     },
   },
 
-  data() {
-    return {
-      items: [
-        {
-          icon: "bold",
-          title: "Bold",
-          action: () => {
-            this.editor.chain().focus().toggleBold().run();
-          },
-          isActive: () => this.editor.isActive("bold"),
-        },
-        {
-          icon: "italic",
-          title: "Italic",
-          action: () => this.editor.chain().focus().toggleItalic().run(),
-          isActive: () => this.editor.isActive("italic"),
-        },
-        {
-          icon: "underline",
-          title: "Underline",
-          action: () => this.editor.chain().focus().toggleUnderline().run(),
-          isActive: () => this.editor.isActive("underline"),
-        },
-        {
-          icon: "strikethrough",
-          title: "Strike",
-          action: () => this.editor.chain().focus().toggleStrike().run(),
-          isActive: () => this.editor.isActive("strike"),
-        },
-        {
-          icon: "list-unordered",
-          title: "Bullet List",
-          action: () => this.editor.chain().focus().toggleBulletList().run(),
-          isActive: () => this.editor.isActive("bulletList"),
-        },
-        {
-          icon: "list-ordered",
-          title: "Ordered List",
-          action: () => this.editor.chain().focus().toggleOrderedList().run(),
-          isActive: () => this.editor.isActive("orderedList"),
-        },
-      ],
+  setup(props) {
+    const bold = {
+      icon: "bold",
+      title: "Bold",
+      action: () => {
+        props.editor.chain().focus().toggleBold().run();
+      },
+      isActive: () => props.editor.isActive("bold"),
     };
-  },
-};
+
+    const italic = {
+      icon: "italic",
+      title: "Italic",
+      action: () => props.editor.chain().focus().toggleItalic().run(),
+      isActive: () => props.editor.isActive("italic"),
+    };
+
+    const underline = {
+      icon: "underline",
+      title: "Underline",
+      action: () => props.editor.chain().focus().toggleUnderline().run(),
+      isActive: () => props.editor.isActive("underline"),
+    };
+
+    const strikethrough = {
+      icon: "strikethrough",
+      title: "Strike",
+      action: () => props.editor.chain().focus().toggleStrike().run(),
+      isActive: () => props.editor.isActive("strike"),
+    };
+
+    const bulletList = {
+      icon: "list-unordered",
+      title: "Bullet List",
+      action: () => props.editor.chain().focus().toggleBulletList().run(),
+      isActive: () => props.editor.isActive("bulletList"),
+    };
+
+    const orderedList = {
+      icon: "list-ordered",
+      title: "Ordered List",
+      action: () => props.editor.chain().focus().toggleOrderedList().run(),
+      isActive: () => props.editor.isActive("orderedList"),
+    };
+
+    const items = [
+      bold,
+      italic,
+      underline,
+      strikethrough,
+      bulletList,
+      orderedList,
+    ];
+
+    return {
+      items,
+    };
+  }
+});
 </script>
 
 <style lang="scss">
