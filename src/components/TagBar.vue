@@ -19,6 +19,7 @@
 
 <script lang="ts">
 import store from "@/store";
+import { TaskTag } from "@/types/asana";
 import { defineComponent } from "vue";
 import { createNamespacedHelpers } from "vuex";
 const { mapState } = createNamespacedHelpers("asana");
@@ -31,7 +32,7 @@ export default defineComponent({
     signedIn() {
       return store.state.signedIn;
     },
-    click(tag: any) {
+    click(tag: TaskTag) {
       if (store.state["preferences"].search === tag.name) {
         store.dispatch("preferences/setSearch", "");
       } else {

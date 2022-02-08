@@ -28,15 +28,15 @@ export default defineComponent({
       assignee.value = store.state["preferences"].taskEditorSectionIdAndTask.task.assignee?.gid ?? null;
     })
 
-    return {
-      assignee
-    };
-  },
-  methods: {
-    onChange(event: Event) {
+    const onChange = (event: Event) => {
       const assignee = (event.target as HTMLSelectElement).value;
       store.dispatch("preferences/setTaskAssignee", assignee);
-    },
-  }
+    }
+
+    return {
+      assignee,
+      onChange
+    };
+  },
 });
 </script>

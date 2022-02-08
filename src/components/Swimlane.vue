@@ -8,11 +8,12 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { Swimlane } from "@/types/layout";
+import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
   props: {
-    swimlane: Object,
+    swimlane: Object as PropType<Swimlane>,
   },
 });
 </script>

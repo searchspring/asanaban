@@ -4,9 +4,10 @@ import AsanaSdk from "asana";
 import CryptoJS from "crypto-js";
 import Cookies from "js-cookie";
 import jsonstore from "@/utils/jsonstore";
-import { State } from "./state";
+import { Action, State } from "./state";
 import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag } from "@/types/asana";
+import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, Resource } from "@/types/asana";
+import { Move, Swimlane } from "@/types/layout";
 
 let asanaClient: AsanaSdk.Client | null = null;
 if (jsonstore.has("refresh_token")) {
@@ -44,14 +45,14 @@ export default {
     selectedProject: jsonstore.get("selectedProject", null) as string | null,
     tasks: jsonstore.get("tasks", []) as Task[],
     sections: jsonstore.get("sections", []) as Section[],
-    actions: [] as any[],
-    errors: [] as any[],
-    tags: jsonstore.get("tags", []) as string[],
+    actions: [] as Action[],
+    errors: [] as AsanaError[],
+    tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
   } as State,
   getters: {
     swimlanes: (state: State) => {
-      const swimlanes: any[] = [];
+      const swimlanes: Swimlane[] = [];
       const found: Set<string> = new Set();
       state.sections.forEach(section => {
         if (section.name.indexOf(":") === -1) {
@@ -87,6 +88,7 @@ export default {
     setStories(state: State, task: Task): void {
       if (asanaClient) {
         asanaClient.stories
+          // asana interface has incorrect type defintion for this function
           .findByTask(task.gid, {
             limit: 100,
             fields:
@@ -183,7 +185,7 @@ export default {
 
       jsonstore.set("sections", state.sections);
     },
-    moveTask(state: State, payload: any): void {
+    moveTask(state: State, payload: Move): void {
       const task = state.tasks.find(task => task.gid === payload.taskId);
       if (task?.memberships[0].section?.gid) {
         task.memberships[0].section.gid = payload.endSectionId;
@@ -268,12 +270,12 @@ export default {
         },
       });
     },
-    completeTask(state, taskAndSectionId: TaskAndSectionId): void {
+    completeTask(state: State, taskAndSectionId: TaskAndSectionId): void {
       state.actions.push({
         description: "completing task",
         func: () => {
           const index = state.tasks.findIndex(
-            (t: any) => t.gid === taskAndSectionId.task.gid
+            t => t.gid === taskAndSectionId.task.gid
           );
           if (index !== -1) {
             state.tasks.splice(index, 1);
@@ -392,7 +394,7 @@ export default {
 function loadTasksWithOffset(
   offset: string,
   state: State,
-  commit: any,
+  commit: (cmd: string, payload: Task[]) => void,
   commitAction: string
 ): void {
   // asana interface has incorrect type definition
@@ -425,7 +427,7 @@ function loadTasksWithOffset(
   if (asanaClient) {
     asanaClient.tasks.findAll(options).then((taskResponse) => {
       if (state.actions.length === 0) {
-        commit(commitAction, taskResponse.data);
+        commit(commitAction, taskResponse.data as Task[]);
         if (taskResponse._response.next_page) {
           loadTasksWithOffset(
             taskResponse._response.next_page.offset,
@@ -442,7 +444,7 @@ function loadTasksWithOffset(
 function loadProjectsWithOffset(
   offset: string,
   workspaceGid: string,
-  commit: any
+  commit: (cmd: string, payload: Project[]) => void
 ): void {
   const options: ProjectParams = {
     limit: 100,
@@ -500,17 +502,17 @@ function base64URL(string: CryptoJS.lib.WordArray) {
     .replace(/\//g, "_");
 }
 
-function sortAndUnique(stuff: any[]): any[] {
+function sortAndUnique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaType[] {
   const uniqueStuff = unique(stuff);
-  uniqueStuff.sort((a: any, b: any) => {
+  uniqueStuff.sort((a, b) => {
     return a.name.localeCompare(b.name);
   });
 
   return uniqueStuff;
 }
-function unique(stuff: any[]): any[] {
-  stuff.sort((a: any, b: any) => {
-    return a.gid?.localeCompare(b.gid) ?? 0;
+function unique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaType[] {
+  stuff.sort((a, b) => {
+    return a.gid.localeCompare(b.gid) ?? 0;
   });
   const uniqueStuff = stuff.filter(
     (thing, index, self) => index === self.findIndex((t) => t.gid === thing.gid)

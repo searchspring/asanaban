@@ -1,4 +1,5 @@
 import store from "@/store";
+import { AsanaError } from "@/types/asana";
 
 // export start function
 export function startWorkers() {
@@ -34,7 +35,7 @@ async function processAction(): Promise<void> {
           error.value.errors[0].message.indexOf("does not exist in parent") ===
           -1
         ) {
-          state.errors.push(error);
+          state.errors.push(error as AsanaError);
         }
         if (error.status !== 400) {
           state.actions.push(action);

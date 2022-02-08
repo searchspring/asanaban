@@ -29,11 +29,12 @@
 
 <script lang="ts">
 import store from "@/store";
-import { defineComponent } from "vue";
+import { Task } from "@/types/asana";
+import { defineComponent, PropType } from "vue";
 
 export default defineComponent({
   props: {
-    task: Object,
+    task: Object as PropType<Task>,
   },
   computed: {
     assignee() {
@@ -62,12 +63,12 @@ export default defineComponent({
     },
   },
   methods: {
-    startDrag(event, task: any) {
+    startDrag(event, task: Task) {
       event.dataTransfer.dropEffect = "move";
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData(
         "startSectionId",
-        task.memberships[0].section.gid
+        task.memberships[0].section!.gid
       );
       event.srcElement.classList.add("dragging");
       event.dataTransfer.setData("taskId", task.gid);

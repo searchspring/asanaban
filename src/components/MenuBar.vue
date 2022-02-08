@@ -11,7 +11,9 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
+import { PropType } from '@vue/runtime-core';
+import { Editor } from "@tiptap/vue-3";
 import MenuItem from "./MenuItem.vue";
 
 export default {
@@ -21,7 +23,7 @@ export default {
 
   props: {
     editor: {
-      type: Object,
+      type: Object as PropType<Editor>,
       required: true,
     },
   },
