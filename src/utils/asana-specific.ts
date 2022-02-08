@@ -2,6 +2,11 @@ import colorConvert from "color-convert";
 import { LightenDarkenColor } from "lighten-darken-color";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
 
+export interface Hex {
+  background: string;
+  font: string;
+}
+
 function getPrettyColumnName(columnName: string): string {
   const parts = columnName.split(/[:|]/);
   if (parts && parts.length > 0) {
@@ -18,7 +23,7 @@ function getColumnCount(columnName: string): string {
   return "-1";
 }
 
-function convertColorToHexes(color: string): any {
+function convertColorToHexes(color: string): Hex {
   if (!color) {
     return {
       background: "#FFFFFF",
