@@ -406,7 +406,7 @@ export default {
     completeTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
       commit("completeTask", taskAndSectionId);
     },
-    releaseSection({ commit }, taskList: any): void {
+    releaseSection({ commit }, taskList: Task[]): void {
       console.log("Releasing Tasks: ", taskList);
       taskList.forEach((task) => {
         commit("releaseTask", task);
