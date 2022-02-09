@@ -51,6 +51,9 @@ export default {
     users: jsonstore.get("users", []) as User[],
   } as State,
   getters: {
+    isSectionComplete: (state: State) => (columnName) => {
+      return columnName.toUpperCase() === 'DONE' || columnName.toUpperCase().startsWith('COMPLETE') || columnName.toUpperCase().startsWith('FINISH')
+    },
     swimlanes: (state: State) => {
       const swimlanes: Swimlane[] = [];
       const found: Set<string> = new Set();
@@ -286,7 +289,7 @@ export default {
         },
       });
     },
-    release(state, task: any): void {
+    releaseTask(state: State, task: any): void {
       state.actions.push({
         description: "releasing task",
         func: () => {
@@ -401,8 +404,11 @@ export default {
     completeTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
       commit("completeTask", taskAndSectionId);
     },
-    release({ commit }, task: any): void {
-      commit("release", task);
+    releaseSection({ commit }, taskList: any): void {
+      console.log("Releasing Tasks: ", taskList);
+      taskList.forEach((task) => {
+        commit("releaseTask", task);
+      });
     },
   },
 };
