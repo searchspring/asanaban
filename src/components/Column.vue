@@ -19,6 +19,17 @@
       <div class="count nav-item" v-if="!columnCollapsed(section.gid)">
         {{ taskCount(section.gid) }} of {{ maxTaskCount() }}
       </div>
+      <div class="nav-item" v-if="isSectionComplete(columnName)">
+        <a
+          class="nav-item"
+          :class="{ mouseInside: mouseInside }"
+          v-if="!columnCollapsed(section.gid)"
+          a
+          href="javascript:;"
+          @click.prevent.stop="release(section.gid)"
+          >release</a
+        >
+      </div>
     </div>
     <div
       v-if="!columnCollapsed(section.gid)"
@@ -76,6 +87,21 @@ export default defineComponent({
         sectionId: sectionId,
         task: {},
       });
+    },
+    isSectionComplete(columnName: string) {
+      return columnName === 'Done' || columnName.startsWith('Complete') || columnName.startsWith('Finish')
+    },
+    release(sectionId: string) {
+      let count = this.taskCount(sectionId);
+      const response = confirm(
+        `Release ${count} task${count > 1 ? 's' : ''} and mark as complete?`
+      );
+      if (response) {
+        console.log("Releasing tasks: ", this.tasks(sectionId))
+        this.tasks(sectionId).forEach((task) => {
+          store.dispatch("asana/release", task);
+        });
+      }
     },
     columnCollapsed(gid: string) {
       if (!store.state["preferences"].columnStates[gid]) {
