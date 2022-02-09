@@ -289,11 +289,13 @@ export default {
         },
       });
     },
-    releaseTask(state: State, task: any): void {
+    releaseTask(state: State, task: Task): void {
       state.actions.push({
         description: "releasing task",
         func: () => {
-          const index = state.tasks.findIndex((t: any) => t.gid === task.gid);
+          const index = state.tasks.findIndex(
+            t => t.gid === task.gid
+            );
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
