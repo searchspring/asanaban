@@ -36,12 +36,19 @@
       </div>
       <div class="description">
         <label for="description">description</label>
-        <asana-description
+        <TextEditor
           :html="taskEditorSectionIdAndTask.task.html_notes"
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
       <Stories></Stories>
+      <div class="new comment">
+        <label for="new comment">new comment</label>
+        <TextEditor
+          :html="taskEditorSectionIdAndTask.task.html_text"
+          v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
+        />
+      </div>
       <div class="button-bar">
         <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
@@ -74,13 +81,13 @@ import store from "@/store";
 import { defineComponent } from "vue";
 import { createNamespacedHelpers } from "vuex";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import AsanaDescription from "./AsanaDescription.vue";
+import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AssigneeSelector, AsanaDescription, Stories },
+  components: { AssigneeSelector, TextEditor, Stories },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
@@ -113,6 +120,9 @@ export default defineComponent({
     },
     updateHtmlNotes(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
       taskEditorSectionIdAndTask.task.html_notes = html;
+    },
+    updateHtmlText(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
+      taskEditorSectionIdAndTask.task.html_text = html;
     },
     completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);

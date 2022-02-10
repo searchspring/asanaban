@@ -1,8 +1,7 @@
 import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
-import { TaskAndSectionId } from "@/types/asana";
-import asana from "asana";
+import { Assignee, TaskAndSectionId } from "@/types/asana";
 
 export default {
   namespaced: true,
@@ -38,7 +37,7 @@ export default {
       } else {
         state.taskEditorSectionIdAndTask!.task.assignee = { 
           gid: gid
-        } as asana.resources.Assignee;
+        } as Assignee;
       }
     },
   },
