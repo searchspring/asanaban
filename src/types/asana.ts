@@ -22,12 +22,13 @@ export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
   tags: TaskTag[]
 };
 
+export type Assignee = asana.resources.Assignee;
 export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
 
 export type AsanaError = asana.errors.AsanaError;
 
 export type TaskAndSectionId = {
-  task: Task,
-  sectionId: string
+  task: Task & { html_text: string },
+  sectionId: string,
 }

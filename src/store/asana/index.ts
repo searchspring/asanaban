@@ -252,6 +252,13 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
+          if (taskAndSectionId.task.html_text != "") {
+            asanaClient?.stories.createOnTask(
+              taskAndSectionId.task.gid,
+              { html_text: taskAndSectionId.task.html_text, }
+            )
+          }
+          taskAndSectionId.task.html_text = "";
           return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
