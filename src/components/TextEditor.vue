@@ -5,7 +5,7 @@
   </div>
 </template>
 
-<script>
+<script lang="ts">
 import { useEditor, EditorContent } from "@tiptap/vue-3";
 import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
@@ -14,11 +14,12 @@ import Underline from "@tiptap/extension-underline";
 import { xmlToHtml, htmlToXml } from "@/utils/asana-specific";
 import MenuBar from "./MenuBar.vue";
 import StarterKit from "@tiptap/starter-kit";
+import { defineComponent } from "vue";
 
 Link.configure({
   openOnClick: false,
 });
-export default {
+export default defineComponent({
   components: {
     EditorContent,
     MenuBar,
@@ -29,7 +30,7 @@ export default {
   emits: ["update"],
   setup(props, { emit }) {
     const editor = useEditor({
-      content: xmlToHtml(props.html),
+      content: xmlToHtml(props.html ?? ""),
       extensions: [
         StarterKit.configure({}),
         TextAlign,
@@ -44,7 +45,7 @@ export default {
 
     return { editor };
   },
-};
+});
 </script>
 
 <style lang="scss">
