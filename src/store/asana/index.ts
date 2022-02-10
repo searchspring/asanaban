@@ -51,6 +51,10 @@ export default {
     users: jsonstore.get("users", []) as User[],
   } as State,
   getters: {
+    isSectionComplete: (state: State) => (columnName) => {
+      const columnNameUpper = columnName.toUpperCase()
+      return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
+    },
     swimlanes: (state: State) => {
       const swimlanes: Swimlane[] = [];
       const found: Set<string> = new Set();
@@ -286,6 +290,22 @@ export default {
         },
       });
     },
+    releaseTask(state: State, task: Task): void {
+      state.actions.push({
+        description: "releasing task",
+        func: () => {
+          const index = state.tasks.findIndex(
+            t => t.gid === task.gid
+            );
+          if (index !== -1) {
+            state.tasks.splice(index, 1);
+          }
+          return asanaClient?.tasks.update(task.gid, {
+            completed: true,
+          });
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -386,6 +406,12 @@ export default {
     },
     completeTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
       commit("completeTask", taskAndSectionId);
+    },
+    releaseSection({ commit }, taskList: Task[]): void {
+      console.log("Releasing Tasks: ", taskList);
+      taskList.forEach((task) => {
+        commit("releaseTask", task);
+      });
     },
   },
 };

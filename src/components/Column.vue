@@ -5,32 +5,41 @@
     @mouseenter="mouseInside = true"
     @mouseleave="mouseInside = false"
   >
-    <div class="column-nav" @click="toggleColumn(section.gid)">
+    <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
       <a
         class="nav-item"
         :class="{ mouseInside: mouseInside }"
-        v-if="!columnCollapsed(section.gid)"
-        a
+        v-if="!columnCollapsed(section?.gid ?? '')"
         href="javascript:;"
-        @click.prevent.stop="showTaskEditor(section.gid)"
+        @click.prevent.stop="showTaskEditor(section?.gid ?? '')"
         >add task</a
       >
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
-      <div class="count nav-item" v-if="!columnCollapsed(section.gid)">
-        {{ taskCount(section.gid) }} of {{ maxTaskCount() }}
+      <div class="count nav-item" v-if="!columnCollapsed(section?.gid ?? '')">
+        {{ taskCount(section?.gid ?? '') }} of {{ maxTaskCount() }}
+      </div>
+      <div class="nav-item" v-if="isSectionComplete(columnName)">
+        <a
+          class="nav-item"
+          :class="{ mouseInside: mouseInside }"
+          v-if="!columnCollapsed(section?.gid ?? '')"
+          href="javascript:;"
+          @click.prevent.stop="release(section?.gid ?? '')"
+          >release</a
+        >
       </div>
     </div>
     <div
-      v-if="!columnCollapsed(section.gid)"
-      @drop="onDrop($event, section.gid)"
+      v-if="!columnCollapsed(section?.gid ?? '')"
+      @drop="onDrop($event, section?.gid ?? '')"
       @dragenter="onDragEnter($event)"
-      @dragend="onDragEnd($event)"
+      @dragend="onDragEnd()"
       @dragover.prevent
       class="droppable"
-      v-bind:id="section.gid"
+      v-bind:id="section?.gid"
     >
       <task
-        v-for="task in tasks(section.gid)"
+        v-for="task in tasks(section?.gid ?? '')"
         :task="task"
         :key="task.gid"
       ></task>
@@ -41,7 +50,7 @@
 <script lang="ts">
 import store from "@/store";
 import { Section, Task as TaskType } from "@/types/asana";
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, computed } from "vue";
 import { getPrettyColumnName } from "../utils/asana-specific";
 import Task from "./Task.vue";
 export default defineComponent({
@@ -54,54 +63,71 @@ export default defineComponent({
       mouseInside: false,
     };
   },
-  computed: {
-    columnName(state) {
-      return getPrettyColumnName(state.section.name);
-    },
-    classObject() {
-      const section = this.$props["section"];
+  setup(props) {
+    const columnName = computed(() => {
+      return getPrettyColumnName(props.section?.name ?? "");
+    });
+    const classObject = computed(() => {
+      const section = props["section"];
       if (section) {
         return {
-          collapsed: this.columnCollapsed(section.gid),
-          "over-budget": this.overBudget(),
-          "search-match": this.tasks(section.gid).length > 0 && !emptySearch(),
+          collapsed: columnCollapsed(section.gid),
+          "over-budget": overBudget(),
+          "search-match": tasks(section.gid).length > 0 && !emptySearch(),
         };
       }
       return {};
-    },
-  },
-  methods: {
-    showTaskEditor(sectionId: string) {
+    });
+
+    const showTaskEditor = (sectionId: string) => {
       store.dispatch("preferences/showTaskEditor", {
         sectionId: sectionId,
         task: {},
       });
-    },
-    columnCollapsed(gid: string) {
+    };
+
+    const isSectionComplete = (columnName: string) => {
+      return store.getters['asana/isSectionComplete'](columnName)
+    };
+
+    const release = (sectionId: string) => {
+      let count = taskCount(sectionId);
+      const response = confirm(
+        `Release ${count} task${count > 1 ? 's' : ''} and mark as complete?`
+      );
+      if (response) {
+        store.dispatch("asana/releaseSection", tasks(sectionId));
+      }
+    };
+
+    const columnCollapsed = (gid: string) => {
       if (!store.state["preferences"].columnStates[gid]) {
         return false;
       }
       return store.state["preferences"].columnStates[gid].collapsed;
-    },
-    overBudget() {
-      const section = this.$props["section"];
+    };
+
+    const overBudget = () => {
+      const section = props["section"];
       if (section) {
         return (
           section.maxTaskCount !== "-1" &&
-          this.taskCount(section.gid) > section.maxTaskCount
+          taskCount(section.gid) > section.maxTaskCount
         );
       }
       return false;
-    },
-    taskCount(sectionId: string) {
+    };
+
+    const taskCount = (sectionId: string) => {
       return store.state["asana"].tasks.filter((task) => {
         return task.memberships.some((membership) => {
           return membership.section.gid === sectionId;
         });
       }).length;
-    },
-    maxTaskCount() {
-      const section = this.$props["section"];
+    };
+
+    const maxTaskCount = () => {
+      const section = props["section"];
       if (section) {
         if (section.maxTaskCount === "-1") {
           return "∞";
@@ -109,8 +135,9 @@ export default defineComponent({
         return section.maxTaskCount;
       }
       return "";
-    },
-    tasks(sectionId: string) {
+    };
+
+    const tasks = (sectionId: string) => {
       return store.state["asana"].tasks.filter((task) => {
         return task.memberships.some((membership) => {
           const isInSection = membership.section.gid === sectionId;
@@ -120,11 +147,13 @@ export default defineComponent({
           return isInSection && isInSearch;
         });
       });
-    },
-    toggleColumn(gid: string) {
+    };
+
+    const toggleColumn = (gid: string) => {
       store.dispatch("preferences/toggleColumn", gid);
-    },
-    onDrop(event, endSectionId: string) {
+    };
+
+    const onDrop = (event, endSectionId: string) => {
       const startSectionId = event.dataTransfer.getData("startSectionId");
       const taskId = event.dataTransfer.getData("taskId");
       let el = event.target;
@@ -141,14 +170,33 @@ export default defineComponent({
         taskId: taskId,
         siblingTaskId: siblingTaskId,
       });
-    },
-    onDragEnter(event) {
+    };
+
+    const onDragEnter = (event) => {
       removeDragOverClass();
       event.currentTarget.classList.add("drag-over");
-    },
-    onDragEnd() {
+    };
+
+    const onDragEnd = () => {
       removeDragOverClass();
-    },
+    };
+
+    return {
+      columnName,
+      classObject,
+      showTaskEditor,
+      isSectionComplete,
+      release,
+      columnCollapsed,
+      overBudget,
+      taskCount,
+      maxTaskCount,
+      tasks,
+      toggleColumn,
+      onDrop,
+      onDragEnter,
+      onDragEnd,
+    };
   },
 });
 
