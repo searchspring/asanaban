@@ -28,6 +28,17 @@
           >release</a
         >
       </div>
+      <div class="nav-item" v-if="isSectionComplete(columnName)">
+        <a
+          class="nav-item"
+          :class="{ mouseInside: mouseInside }"
+          v-if="!columnCollapsed(section?.gid ?? '')"
+          a
+          href="javascript:;"
+          @click.prevent.stop="release(section?.gid ?? '')"
+          >release</a
+        >
+      </div>
     </div>
     <div
       v-if="!columnCollapsed(section?.gid ?? '')"
