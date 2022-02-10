@@ -52,7 +52,8 @@ export default {
   } as State,
   getters: {
     isSectionComplete: (state: State) => (columnName) => {
-      return columnName.toUpperCase() === 'DONE' || columnName.toUpperCase().startsWith('COMPLETE') || columnName.toUpperCase().startsWith('FINISH')
+      const columnNameUpper = columnName.toUpperCase()
+      return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
     },
     swimlanes: (state: State) => {
       const swimlanes: Swimlane[] = [];
