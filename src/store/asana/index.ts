@@ -51,7 +51,7 @@ export default {
     users: jsonstore.get("users", []) as User[],
   } as State,
   getters: {
-    isSectionComplete: (state: State) => (columnName) => {
+    isSectionComplete: (state: State) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
       return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
     },
@@ -86,8 +86,8 @@ export default {
       });
       return swimlanes;
     },
+    users: (state: State) => state.users,
   },
-  users: (state: State) => state.users,
   mutations: {
     setStories(state: State, task: Task): void {
       if (asanaClient) {
@@ -252,7 +252,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
-          if (taskAndSectionId.task.html_text != "") {
+          if (taskAndSectionId.task.html_text) {
             asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
               { html_text: taskAndSectionId.task.html_text, }

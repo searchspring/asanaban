@@ -11,10 +11,12 @@ import TextAlign from "@tiptap/extension-text-align";
 import Highlight from "@tiptap/extension-highlight";
 import Link from "@tiptap/extension-link";
 import Underline from "@tiptap/extension-underline";
+import Mention from "@tiptap/extension-mention"
 import { xmlToHtml, htmlToXml } from "@/utils/asana-specific";
 import MenuBar from "./MenuBar.vue";
 import StarterKit from "@tiptap/starter-kit";
 import { defineComponent } from "vue";
+import suggestion from "../utils/suggestion";
 
 Link.configure({
   openOnClick: false,
@@ -37,6 +39,12 @@ export default defineComponent({
         Highlight,
         Underline,
         Link,
+        Mention.configure({
+          HTMLAttributes: {
+            class: 'mention',
+          },
+          suggestion
+        })
       ],
       onUpdate: ({ editor }) => {
         emit("update", htmlToXml(editor.getHTML()));

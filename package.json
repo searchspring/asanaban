@@ -17,6 +17,7 @@
     "@tiptap/extension-highlight": "^2.0.0-beta.30",
     "@tiptap/extension-link": "^2.0.0-beta.28",
     "@tiptap/extension-list-item": "^2.0.0-beta.19",
+    "@tiptap/extension-mention": "^2.0.0-beta.91",
     "@tiptap/extension-ordered-list": "^2.0.0-beta.24",
     "@tiptap/extension-paragraph": "^2.0.0-beta.22",
     "@tiptap/extension-text": "^2.0.0-beta.15",
@@ -24,6 +25,7 @@
     "@tiptap/extension-underline": "^2.0.0-beta.22",
     "@tiptap/html": "^2.0.0-beta.142",
     "@tiptap/starter-kit": "^2.0.0-beta.145",
+    "@tiptap/suggestion": "^2.0.0-beta.86",
     "@tiptap/vue-3": "^2.0.0-beta.81",
     "asana": "^0.18.6",
     "color-convert": "^1.9.3",
@@ -35,6 +37,7 @@
     "lighten-darken-color": "^1.0.0",
     "register-service-worker": "^1.7.1",
     "remixicon": "^2.5.0",
+    "tippy.js": "^6.3.7",
     "vue": "^3.0.0",
     "vue-router": "^4.0.0-0",
     "vuex": "^4.0.0-0"
