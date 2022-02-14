@@ -8,6 +8,7 @@
         :key="index"
         :value="item.gid"
         @click="selectItem(index)"
+        @keydown="onKeyDown({ event: $event })"
       >
         {{ item.name }}
       </button>
@@ -20,7 +21,7 @@
 
 <script lang="ts">
 import { User } from "@/types/asana";
-import { defineComponent, PropType } from "vue";
+import { defineComponent, PropType, ref, watch } from "vue";
 
 export default defineComponent({
   props: {
@@ -33,55 +34,61 @@ export default defineComponent({
       required: true,
     },
   },
-  data() {
-    return {
-      selectedIndex: 0,
-    }
-  },
-  watch: {
-    items() {
-      this.selectedIndex = 0
-    },
-  },
-  methods: {
-    onKeyDown({ event }) {
+  setup(props) {
+    const selectedIndex = ref(0);
+
+    const onKeyDown = ({ event }: { event: KeyboardEvent }) => {
       if (event.key === 'ArrowUp') {
-        this.upHandler()
-        return true
+        upHandler();
+        return true;
       }
       if (event.key === 'ArrowDown') {
-        this.downHandler()
-        return true
+        downHandler();
+        return true;
       }
       if (event.key === 'Enter') {
-        this.enterHandler()
-        return true
+        enterHandler();
+        return true;
       }
-      return false
-    },
-    upHandler() {
-      this.selectedIndex = ((this.selectedIndex + this.items.length) - 1) % this.items.length
-    },
-    downHandler() {
-      this.selectedIndex = (this.selectedIndex + 1) % this.items.length
-    },
-    enterHandler() {
-      this.selectItem(this.selectedIndex)
-    },
-    selectItem(index) {
-      const item = this.items[index]
+      return false;
+    };
+
+    const selectItem = (index: number) => {
+      const item = props.items[index]
       if (item) {
-        this.command({
+        props.command({
           id: item.gid,
           label: item.name
         })
       }
-    },
-  },
+    };
+
+    const upHandler = () => {
+      selectedIndex.value = ((selectedIndex.value + props.items.length) - 1) % props.items.length;
+    };
+
+    const downHandler = () => {
+      selectedIndex.value = (selectedIndex.value + 1) % props.items.length;
+    };
+
+    const enterHandler = () => {
+      selectItem(selectedIndex.value);
+    };
+
+    watch([props.items], () => {
+      selectedIndex.value = 0;
+    });
+
+    return {
+      selectedIndex,
+      selectItem,
+      onKeyDown,
+    };
+  }
 })
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 .items {
   padding: 0.2rem;
   position: relative;
