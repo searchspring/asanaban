@@ -13,7 +13,7 @@ export type Section = asana.resources.Sections.Type & { maxTaskCount: string };
 export type Tag = asana.resources.Tags.Type;
 export type TaskTag = Resource & {
   color: string,
-  hexes: Hex
+  hexes?: Hex
 };
 export type User = asana.resources.Users.Type & {
   email: string,
@@ -30,6 +30,7 @@ export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
 export type Assignee = asana.resources.Assignee;
 export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
+export type PaginationParams = asana.resources.PaginationParams;
 
 export type AsanaError = asana.errors.AsanaError;
 

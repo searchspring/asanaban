@@ -41,7 +41,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
-      <TagSelector></TagSelector>
+      <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
       <div class="new comment">
         <label for="new comment">new comment</label>
