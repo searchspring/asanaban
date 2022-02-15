@@ -51,6 +51,9 @@ export default {
     users: jsonstore.get("users", []) as User[],
   } as State,
   getters: {
+    getTags: (state: State) => {
+      return state.tags;
+    },
     isSectionComplete: (state: State) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
       return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
@@ -524,6 +527,7 @@ function colorizeTaskTags(state: State): void {
 function setTags(state: State, payload: TaskTag[]): void {
   state.tags = sortAndUnique(payload);
   jsonstore.set("tags", state.tags);
+  console.log("setTags", state.tags)
 }
 
 function getTags(tasks: Task[]): TaskTag[] {
