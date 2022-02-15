@@ -41,6 +41,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
+      <TagSelector></TagSelector>
       <Stories></Stories>
       <div class="new comment">
         <label for="new comment">new comment</label>
@@ -84,10 +85,11 @@ import AssigneeSelector from "./AssigneeSelector.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
+import TagSelector from "./TagSelector.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AssigneeSelector, TextEditor, Stories },
+  components: { AssigneeSelector, TextEditor, Stories, TagSelector },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
