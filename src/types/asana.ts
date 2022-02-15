@@ -2,8 +2,13 @@ import asana from "asana";
 import { Hex } from "@/utils/asana-specific";
 
 export type Resource = asana.resources.Resource;
+export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 
-export type Project = asana.resources.Projects.Type;
+// interface doesn't have ProjectCompact type https://developers.asana.com/docs/project-compact
+export type Project = BaseResource & {
+  workspaceGid: string
+};
+
 export type Section = asana.resources.Sections.Type & { maxTaskCount: string };
 export type Tag = asana.resources.Tags.Type;
 export type TaskTag = Resource & {

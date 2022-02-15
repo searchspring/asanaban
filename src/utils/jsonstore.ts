@@ -1,19 +1,14 @@
+type NonUndefined<T> = T extends undefined ? never : T;
+
 class JsonStore {
-  set(key: string, value: unknown) {
+  set<T>(key: string, value: NonUndefined<T>) {
     localStorage.setItem(key, JSON.stringify(value));
   }
   get<T>(key: string, defaultValue?: T): any {
     if (this.has(key)) {
-      try {
-        return JSON.parse(localStorage.getItem(key)!);
-      } catch (exception) {
-        console.warn(exception);
-        const value = localStorage.getItem(key);
-        this.set(key, value);
-        return value;
-      }
+      return JSON.parse(localStorage.getItem(key)!);
     }
-    if (defaultValue) {
+    if (arguments.length === 2) {
       return defaultValue;
     } else {
       throw `no entry for ${key}, and no default given`;

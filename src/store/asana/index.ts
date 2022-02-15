@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import jsonstore from "@/utils/jsonstore";
 import { Action, State } from "./state";
 import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, Resource } from "@/types/asana";
+import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 
 let asanaClient: AsanaSdk.Client | null = null;
@@ -107,12 +107,17 @@ export default {
     },
     tokenReceived(state: State, payload: any): void {
       const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
-      Cookies.set("access_token", payload.access_token, {
+
+      const access_token = payload.access_token ?? "";
+      const refresh_token = payload.refresh_token ?? "";
+      const data = payload.data ?? {};
+      
+      Cookies.set("access_token", access_token, {
         expires: oneHourFromNow,
       });
-      jsonstore.set("refresh_token", payload.refresh_token);
-      jsonstore.set("user", payload.data);
-      asanaClient = createClient(payload.access_token, payload.refresh_token);
+      jsonstore.set("refresh_token", refresh_token);
+      jsonstore.set("user", data);
+      asanaClient = createClient(access_token, refresh_token);
     },
     signOut(state: State): void {
       Cookies.remove("access_token");
@@ -490,7 +495,13 @@ function loadProjectsWithOffset(
 
   if (asanaClient) {
     asanaClient.projects.findAll(options).then(projectResponse => {
-      commit("addProjects", projectResponse.data);
+      const projects = projectResponse.data.map(p => {
+        return {
+          ...p,
+          workspaceGid: workspaceGid
+        } as Project
+      });
+      commit("addProjects", projects);
       if (projectResponse._response.next_page) {
         loadProjectsWithOffset(
           projectResponse._response.next_page.offset,
@@ -535,7 +546,7 @@ function base64URL(string: CryptoJS.lib.WordArray) {
     .replace(/\//g, "_");
 }
 
-function sortAndUnique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaType[] {
+function sortAndUnique<AsanaType extends BaseResource>(stuff: AsanaType[]): AsanaType[] {
   const uniqueStuff = unique(stuff);
   uniqueStuff.sort((a, b) => {
     return a.name.localeCompare(b.name);
@@ -543,7 +554,7 @@ function sortAndUnique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaTyp
 
   return uniqueStuff;
 }
-function unique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaType[] {
+function unique<AsanaType extends BaseResource>(stuff: AsanaType[]): AsanaType[] {
   stuff.sort((a, b) => {
     return a.gid.localeCompare(b.gid) ?? 0;
   });
@@ -555,5 +566,5 @@ function unique<AsanaType extends Resource>(stuff: AsanaType[]): AsanaType[] {
 
 function currentWorkspace(state: State): string | undefined {
   const match = state.projects.find(p => p.gid === state.selectedProject);
-  return match?.workspace.gid;
+  return match?.workspaceGid;
 }
