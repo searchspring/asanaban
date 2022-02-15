@@ -5,6 +5,8 @@ import { Instance, Props } from 'tippy.js'
 import MentionList from '../components/MentionList.vue'
 import { SuggestionOptions } from '@tiptap/suggestion'
 
+// adapted from this demo: https://tiptap.dev/api/nodes/mention
+
 const suggestions: Omit<SuggestionOptions, "editor"> = {
   items: ({ query }) => {
     const users = store.getters["asana/users"];
