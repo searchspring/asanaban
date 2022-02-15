@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import jsonstore from "@/utils/jsonstore";
 import { Action, State } from "./state";
 import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource } from "@/types/asana";
+import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource, PaginationParams } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 
 let asanaClient: AsanaSdk.Client | null = null;
@@ -49,10 +49,11 @@ export default {
     errors: [] as AsanaError[],
     tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
+    allTags: jsonstore.get("allTags", []) as TaskTag[],
   } as State,
   getters: {
     getTags: (state: State) => {
-      return state.tags;
+      return state.allTags;
     },
     isSectionComplete: (state: State) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
@@ -131,6 +132,7 @@ export default {
       jsonstore.remove("projects");
       jsonstore.remove("tags");
       jsonstore.remove("users");
+      jsonstore.remove("allTags");
       asanaClient = null;
       state.projects = [];
       state.sections = [];
@@ -138,6 +140,7 @@ export default {
       state.tags = [];
       state.selectedProject = null;
       state.users = [];
+      state.allTags = [];
     },
     setProjects(state: State, payload: Project[]): void {
       state.projects = payload;
@@ -148,6 +151,17 @@ export default {
       state.projects.push(...payload);
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
+    },
+    setAllTags(state: State, payload: TaskTag[]): void {
+      state.allTags = payload;
+      state.allTags = sortAndUnique(state.allTags);
+      colorizeTaskTags(state)
+      jsonstore.set("allTags", state.allTags);
+    },
+    addAllTags(state: State, payload: TaskTag[]): void {
+      state.allTags.push(...payload);
+      state.allTags = sortAndUnique(state.allTags);
+      jsonstore.set("allTags", state.allTags);
     },
     setUsers(state: State, payload: User[]): void {
       state.users = payload;
@@ -267,11 +281,14 @@ export default {
             )
           }
           taskAndSectionId.task.html_text = "";
+          const tags = taskAndSectionId.task.tags.map(tag => tag.gid);
+
           return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
             html_notes: taskAndSectionId.task.html_notes,
-          });
+            tags: tags,
+          } as any);
         },
       });
     },
@@ -362,6 +379,7 @@ export default {
       dispatch("loadTasks");
       dispatch("loadSections");
       dispatch("loadUsers");
+      dispatch("loadAllTags");
     },
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
@@ -390,6 +408,12 @@ export default {
           commit("setUsers", userResponse.data);
         });
       }
+    },
+    loadAllTags({ commit, state }): void {
+      if (asanaClient && state.selectedProject) {
+        loadAllTagsWithOffset("", currentWorkspace(state)!, commit);
+      }
+      console.log("all tags", state.allTags);
     },
     moveTask({ commit }, payload) {
       commit("moveTask", payload);
@@ -480,6 +504,37 @@ function loadTasksWithOffset(
       }
     });
   }
+}
+
+function loadAllTagsWithOffset(
+  offset: string,
+  workspaceGid: string,
+  commit: (cmd: string, payload: TaskTag[]) => void
+): void {
+  const options: PaginationParams = {
+    limit: 100,
+    opt_fields: "color,name",
+  };
+  if (offset) {
+    options["offset"] = offset;
+  }
+  if (asanaClient) {
+    asanaClient.tags.findByWorkspace(
+      workspaceGid,
+      options)
+      .then(tagResponse => {
+        commit("addAllTags", tagResponse.data as TaskTag[])
+        console.log(tagResponse.data);
+        if (tagResponse._response.next_page) {
+          loadAllTagsWithOffset(
+            tagResponse._response.next_page.offset,
+            workspaceGid,
+            commit
+          );
+        }
+      })
+  }
+
 }
 
 function loadProjectsWithOffset(

@@ -8,6 +8,7 @@
       v-model="value"
       multiple
       searchable
+      @update:modelValue="setTag()"
     >
       <template #content="{ value }">
         <va-chip
@@ -15,6 +16,7 @@
           :key="chip"
           size="small"
           class="mr-1 my-1"
+          :color="chip.hexes?.background"
           closeable
           @update:modelValue="deleteChip(chip)"
         >
@@ -26,39 +28,58 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed } from "vue";
+import { defineComponent, ref, computed, onMounted, PropType } from "vue";
 import store from "@/store";
+import { Task, TaskTag } from "@/types/asana";
+import { TagOption } from "@/types/vue";
 
 export default defineComponent ({
-  setup() {
-    let value = ref<string[]>();
+  props: {
+    task: {
+      type: Object as PropType<Task>,
+      required: true
+    }
+  },
+  setup(props) {
+    let value = ref<TagOption[]>();
 
-    // const options =  [
-    //     { gid: '0', text: 'one', name: 'one' },
-    //     { gid: '1', text: 'two', name: 'two' },
-    //     { gid: '2', text: 'three', name: 'three' },
-    //     { gid: '3', text: 'four', name: 'four' },
-    //     { gid: '4', text: 'five', name: 'five' },
-    //   ];
-    
-    const options = [
-      { gid: '1201827305125769', color: 'light-teal', name: 'tag1', hexes: {background: '#64e4e4', font: '#000000'} },
-      { gid: '1201831364375631', color: 'light-purple', name: 'tag2', hexes: {background: '#64e4e4', font: '#000000'} }
-    ];
-
-    // const options = computed(() => {
-    //   return store.getters['asana/getTags'];
-    // });
+    const options = computed(() => {
+      const tags = store.getters['asana/getTags'];
+      return makeTagOption(tags);
+    });
 
     const deleteChip = (chip) => {
+      console.log("chip:", chip)
+      console.log("value:", value.value)
       value.value = value.value?.filter((v) => v !== chip)
     }
+
+    const setTag = () => {
+      const tags = value.value as TaskTag[];
+      store.dispatch("preferences/setTaskTags", tags);
+    }
+
+    onMounted(() => {
+      value.value = makeTagOption(props.task.tags);
+      console.log("after make tag opt", value.value);
+    })
 
     return {
       options,
       value,
       deleteChip,
+      setTag,
     }
   },
 });
+
+function makeTagOption(tags: TaskTag[]): TagOption[] {
+  const tagOptions = tags.map(tag => {
+    return {
+      ...tag, 
+      text: tag.name
+    }
+  });
+  return tagOptions;
+}
 </script>
