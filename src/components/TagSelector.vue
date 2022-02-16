@@ -49,19 +49,20 @@ export default defineComponent ({
     });
 
     const deleteChip = (chip) => {
-      console.log("chip:", chip)
-      console.log("value:", value.value)
       value.value = value.value?.filter((v) => v !== chip)
+      setTag();
     }
 
     const setTag = () => {
-      const tags = value.value as TaskTag[];
-      store.dispatch("preferences/setTaskTags", tags);
+      const tags = value.value?.map((tag) => { 
+        return { ...tag }
+      });
+      tags?.forEach((tag) => { delete tag.text })
+      store.dispatch("preferences/setTempTags", tags as TaskTag[]);
     }
 
     onMounted(() => {
       value.value = makeTagOption(props.task.tags);
-      console.log("after make tag opt", value.value);
     })
 
     return {
@@ -74,12 +75,12 @@ export default defineComponent ({
 });
 
 function makeTagOption(tags: TaskTag[]): TagOption[] {
-  const tagOptions = tags.map(tag => {
+  const tagOptions = tags?.map(tag => {
     return {
       ...tag, 
       text: tag.name
     }
   });
-  return tagOptions;
+  return tagOptions ?? [];
 }
 </script>

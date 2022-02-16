@@ -40,8 +40,8 @@ export default {
         } as Assignee;
       }
     },
-    setTaskTags(state: State, tags: TaskTag[]) {
-      state.taskEditorSectionIdAndTask!.task.tags = tags;
+    setTempTags(state: State, tags: TaskTag[]) {
+      state.taskEditorSectionIdAndTask!.tempTags = tags;
     },
   },
   actions: {
@@ -54,8 +54,8 @@ export default {
     setTaskAssignee({ commit }, assignee: string | null) {
       commit("setTaskAssignee", assignee);
     },
-    setTaskTags({ commit }, tags: TaskTag[]) {
-      commit("setTaskTags", tags);
+    setTempTags({ commit }, tags: TaskTag[]) {
+      commit("setTempTags", tags);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");

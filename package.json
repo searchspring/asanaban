@@ -46,6 +46,7 @@
   "devDependencies": {
     "@types/asana": "^0.18.5",
     "@types/chai": "^4.2.11",
+    "@types/color-convert": "^2.0.0",
     "@types/crypto-js": "^4.1.0",
     "@types/js-cookie": "^3.0.1",
     "@types/mocha": "^5.2.4",
