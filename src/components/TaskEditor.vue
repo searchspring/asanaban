@@ -46,7 +46,7 @@
       <div class="new comment">
         <label for="new comment">new comment</label>
         <TextEditor
-          :html="taskEditorSectionIdAndTask.task.html_text"
+          :html="taskEditorSectionIdAndTask.htmlText"
           v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
         />
       </div>
@@ -124,7 +124,7 @@ export default defineComponent({
       taskEditorSectionIdAndTask.task.html_notes = html;
     },
     updateHtmlText(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
-      taskEditorSectionIdAndTask.task.html_text = html;
+      taskEditorSectionIdAndTask.htmlText = html;
     },
     completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);

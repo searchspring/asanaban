@@ -152,15 +152,10 @@ export default {
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
     },
-    setAllTags(state: State, payload: TaskTag[]): void {
-      state.allTags = payload;
-      state.allTags = sortAndUnique(state.allTags);
-      colorizeTaskTags(state)
-      jsonstore.set("allTags", state.allTags);
-    },
     addAllTags(state: State, payload: TaskTag[]): void {
       state.allTags.push(...payload);
       state.allTags = sortAndUnique(state.allTags);
+      colorizeAllTags(state)
       jsonstore.set("allTags", state.allTags);
     },
     setUsers(state: State, payload: User[]): void {
@@ -249,6 +244,7 @@ export default {
             return asanaClient?.tasks
               .create({
                 ...taskAndSectionId.task,
+                tags: taskAndSectionId.tempTags.map((tag) => tag.gid),
                 projects: [state.selectedProject],
                 memberships: [
                   {
@@ -274,21 +270,19 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
-          if (taskAndSectionId.task.html_text) {
+          if (taskAndSectionId.htmlText) {
             asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
-              { html_text: taskAndSectionId.task.html_text, }
+              { htmlText: taskAndSectionId.htmlText, }
             )
           }
-          taskAndSectionId.task.html_text = "";
-          const tags = taskAndSectionId.task.tags.map(tag => tag.gid);
+          taskAndSectionId.htmlText = "";
 
           return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
             html_notes: taskAndSectionId.task.html_notes,
-            tags: tags,
-          } as any);
+          });
         },
       });
     },
@@ -334,6 +328,26 @@ export default {
           }
           return asanaClient?.tasks.update(task.gid, {
             completed: true,
+          });
+        },
+      });
+    },
+    addTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
+      state.actions.push({
+        description: "adding task tag",
+        func: () => {
+          return asanaClient?.tasks.addTag(payload.task.gid, {
+            tag: payload.tagGid,
+          });
+        },
+      });
+    },
+    removeTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
+      state.actions.push({
+        description: "removing task tag",
+        func: () => {
+          return asanaClient?.tasks.removeTag(payload.task.gid, {
+            tag: payload.tagGid,
           });
         },
       });
@@ -411,9 +425,9 @@ export default {
     },
     loadAllTags({ commit, state }): void {
       if (asanaClient && state.selectedProject) {
+        state.allTags = [];
         loadAllTagsWithOffset("", currentWorkspace(state)!, commit);
       }
-      console.log("all tags", state.allTags);
     },
     moveTask({ commit }, payload) {
       commit("moveTask", payload);
@@ -431,11 +445,12 @@ export default {
         loadTasksWithOffset("", state, commit, "mergeTasks");
       }
     },
-    createTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
+    createTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
       commit("createTask", taskAndSectionId);
     },
-    updateTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
+    updateTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
       commit("updateTask", taskAndSectionId);
+      dispatch("updateTaskTags", taskAndSectionId);
     },
     deleteTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
       commit("deleteTask", taskAndSectionId);
@@ -450,6 +465,20 @@ export default {
       console.log("Releasing Tasks: ", taskList);
       taskList.forEach((task) => {
         commit("releaseTask", task);
+      });
+    },
+    updateTaskTags({ commit }, taskAndSectionId: TaskAndSectionId): void {
+      const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
+      const tempTagIds = taskAndSectionId.tempTags.map(tag => tag.gid)
+
+      const removedTags = originalTagIds.filter(tag => !tempTagIds.includes(tag))
+      removedTags.forEach((tagGid) => {
+        commit("removeTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
+      });
+
+      const newTags = tempTagIds.filter(tag => !originalTagIds.includes(tag))
+      newTags.forEach((tagGid) => {
+        commit("addTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
       });
     },
   },
@@ -524,7 +553,6 @@ function loadAllTagsWithOffset(
       options)
       .then(tagResponse => {
         commit("addAllTags", tagResponse.data as TaskTag[])
-        console.log(tagResponse.data);
         if (tagResponse._response.next_page) {
           loadAllTagsWithOffset(
             tagResponse._response.next_page.offset,
@@ -574,15 +602,20 @@ function loadProjectsWithOffset(
 function colorizeTaskTags(state: State): void {
   state.tasks.forEach(task => {
     task.tags.forEach(tag => {
-      tag.hexes = convertColorToHexes(tag.color);
+      tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
     });
+  });
+}
+
+function colorizeAllTags(state: State): void {
+  state.allTags.forEach(tag => {
+    tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
   });
 }
 
 function setTags(state: State, payload: TaskTag[]): void {
   state.tags = sortAndUnique(payload);
   jsonstore.set("tags", state.tags);
-  console.log("setTags", state.tags)
 }
 
 function getTags(tasks: Task[]): TaskTag[] {

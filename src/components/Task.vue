@@ -16,8 +16,8 @@
         v-for="tag in tags"
         :key="tag"
         :style="{
-          'background-color': tag.hexes.background,
-          color: tag.hexes.font,
+          'background-color': tag.hexes?.background,
+          color: tag.hexes?.font,
         }"
       >
         {{ tag.name }}
