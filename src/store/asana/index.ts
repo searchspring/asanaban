@@ -152,7 +152,7 @@ export default {
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
     },
-    addAllTags(state: State, payload: TaskTag[]): void {
+    setAllTags(state: State, payload: TaskTag[]): void {
       state.allTags.push(...payload);
       state.allTags = sortAndUnique(state.allTags);
       colorizeAllTags(state)
@@ -244,7 +244,7 @@ export default {
             return asanaClient?.tasks
               .create({
                 ...taskAndSectionId.task,
-                tags: taskAndSectionId.tempTags.map((tag) => tag.gid),
+                tags: taskAndSectionId.newTags,
                 projects: [state.selectedProject],
                 memberships: [
                   {
@@ -469,15 +469,14 @@ export default {
     },
     updateTaskTags({ commit }, taskAndSectionId: TaskAndSectionId): void {
       const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
-      const tempTagIds = taskAndSectionId.tempTags.map(tag => tag.gid)
 
-      const removedTags = originalTagIds.filter(tag => !tempTagIds.includes(tag))
+      const removedTags = originalTagIds.filter(tagId => !taskAndSectionId.newTags.includes(tagId))
       removedTags.forEach((tagGid) => {
         commit("removeTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
       });
 
-      const newTags = tempTagIds.filter(tag => !originalTagIds.includes(tag))
-      newTags.forEach((tagGid) => {
+      const addedTags = taskAndSectionId.newTags.filter(tagId => !originalTagIds.includes(tagId))
+      addedTags.forEach((tagGid) => {
         commit("addTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
       });
     },
@@ -485,12 +484,12 @@ export default {
 };
 
 // load tasks with offset
-function loadTasksWithOffset(
+async function loadTasksWithOffset(
   offset: string,
   state: State,
   commit: (cmd: string, payload: Task[]) => void,
   commitAction: string
-): void {
+): Promise<void> {
   // asana interface has incorrect type definition
   const options: any = {
     project: state.selectedProject!,
@@ -519,27 +518,26 @@ function loadTasksWithOffset(
     options["offset"] = offset;
   }
   if (asanaClient) {
-    asanaClient.tasks.findAll(options).then((taskResponse) => {
-      if (state.actions.length === 0) {
-        commit(commitAction, taskResponse.data as Task[]);
-        if (taskResponse._response.next_page) {
-          loadTasksWithOffset(
-            taskResponse._response.next_page.offset,
-            state,
-            commit,
-            commitAction
-          );
-        }
+    const taskResponse = await asanaClient.tasks.findAll(options);
+    if (state.actions.length === 0) {
+      commit(commitAction, taskResponse.data as Task[]);
+      if (taskResponse._response.next_page) {
+        loadTasksWithOffset(
+          taskResponse._response.next_page.offset,
+          state,
+          commit,
+          commitAction
+        );
       }
-    });
+    }
   }
 }
 
-function loadAllTagsWithOffset(
+async function loadAllTagsWithOffset(
   offset: string,
   workspaceGid: string,
   commit: (cmd: string, payload: TaskTag[]) => void
-): void {
+  ): Promise<void> {
   const options: PaginationParams = {
     limit: 100,
     opt_fields: "color,name",
@@ -548,28 +546,23 @@ function loadAllTagsWithOffset(
     options["offset"] = offset;
   }
   if (asanaClient) {
-    asanaClient.tags.findByWorkspace(
-      workspaceGid,
-      options)
-      .then(tagResponse => {
-        commit("addAllTags", tagResponse.data as TaskTag[])
-        if (tagResponse._response.next_page) {
-          loadAllTagsWithOffset(
-            tagResponse._response.next_page.offset,
-            workspaceGid,
-            commit
-          );
-        }
-      })
+    const tagResponse = await asanaClient.tags.findByWorkspace(workspaceGid, options);
+    commit("setAllTags", tagResponse.data as TaskTag[])
+    if (tagResponse._response.next_page) {
+      loadAllTagsWithOffset(
+        tagResponse._response.next_page.offset,
+        workspaceGid,
+        commit
+      );
+    }
   }
-
 }
 
-function loadProjectsWithOffset(
+async function loadProjectsWithOffset(
   offset: string,
   workspaceGid: string,
   commit: (cmd: string, payload: Project[]) => void
-): void {
+): Promise<void> {
   const options: ProjectParams = {
     limit: 100,
     workspace: workspaceGid,
@@ -580,22 +573,21 @@ function loadProjectsWithOffset(
   }
 
   if (asanaClient) {
-    asanaClient.projects.findAll(options).then(projectResponse => {
-      const projects = projectResponse.data.map(p => {
-        return {
-          ...p,
-          workspaceGid: workspaceGid
-        } as Project
-      });
-      commit("addProjects", projects);
-      if (projectResponse._response.next_page) {
-        loadProjectsWithOffset(
-          projectResponse._response.next_page.offset,
-          workspaceGid,
-          commit
-        );
-      }
+    const projectResponse = await asanaClient.projects.findAll(options);
+    const projects = projectResponse.data.map(p => {
+      return {
+        ...p,
+        workspaceGid: workspaceGid
+      } as Project
     });
+    commit("addProjects", projects);
+    if (projectResponse._response.next_page) {
+      loadProjectsWithOffset(
+        projectResponse._response.next_page.offset,
+        workspaceGid,
+        commit
+      );
+    }
   }
 }
 
