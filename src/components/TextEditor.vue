@@ -16,7 +16,7 @@ import { xmlToHtml, htmlToXml } from "@/utils/asana-specific";
 import MenuBar from "./MenuBar.vue";
 import StarterKit from "@tiptap/starter-kit";
 import { defineComponent } from "vue";
-import suggestion from "../utils/suggestion";
+import { userSuggestion, taskSuggestion } from "../utils/suggestion";
 
 Link.configure({
   openOnClick: false,
@@ -39,11 +39,21 @@ export default defineComponent({
         Highlight,
         Underline,
         Link,
-        Mention.configure({
+        Mention.extend({
+          name: "user"
+        }).configure({
           HTMLAttributes: {
             class: 'mention',
           },
-          suggestion
+          suggestion: userSuggestion
+        }),
+        Mention.extend({
+          name: "task"
+        }).configure({
+          HTMLAttributes: {
+            class: 'mention',
+          },
+          suggestion: taskSuggestion
         })
       ],
       onUpdate: ({ editor }) => {

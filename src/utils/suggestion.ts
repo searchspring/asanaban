@@ -2,28 +2,47 @@ import store from '@/store'
 import { VueRenderer } from '@tiptap/vue-3'
 import tippy from 'tippy.js'
 import { Instance, Props } from 'tippy.js'
-import MentionList from '../components/MentionList.vue'
-import { SuggestionOptions } from '@tiptap/suggestion'
+import UserMentionList from '../components/UserMentionList.vue'
+import TaskMentionList from '../components/TaskMentionList.vue'
+import { SuggestionKeyDownProps, SuggestionOptions, SuggestionProps } from '@tiptap/suggestion'
+import { PluginKey } from 'prosemirror-state';
+import { Component, ComputedOptions, MethodOptions } from 'vue'
 
 // adapted from this demo: https://tiptap.dev/api/nodes/mention
 
-const suggestions: Omit<SuggestionOptions, "editor"> = {
+export const userSuggestion: Omit<SuggestionOptions, "editor"> = {
+  char: "@",
+  allowSpaces: true,
+  pluginKey: new PluginKey("userSuggestion"),
   items: ({ query }) => {
     const users = store.getters["asana/users"];
     return users.filter(u => u.name.toLowerCase().startsWith(query.toLowerCase())).slice(0, 5);
   },
+  render: newRender(UserMentionList)
+};
 
-  render: () => {
+export const taskSuggestion: Omit<SuggestionOptions, "editor"> = {
+  char: "#",
+  allowSpaces: true,
+  pluginKey: new PluginKey("taskSuggestion"),
+  items: async ({ query }) => {
+    return await store.dispatch("asana/loadQueriedTask", query);
+  },
+  render: newRender(TaskMentionList)
+};
+
+function newRender(mentionList: Component<any, any, any, ComputedOptions, MethodOptions>) {
+  return () => {
     let component: VueRenderer;
     let popup: Instance<Props>[];
-
+  
     return {
-      onStart: props => {
-        component = new VueRenderer(MentionList, {
+      onStart: (props: SuggestionProps): void => {
+        component = new VueRenderer(mentionList, {
           props,
           editor: props.editor,
         })
-
+  
         popup = tippy('body', {
           getReferenceClientRect: props.clientRect,
           appendTo: () => document.body,
@@ -34,28 +53,27 @@ const suggestions: Omit<SuggestionOptions, "editor"> = {
           placement: 'bottom-start',
         });
       },
-
-      onUpdate(props) {
+  
+      onUpdate: (props: SuggestionProps): void => {
         component.updateProps(props);
         popup[0].setProps({
           getReferenceClientRect: props.clientRect,
         });
       },
-
-      onKeyDown(props) {
+  
+      onKeyDown: (props: SuggestionKeyDownProps): boolean => {
         if (props.event.key === 'Escape') {
           popup[0].hide();
           return true;
         }
         return component.ref?.onKeyDown(props);
       },
-
-      onExit() {
+  
+      onExit: (): void => {
         popup[0].destroy();
         component.destroy();
       }
     }
-  },
+  }
 }
 
-export default suggestions;
