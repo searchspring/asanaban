@@ -8,6 +8,13 @@ export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 export type Project = BaseResource & {
   workspaceGid: string
 };
+export type QueriedTask = BaseResource & {
+  completed: boolean,
+  projects: {
+    gid: string,
+    name: string,
+  }
+};
 
 export type Section = asana.resources.Sections.Type & { maxTaskCount: string };
 export type Tag = asana.resources.Tags.Type;

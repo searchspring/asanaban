@@ -42,7 +42,7 @@
         />
       </div>
       <Stories></Stories>
-      <div class="new comment">
+      <div class="new comment" v-if="taskEditorSectionIdAndTask.task.gid">
         <label for="new comment">new comment</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.task.html_text"

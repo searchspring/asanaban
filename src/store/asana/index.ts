@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import jsonstore from "@/utils/jsonstore";
 import { Action, State } from "./state";
 import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource } from "@/types/asana";
+import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource, Resource, QueriedTask } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 
 let asanaClient: AsanaSdk.Client | null = null;
@@ -41,6 +41,7 @@ function createClient(accessToken: string, refreshToken: string) {
 export default {
   namespaced: true,
   state: {
+    workspace: jsonstore.get("workspace", null) as string | null,
     projects: jsonstore.get("projects", []) as Project[],
     selectedProject: jsonstore.get("selectedProject", null) as string | null,
     tasks: jsonstore.get("tasks", []) as Task[],
@@ -135,6 +136,10 @@ export default {
       state.tags = [];
       state.selectedProject = null;
       state.users = [];
+    },
+    setWorkspace(state: State): void {
+      state.workspace = currentWorkspace(state) ?? null;
+      jsonstore.set("workspace", state.workspace);
     },
     setProjects(state: State, payload: Project[]): void {
       state.projects = payload;
@@ -356,6 +361,7 @@ export default {
     },
     setSelectedProject({ commit, dispatch }, project: string): void {
       commit("setSelectedProject", project);
+      commit("setWorkspace");
       dispatch("loadTasks");
       dispatch("loadSections");
       dispatch("loadUsers");
@@ -367,6 +373,17 @@ export default {
         loadTasksWithOffset("", state, commit, "addTasks");
       }
     },
+    async loadQueriedTask({ commit, state }, query: string): Promise<Resource[] | undefined> {
+      return await asanaClient?.workspaces.typeahead(
+        state.workspace, {
+          // interface wrong, casted to any
+          resource_type: "task",
+          query: query,
+          count: 5,
+          opt_fields: "name,completed,projects.name"
+        } as any
+      ).then(taskResponse => taskResponse.data);
+    },
     loadSections({ commit, state }): void {
       if (asanaClient && state.selectedProject) {
         asanaClient.sections
@@ -377,9 +394,9 @@ export default {
       }
     },
     loadUsers({ commit, state }): void {
-      if (asanaClient && state.selectedProject) {
+      if (asanaClient && state.workspace) {
         asanaClient.users.findByWorkspace(
-          currentWorkspace(state)!,
+          state.workspace,
           {
             opt_fields: "name,photo.image_60x60,resource_type,email",
           })

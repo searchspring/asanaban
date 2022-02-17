@@ -6,7 +6,6 @@ import {
   TaskTag,
   User
 } from "@/types/asana";
-import asana from "asana";
 
 export interface Action {
   description: string,
@@ -14,7 +13,7 @@ export interface Action {
 }
 
 export interface State {
-  asanaClient: asana.Client | null,
+  workspace: string | null,
   projects: Project[],
   selectedProject: string | null,
   tasks: Task[],
