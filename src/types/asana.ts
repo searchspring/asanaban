@@ -37,6 +37,6 @@ export type AsanaError = asana.errors.AsanaError;
 export type TaskAndSectionId = {
   task: Task,
   htmlText: string,
-  tempTags: TaskTag[],
+  newTags: string[],
   sectionId: string,
 }

@@ -8,7 +8,6 @@
       v-model="value"
       multiple
       searchable
-      @update:modelValue="setTag()"
     >
       <template #content="{ value }">
         <va-chip
@@ -28,7 +27,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, PropType } from "vue";
+import { defineComponent, ref, computed, onMounted, PropType, watch } from "vue";
 import store from "@/store";
 import { Task, TaskTag } from "@/types/asana";
 import { TagOption } from "@/types/vue";
@@ -41,7 +40,7 @@ export default defineComponent ({
     }
   },
   setup(props) {
-    let value = ref<TagOption[]>();
+    const value = ref<TagOption[]>([]);
 
     const options = computed(() => {
       const tags = store.getters['asana/getTags'];
@@ -49,27 +48,22 @@ export default defineComponent ({
     });
 
     const deleteChip = (chip) => {
-      value.value = value.value?.filter((v) => v !== chip)
-      setTag();
-    }
-
-    const setTag = () => {
-      const tags = value.value?.map((tag) => { 
-        return { ...tag }
-      });
-      tags?.forEach((tag) => { delete tag.text })
-      store.dispatch("preferences/setTempTags", tags as TaskTag[]);
+      value.value = value.value.filter((v) => v !== chip)
     }
 
     onMounted(() => {
       value.value = makeTagOption(props.task.tags);
     })
 
+    watch([value], () => {
+      const tagIds = value.value.map((tag) => tag.gid);
+      store.dispatch("preferences/setNewTags", tagIds);
+    })
+
     return {
       options,
       value,
       deleteChip,
-      setTag,
     }
   },
 });
