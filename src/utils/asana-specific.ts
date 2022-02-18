@@ -60,9 +60,9 @@ function htmlToXml(html: string): string {
     h = h.replaceAll("<div>", "").replaceAll("</div>", "").trim();
   }
   // Converting mentions to Asana mention format:
-  // data-id      => user gid
-  // data-label   => user name
-  // span content => user name
+  // data-id      => user/task gid
+  // data-label   => user/task name
+  // span content => user/task name
   const regMention = /<span data-type="([A-Za-z]+)" class="mention" data-id="([0-9]+)" data-label="([A-Za-z\s]+)">[@#]([A-Za-z\s]+)/g;
   h = h.replace(regMention, '<a href="https://app.asana.com/0/$2/" data-asana-dynamic="true" data-asana-gid="$2" data-asana-accessible="true">$3</a>')
     .replace(/<span>/g, '')
