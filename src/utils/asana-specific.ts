@@ -1,6 +1,7 @@
 import colorConvert from "color-convert";
 import { LightenDarkenColor } from "lighten-darken-color";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
+import { KEYWORD } from "color-convert/conversions";
 
 export interface Hex {
   background: string;
@@ -33,7 +34,7 @@ function convertColorToHexes(color: string): Hex {
   const parts = color.split("-");
   const brightness = parts[0];
   const hue = parts[parts.length - 1];
-  const hex = colorConvert.keyword.hex(hue);
+  const hex = colorConvert.keyword.hex(hue as KEYWORD);
   let adjustedHex = "";
   let font = "#000000";
   if (brightness === "dark") {

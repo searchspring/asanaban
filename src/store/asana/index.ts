@@ -6,7 +6,7 @@ import Cookies from "js-cookie";
 import jsonstore from "@/utils/jsonstore";
 import { Action, State } from "./state";
 import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource } from "@/types/asana";
+import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource, PaginationParams } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 
 let asanaClient: AsanaSdk.Client | null = null;
@@ -49,8 +49,12 @@ export default {
     errors: [] as AsanaError[],
     tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
+    allTags: jsonstore.get("allTags", []) as TaskTag[],
   } as State,
   getters: {
+    getTags: (state: State) => {
+      return state.allTags;
+    },
     isSectionComplete: (state: State) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
       return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
@@ -128,6 +132,7 @@ export default {
       jsonstore.remove("projects");
       jsonstore.remove("tags");
       jsonstore.remove("users");
+      jsonstore.remove("allTags");
       asanaClient = null;
       state.projects = [];
       state.sections = [];
@@ -135,6 +140,7 @@ export default {
       state.tags = [];
       state.selectedProject = null;
       state.users = [];
+      state.allTags = [];
     },
     setProjects(state: State, payload: Project[]): void {
       state.projects = payload;
@@ -145,6 +151,12 @@ export default {
       state.projects.push(...payload);
       state.projects = sortAndUnique(state.projects);
       jsonstore.set("projects", state.projects);
+    },
+    setAllTags(state: State, payload: TaskTag[]): void {
+      state.allTags.push(...payload);
+      state.allTags = sortAndUnique(state.allTags);
+      colorizeAllTags(state)
+      jsonstore.set("allTags", state.allTags);
     },
     setUsers(state: State, payload: User[]): void {
       state.users = payload;
@@ -232,6 +244,7 @@ export default {
             return asanaClient?.tasks
               .create({
                 ...taskAndSectionId.task,
+                tags: taskAndSectionId.newTags,
                 projects: [state.selectedProject],
                 memberships: [
                   {
@@ -257,13 +270,14 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
-          if (taskAndSectionId.task.html_text) {
+          if (taskAndSectionId.htmlText) {
             asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
-              { html_text: taskAndSectionId.task.html_text, }
+              { htmlText: taskAndSectionId.htmlText, }
             )
           }
-          taskAndSectionId.task.html_text = "";
+          taskAndSectionId.htmlText = "";
+
           return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
@@ -318,6 +332,26 @@ export default {
         },
       });
     },
+    addTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
+      state.actions.push({
+        description: "adding task tag",
+        func: () => {
+          return asanaClient?.tasks.addTag(payload.task.gid, {
+            tag: payload.tagGid,
+          });
+        },
+      });
+    },
+    removeTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
+      state.actions.push({
+        description: "removing task tag",
+        func: () => {
+          return asanaClient?.tasks.removeTag(payload.task.gid, {
+            tag: payload.tagGid,
+          });
+        },
+      });
+    },
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -359,6 +393,7 @@ export default {
       dispatch("loadTasks");
       dispatch("loadSections");
       dispatch("loadUsers");
+      dispatch("loadAllTags");
     },
     loadTasks({ commit, state }): void {
       commit("setTasks", []);
@@ -388,6 +423,12 @@ export default {
         });
       }
     },
+    loadAllTags({ commit, state }): void {
+      if (asanaClient && state.selectedProject) {
+        state.allTags = [];
+        loadAllTagsWithOffset("", currentWorkspace(state)!, commit);
+      }
+    },
     moveTask({ commit }, payload) {
       commit("moveTask", payload);
     },
@@ -404,11 +445,12 @@ export default {
         loadTasksWithOffset("", state, commit, "mergeTasks");
       }
     },
-    createTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
+    createTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
       commit("createTask", taskAndSectionId);
     },
-    updateTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
+    updateTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
       commit("updateTask", taskAndSectionId);
+      dispatch("updateTaskTags", taskAndSectionId);
     },
     deleteTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
       commit("deleteTask", taskAndSectionId);
@@ -425,16 +467,29 @@ export default {
         commit("releaseTask", task);
       });
     },
+    updateTaskTags({ commit }, taskAndSectionId: TaskAndSectionId): void {
+      const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
+
+      const removedTags = originalTagIds.filter(tagId => !taskAndSectionId.newTags.includes(tagId))
+      removedTags.forEach((tagGid) => {
+        commit("removeTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
+      });
+
+      const addedTags = taskAndSectionId.newTags.filter(tagId => !originalTagIds.includes(tagId))
+      addedTags.forEach((tagGid) => {
+        commit("addTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
+      });
+    },
   },
 };
 
 // load tasks with offset
-function loadTasksWithOffset(
+async function loadTasksWithOffset(
   offset: string,
   state: State,
   commit: (cmd: string, payload: Task[]) => void,
   commitAction: string
-): void {
+): Promise<void> {
   // asana interface has incorrect type definition
   const options: any = {
     project: state.selectedProject!,
@@ -463,27 +518,51 @@ function loadTasksWithOffset(
     options["offset"] = offset;
   }
   if (asanaClient) {
-    asanaClient.tasks.findAll(options).then((taskResponse) => {
-      if (state.actions.length === 0) {
-        commit(commitAction, taskResponse.data as Task[]);
-        if (taskResponse._response.next_page) {
-          loadTasksWithOffset(
-            taskResponse._response.next_page.offset,
-            state,
-            commit,
-            commitAction
-          );
-        }
+    const taskResponse = await asanaClient.tasks.findAll(options);
+    if (state.actions.length === 0) {
+      commit(commitAction, taskResponse.data as Task[]);
+      if (taskResponse._response.next_page) {
+        loadTasksWithOffset(
+          taskResponse._response.next_page.offset,
+          state,
+          commit,
+          commitAction
+        );
       }
-    });
+    }
   }
 }
 
-function loadProjectsWithOffset(
+async function loadAllTagsWithOffset(
+  offset: string,
+  workspaceGid: string,
+  commit: (cmd: string, payload: TaskTag[]) => void
+  ): Promise<void> {
+  const options: PaginationParams = {
+    limit: 100,
+    opt_fields: "color,name",
+  };
+  if (offset) {
+    options["offset"] = offset;
+  }
+  if (asanaClient) {
+    const tagResponse = await asanaClient.tags.findByWorkspace(workspaceGid, options);
+    commit("setAllTags", tagResponse.data as TaskTag[])
+    if (tagResponse._response.next_page) {
+      loadAllTagsWithOffset(
+        tagResponse._response.next_page.offset,
+        workspaceGid,
+        commit
+      );
+    }
+  }
+}
+
+async function loadProjectsWithOffset(
   offset: string,
   workspaceGid: string,
   commit: (cmd: string, payload: Project[]) => void
-): void {
+): Promise<void> {
   const options: ProjectParams = {
     limit: 100,
     workspace: workspaceGid,
@@ -494,30 +573,35 @@ function loadProjectsWithOffset(
   }
 
   if (asanaClient) {
-    asanaClient.projects.findAll(options).then(projectResponse => {
-      const projects = projectResponse.data.map(p => {
-        return {
-          ...p,
-          workspaceGid: workspaceGid
-        } as Project
-      });
-      commit("addProjects", projects);
-      if (projectResponse._response.next_page) {
-        loadProjectsWithOffset(
-          projectResponse._response.next_page.offset,
-          workspaceGid,
-          commit
-        );
-      }
+    const projectResponse = await asanaClient.projects.findAll(options);
+    const projects = projectResponse.data.map(p => {
+      return {
+        ...p,
+        workspaceGid: workspaceGid
+      } as Project
     });
+    commit("addProjects", projects);
+    if (projectResponse._response.next_page) {
+      loadProjectsWithOffset(
+        projectResponse._response.next_page.offset,
+        workspaceGid,
+        commit
+      );
+    }
   }
 }
 
 function colorizeTaskTags(state: State): void {
   state.tasks.forEach(task => {
     task.tags.forEach(tag => {
-      tag.hexes = convertColorToHexes(tag.color);
+      tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
     });
+  });
+}
+
+function colorizeAllTags(state: State): void {
+  state.allTags.forEach(tag => {
+    tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
   });
 }
 

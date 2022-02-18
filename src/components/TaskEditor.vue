@@ -41,11 +41,12 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
+      <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
       <div class="new comment">
         <label for="new comment">new comment</label>
         <TextEditor
-          :html="taskEditorSectionIdAndTask.task.html_text"
+          :html="taskEditorSectionIdAndTask.htmlText"
           v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
         />
       </div>
@@ -84,10 +85,11 @@ import AssigneeSelector from "./AssigneeSelector.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
+import TagSelector from "./TagSelector.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AssigneeSelector, TextEditor, Stories },
+  components: { AssigneeSelector, TextEditor, Stories, TagSelector },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
@@ -122,7 +124,7 @@ export default defineComponent({
       taskEditorSectionIdAndTask.task.html_notes = html;
     },
     updateHtmlText(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
-      taskEditorSectionIdAndTask.task.html_text = html;
+      taskEditorSectionIdAndTask.htmlText = html;
     },
     completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);

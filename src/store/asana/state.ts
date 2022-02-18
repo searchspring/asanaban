@@ -23,4 +23,5 @@ export interface State {
   errors: AsanaError[],
   tags: TaskTag[],
   users: User[],
+  allTags: TaskTag[],
 }

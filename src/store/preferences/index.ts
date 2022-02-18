@@ -1,7 +1,7 @@
 import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
-import { Assignee, TaskAndSectionId } from "@/types/asana";
+import { Assignee, TaskAndSectionId, TaskTag } from "@/types/asana";
 
 export default {
   namespaced: true,
@@ -40,6 +40,9 @@ export default {
         } as Assignee;
       }
     },
+    setNewTags(state: State, tags: string[]) {
+      state.taskEditorSectionIdAndTask!.newTags = tags;
+    },
   },
   actions: {
     toggleColumn({ commit }, gid: string) {
@@ -50,6 +53,9 @@ export default {
     },
     setTaskAssignee({ commit }, assignee: string | null) {
       commit("setTaskAssignee", assignee);
+    },
+    setNewTags({ commit }, tags: string[]) {
+      commit("setNewTags", tags);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");
