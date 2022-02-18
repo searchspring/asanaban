@@ -1,7 +1,6 @@
 <template>
-  <div style="max-width: 600px;">
+  <div>
     <va-select
-      class="mb-4"
       label="tags"
       :options="options"
       :track-by="(option) => option.gid"
@@ -11,15 +10,14 @@
     >
       <template #content="{ value }">
         <va-chip
-          v-for="chip in value"
-          :key="chip"
+          v-for="tag in value"
+          :key="tag"
           size="small"
-          class="mr-1 my-1"
-          :color="chip.hexes?.background"
+          :color="tag.hexes?.background"
           closeable
-          @update:modelValue="deleteChip(chip)"
+          @update:modelValue="deleteTag(tag)"
         >
-          {{ chip.name }}
+          {{ tag.name }}
         </va-chip>
       </template>
     </va-select>
@@ -47,8 +45,8 @@ export default defineComponent ({
       return makeTagOption(tags);
     });
 
-    const deleteChip = (chip) => {
-      value.value = value.value.filter((v) => v !== chip)
+    const deleteTag = (tag) => {
+      value.value = value.value.filter((v) => v !== tag)
     }
 
     onMounted(() => {
@@ -63,13 +61,13 @@ export default defineComponent ({
     return {
       options,
       value,
-      deleteChip,
+      deleteTag,
     }
   },
 });
 
 function makeTagOption(tags: TaskTag[]): TagOption[] {
-  const tagOptions = tags?.map(tag => {
+  const tagOptions = tags?.map((tag) => {
     return {
       ...tag, 
       text: tag.name
