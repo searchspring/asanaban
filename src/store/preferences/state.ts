@@ -4,8 +4,13 @@ export interface ColumnState {
   [gid: string]: { collapsed: boolean };
 }
 
+export interface SwimlaneState {
+  [swimlaneName: string]: { collapsed: boolean };
+}
+
 export interface State {
-  columnStates: ColumnState,
-  search: string,
-  taskEditorSectionIdAndTask: TaskAndSectionId | null
+  columnStates: ColumnState;
+  swimlaneStates: SwimlaneState;
+  search: string;
+  taskEditorSectionIdAndTask: TaskAndSectionId | null;
 }
