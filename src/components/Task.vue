@@ -34,6 +34,7 @@ import { Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
+import { max } from "date-fns";
 
 export default defineComponent({
   props: {
@@ -68,7 +69,7 @@ export default defineComponent({
       }) as any)?.text_value;
       const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate));
       const opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.3;
-      return opacity < 0.3 ? 0.3 : opacity;
+      return Math.max(opacity, 0.3);
     });
 
     const startDrag = (event, task: Task) => {
