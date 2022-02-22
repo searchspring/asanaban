@@ -277,8 +277,9 @@ export default {
                   project: state.selectedProject,
                 },
               ],
-            } as any)
+            } as any);
           state.tasks.push(task as Task);
+          store.commit("asana/updateCustomFields", task.gid);
         },
       });
     },
