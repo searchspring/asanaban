@@ -66,10 +66,11 @@ export default defineComponent({
     });
 
     const opacity = computed(() => {
-      const columnChangeDate = (props.task?.custom_fields.find(field => {
+      // custom_fields is undefined for free accounts
+      const columnChangeDate = (props.task?.custom_fields?.find(field => {
         return field.name === "column-change";
       }) as any)?.text_value;
-      const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate));
+      const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate) ?? new Date());
       const opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.3;
       return Math.max(opacity, 0.3);
     });
