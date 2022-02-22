@@ -9,7 +9,7 @@ import {
 
 export interface Action {
   description: string,
-  func: () => any
+  func: () => Promise<any>
 }
 
 export interface State {

@@ -226,13 +226,34 @@ export default {
 
       state.actions.push({
         description: "moving task",
-        func: () => {
-          return asanaClient?.sections.addTask(payload.endSectionId, {
+        func: async () => {
+          asanaClient?.sections.addTask(payload.endSectionId, {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
           });
         },
       });
+    },
+    updateCustomFields(state: State, taskId: string): void {
+      const task = state.tasks.find(task => task.gid === taskId)!;
+      const columnChangeIdx = task.custom_fields?.findIndex(field => field.name === "column-change");
+      
+      if (columnChangeIdx === undefined) return;
+
+      const body = {
+        custom_fields: {}
+      }
+      if (columnChangeIdx !== -1) {
+        body.custom_fields[task.custom_fields[columnChangeIdx].gid] = new Date().toISOString();
+        (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
+      }
+      
+      state.actions.push({
+        description: "updating custom fields",
+        func: async () => {
+          asanaClient?.tasks.update(task.gid, body);
+        }
+      })
     },
     clearErrors(state: State): void {
       state.errors = [];
@@ -241,34 +262,31 @@ export default {
       state.actions = [];
     },
     createTask(state: State, taskAndSectionId: TaskAndSectionId): void {
-      if (asanaClient) {
-        state.actions.push({
-          description: "creating task",
-          func: () => {
-            // asana interface has incorrect type defintion for this function
-            return asanaClient?.tasks
-              .create({
-                ...taskAndSectionId.task,
-                tags: taskAndSectionId.newTags,
-                projects: [state.selectedProject],
-                memberships: [
-                  {
-                    section: taskAndSectionId.sectionId,
-                    project: state.selectedProject,
-                  },
-                ],
-              } as any)
-              .then(task => {
-                state.tasks.push(task as Task);
-              });
-          },
-        });
-      }
+      state.actions.push({
+        description: "creating task",
+        func: async () => {
+          // asana interface has incorrect type defintion for this function
+          const task = await asanaClient!.tasks
+            .create({
+              ...taskAndSectionId.task,
+              tags: taskAndSectionId.newTags,
+              projects: [state.selectedProject],
+              memberships: [
+                {
+                  section: taskAndSectionId.sectionId,
+                  project: state.selectedProject,
+                },
+              ],
+            } as any);
+          state.tasks.push(task as Task);
+          store.commit("asana/updateCustomFields", task.gid);
+        },
+      });
     },
     updateTask(state: State, taskAndSectionId: TaskAndSectionId): void {
       state.actions.push({
         description: "updating task",
-        func: () => {
+        func: async () => {
           const index = state.tasks.findIndex(
             t => t.gid === taskAndSectionId.task.gid
           );
@@ -283,7 +301,7 @@ export default {
           }
           taskAndSectionId.htmlText = "";
 
-          return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+          asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
             html_notes: taskAndSectionId.task.html_notes,
@@ -294,28 +312,28 @@ export default {
     deleteTask(state: State, taskAndSectionId: TaskAndSectionId): void {
       state.actions.push({
         description: "deleting task",
-        func: () => {
+        func: async () => {
           const index = state.tasks.findIndex(
             t => t.gid === taskAndSectionId.task.gid
           );
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          return asanaClient?.tasks.delete(taskAndSectionId.task.gid);
+          asanaClient?.tasks.delete(taskAndSectionId.task.gid);
         },
       });
     },
     completeTask(state: State, taskAndSectionId: TaskAndSectionId): void {
       state.actions.push({
         description: "completing task",
-        func: () => {
+        func: async () => {
           const index = state.tasks.findIndex(
             t => t.gid === taskAndSectionId.task.gid
           );
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          return asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+          asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             completed: true,
           });
         },
@@ -324,14 +342,14 @@ export default {
     releaseTask(state: State, task: Task): void {
       state.actions.push({
         description: "releasing task",
-        func: () => {
+        func: async () => {
           const index = state.tasks.findIndex(
             t => t.gid === task.gid
             );
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          return asanaClient?.tasks.update(task.gid, {
+          asanaClient?.tasks.update(task.gid, {
             completed: true,
           });
         },
@@ -340,8 +358,8 @@ export default {
     addTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
       state.actions.push({
         description: "adding task tag",
-        func: () => {
-          return asanaClient?.tasks.addTag(payload.task.gid, {
+        func: async () => {
+          asanaClient?.tasks.addTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
@@ -350,13 +368,27 @@ export default {
     removeTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
       state.actions.push({
         description: "removing task tag",
-        func: () => {
-          return asanaClient?.tasks.removeTag(payload.task.gid, {
+        func: async () => {
+          asanaClient?.tasks.removeTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
       });
     },
+    updateStories(state: State, taskAndSectionId: TaskAndSectionId): void {
+      if (taskAndSectionId.htmlText) {
+        state.actions.push({
+          description: "adding stories",
+          func: async () => {
+            asanaClient?.stories.createOnTask(
+              taskAndSectionId.task.gid,
+              { html_text: taskAndSectionId.htmlText }
+            )
+          }
+        });
+      }
+      taskAndSectionId.htmlText = "";
+    }
   },
   actions: {
     tokenReceived({ commit, rootState }, payload: any): void {
@@ -446,8 +478,9 @@ export default {
         loadAllTagsWithOffset("", currentWorkspace(state)!, commit);
       }
     },
-    moveTask({ commit }, payload) {
+    moveTask({ commit }, payload: Move) {
       commit("moveTask", payload);
+      commit("updateCustomFields", payload.taskId)
     },
     processAction({ commit, state }): void {
       if (state.actions.length > 0) {
@@ -467,6 +500,7 @@ export default {
     },
     updateTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
       commit("updateTask", taskAndSectionId);
+      commit("updateStories", taskAndSectionId);
       dispatch("updateTaskTags", taskAndSectionId);
     },
     deleteTask({ commit }, taskAndSectionId: TaskAndSectionId): void {

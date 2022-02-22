@@ -3,8 +3,9 @@
     v-bind:id="task.gid"
     class="task"
     draggable="true"
+    :style="{ opacity: opacity }"
     @dragstart="startDrag($event, task)"
-    @dragend="endDrag($event, task)"
+    @dragend="endDrag($event)"
     @click="edit()"
   >
     <div class="text">
@@ -30,40 +31,51 @@
 <script lang="ts">
 import store from "@/store";
 import { Task } from "@/types/asana";
-import { defineComponent, PropType } from "vue";
+import { computed, defineComponent, PropType } from "vue";
+import differenceInDays from "date-fns/differenceInDays/index";
+import parseISO from "date-fns/parseISO/index";
 
 export default defineComponent({
   props: {
-    task: Object as PropType<Task>,
-  },
-  computed: {
-    assignee() {
-      return this.$props.task &&
-        this.$props.task.assignee &&
-        this.$props.task.assignee.photo &&
-        this.$props.task.assignee.photo.image_21x21
-        ? this.$props.task.assignee.photo.image_21x21
-        : "";
+    task: {
+      type: Object as PropType<Task>,
+      required: true
     },
-    tags() {
-      if (this.$props.task) {
-        return this.$props.task.tags.map((tag) => {
+  },
+  setup(props) {
+    const assignee = computed(() => {
+      return props.task &&
+        props.task.assignee &&
+        props.task.assignee.photo &&
+        props.task.assignee.photo.image_21x21
+        ? props.task.assignee.photo.image_21x21
+        : "";
+    });
+
+    const tags = computed(() => {
+      if (props.task) {
+        return props.task.tags.map((tag) => {
           return { name: tag.name.substring(0, 1), hexes: tag.hexes };
         });
       }
       return [];
-    },
-    dueDate() {
-      if (this.$props.task) {
-        return this.$props.task.due_on
-          ? this.$props.task.due_on.substring(0, 10)
-          : "";
-      }
-      return "";
-    },
-  },
-  methods: {
-    startDrag(event, task: Task) {
+    });
+
+    const dueDate = computed(() => {
+      return props.task?.due_on?.substring(0, 10) ?? "";
+    });
+
+    const opacity = computed(() => {
+      // custom_fields is undefined for free accounts
+      const columnChangeDate = (props.task?.custom_fields?.find(field => {
+        return field.name === "column-change";
+      }) as any)?.text_value;
+      const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate) ?? new Date());
+      const opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.3;
+      return Math.max(opacity, 0.3);
+    });
+
+    const startDrag = (event, task: Task) => {
       event.dataTransfer.dropEffect = "move";
       event.dataTransfer.effectAllowed = "move";
       event.dataTransfer.setData(
@@ -72,14 +84,26 @@ export default defineComponent({
       );
       event.srcElement.classList.add("dragging");
       event.dataTransfer.setData("taskId", task.gid);
-    },
-    endDrag(event) {
+    };
+
+    const endDrag = (event) => {
       event.srcElement.classList.remove("dragging");
-    },
-    edit() {
-      store.dispatch("preferences/showTaskEditor", { task: this.$props.task });
-    },
-  },
+    };
+
+    const edit = () => {
+      store.dispatch("preferences/showTaskEditor", { task: props.task });
+    };
+
+    return {
+      assignee,
+      tags,
+      dueDate,
+      opacity,
+      startDrag,
+      endDrag,
+      edit
+    }
+  }
 });
 </script>
 
