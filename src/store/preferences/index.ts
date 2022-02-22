@@ -1,12 +1,13 @@
 import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
-import { Assignee, TaskAndSectionId, TaskTag } from "@/types/asana";
+import { Assignee, TaskAndSectionId } from "@/types/asana";
 
 export default {
   namespaced: true,
   state: {
     columnStates: jsonstore.get("columnStates", {}),
+    swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
   } as State,
@@ -20,6 +21,15 @@ export default {
         collapsed: !state.columnStates[gid].collapsed,
       };
       jsonstore.set("columnStates", state.columnStates);
+    },
+    toggleSwimlane(state: State, swimlaneName: string) {
+      if (!state.swimlaneStates[swimlaneName]) {
+        state.swimlaneStates[swimlaneName] = { collapsed: false };
+      }
+      state.swimlaneStates[swimlaneName] = {
+        collapsed: !state.swimlaneStates[swimlaneName].collapsed,
+      };
+      jsonstore.set("swimlaneStates", state.swimlaneStates);
     },
     setSearch(state: State, search: string) {
       state.search = search;
@@ -35,8 +45,8 @@ export default {
       if (state.taskEditorSectionIdAndTask?.task.assignee) {
         state.taskEditorSectionIdAndTask.task.assignee.gid = gid;
       } else {
-        state.taskEditorSectionIdAndTask!.task.assignee = { 
-          gid: gid
+        state.taskEditorSectionIdAndTask!.task.assignee = {
+          gid: gid,
         } as Assignee;
       }
     },
@@ -47,6 +57,9 @@ export default {
   actions: {
     toggleColumn({ commit }, gid: string) {
       commit("toggleColumn", gid);
+    },
+    toggleSwimlane({ commit }, swimlaneName: string) {
+      commit("toggleSwimlane", swimlaneName);
     },
     setSearch({ commit }, search: string) {
       commit("setSearch", search);
