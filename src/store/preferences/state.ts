@@ -9,8 +9,9 @@ export interface SwimlaneState {
 }
 
 export interface State {
-  columnStates: ColumnState;
-  swimlaneStates: SwimlaneState;
-  search: string;
-  taskEditorSectionIdAndTask: TaskAndSectionId | null;
+  columnStates: ColumnState,
+  swimlaneStates: SwimlaneState,
+  search: string,
+  taskEditorSectionIdAndTask: TaskAndSectionId | null,
+  disableSave: boolean,
 }

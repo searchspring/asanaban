@@ -10,8 +10,13 @@ export default {
     swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
+    disableSave: false,
   } as State,
-  getters: {},
+  getters: {
+    isSaveDisabled: (state: State) => {
+      return state.disableSave;
+    }
+  },
   mutations: {
     toggleColumn(state: State, gid: string) {
       if (!state.columnStates[gid]) {
@@ -53,6 +58,15 @@ export default {
     setNewTags(state: State, tags: string[]) {
       state.taskEditorSectionIdAndTask!.newTags = tags;
     },
+    setDueDate(state: State, date: string) {
+      if (date === "Invalid Date") {
+        date = ""
+        state.disableSave = true
+      } else {
+        state.disableSave = false
+      }
+      state.taskEditorSectionIdAndTask!.task.due_on = date;
+    },
   },
   actions: {
     toggleColumn({ commit }, gid: string) {
@@ -69,6 +83,9 @@ export default {
     },
     setNewTags({ commit }, tags: string[]) {
       commit("setNewTags", tags);
+    },
+    setDueDate({ commit }, date: string) {
+      commit("setDueDate", date);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");

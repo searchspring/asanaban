@@ -41,6 +41,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
+      <DateSelector :task="taskEditorSectionIdAndTask.task"></DateSelector>
       <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
       <div class="new comment" v-if="taskEditorSectionIdAndTask.task.gid">
@@ -51,7 +52,7 @@
         />
       </div>
       <div class="button-bar">
-        <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <button :disabled="isSaveDisabled()" class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
         </button>
         <button
@@ -86,10 +87,11 @@ import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
+import DateSelector from "./DateSelector.vue";
 const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
-  components: { AssigneeSelector, TextEditor, Stories, TagSelector },
+  components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
   watch: {
     taskEditorSectionIdAndTask(val) {
       if (val) {
@@ -129,6 +131,9 @@ export default defineComponent({
     completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
       store.dispatch("preferences/hideTaskEditor");
+    },
+    isSaveDisabled() {
+      return store.getters['preferences/isSaveDisabled'];
     },
   },
   computed: {
