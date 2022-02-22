@@ -267,6 +267,7 @@ export default {
           const task = await asanaClient!.tasks
             .create({
               ...taskAndSectionId.task,
+              tags: taskAndSectionId.newTags,
               projects: [state.selectedProject],
               memberships: [
                 {
