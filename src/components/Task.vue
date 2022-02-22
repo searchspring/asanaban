@@ -5,7 +5,7 @@
     draggable="true"
     :style="{ opacity: opacity }"
     @dragstart="startDrag($event, task)"
-    @dragend="endDrag($event, task)"
+    @dragend="endDrag($event)"
     @click="edit()"
   >
     <div class="text">
@@ -34,11 +34,13 @@ import { Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
-import { max } from "date-fns";
 
 export default defineComponent({
   props: {
-    task: Object as PropType<Task>,
+    task: {
+      type: Object as PropType<Task>,
+      required: true
+    },
   },
   setup(props) {
     const assignee = computed(() => {
