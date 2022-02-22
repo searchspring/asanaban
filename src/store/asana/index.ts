@@ -236,7 +236,9 @@ export default {
     },
     updateCustomFields(state: State, taskId: string): void {
       const task = state.tasks.find(task => task.gid === taskId)!;
-      const columnChangeIdx = task.custom_fields.findIndex(field => field.name === "column-change");
+      const columnChangeIdx = task.custom_fields?.findIndex(field => field.name === "column-change");
+      
+      if (columnChangeIdx === undefined) return;
 
       const body = {
         custom_fields: {}
