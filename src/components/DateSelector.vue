@@ -3,10 +3,9 @@
     <va-date-input
     label="due date"
     v-model="value"
-    :readonly="false"
     :format="formatDate"
     :parse="parseFn"
-    :placeholder="getCurrentDate()"
+    placeholder="yyyy-mm-dd"
     clearable
     manual-input
   />
@@ -14,9 +13,9 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, watch, PropType } from "vue";
+import { defineComponent, ref, watch, PropType, onMounted } from "vue";
 import { Task } from "@/types/asana";
-import format from 'date-fns/format'
+import { format, isValid, parse } from "date-fns";
 import store from "@/store";
 
 export default defineComponent ({
@@ -27,36 +26,47 @@ export default defineComponent ({
     }
   },
   setup(props) {
-    const value = ref();
+    const value = ref<Date>();
 
-    const getCurrentDate = () => {
-      if (props.task.due_on) {
-        return props.task.due_on
-      } 
-      return "yyyy-mm-dd"
-    };
+    const formatDate = (date: Date | undefined) => {
 
-    const formatDate = (date: Date) => {
-      if (date) {
-        const formattedDate = format(date, "YYYY-MM-DD");
-        return formattedDate
+      if (isValid(date)) {
+        return format(date!, "yyyy-MM-dd");
       }
+
+      if (date === undefined) {
+        return ""
+      }
+
+      return "Invalid Date"
     };
 
-    const parseFn = (event) => {
-      const dateString = event.target.value
+    const parseFn = (event: Event) => {
+      const dateString = (event.target as HTMLInputElement).value
       const [year, month, day] = dateString.split('-')
-      return new Date(year, (month - 1), day)
+
+      const yearNum = parseInt(year)
+      const monthNum = parseInt(month)
+      const dayNum = parseInt(day)
+
+      return new Date(yearNum, (monthNum - 1), dayNum)
     };
 
     watch([value], () => {
       const formattedDate = formatDate(value.value)
       store.dispatch("preferences/setDueDate", formattedDate);
-    })
+    });
+
+    onMounted(() => {
+      if (props.task.due_on === null) {
+        value.value = undefined
+      } else {
+        value.value = parse(props.task.due_on, "yyyy-MM-dd", new Date());
+      }
+    });
 
     return {
       value,
-      getCurrentDate,
       formatDate,
       parseFn,
     }

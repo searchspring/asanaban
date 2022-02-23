@@ -3,7 +3,7 @@
     v-bind:id="task.gid"
     class="task"
     draggable="true"
-    :style="{ opacity: opacity }"
+    :style="{ opacity: opacity, ...backgroundAndTextColor }"
     @dragstart="startDrag($event, task)"
     @dragend="endDrag($event)"
     @click="edit()"
@@ -34,6 +34,7 @@ import { Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
+import { parse } from "date-fns";
 
 export default defineComponent({
   props: {
@@ -67,12 +68,33 @@ export default defineComponent({
 
     const opacity = computed(() => {
       // custom_fields is undefined for free accounts
-      const columnChangeDate = (props.task?.custom_fields?.find(field => {
+      const columnChangeDate = (props.task.custom_fields?.find(field => {
         return field.name === "column-change";
       }) as any)?.text_value;
       const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate) ?? new Date());
       const opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.3;
       return Math.max(opacity, 0.3);
+    });
+
+    const backgroundAndTextColor = computed(() => {
+      const dueDate = props.task?.due_on?.substring(0, 10) ?? "";
+      if (dueDate) {
+        if (differenceInDays(parse(dueDate, "yyyy-MM-dd", new Date()), new Date()) < 5) {
+          return {
+            "background-color": "red",
+            "color": "white"
+          }
+        } else {
+          return {
+            "background-color": "purple",
+            "color": "white"
+          }
+        }
+      }
+      return {
+        "background-color": "white",
+        "color": "black"
+      }
     });
 
     const startDrag = (event, task: Task) => {
@@ -99,6 +121,7 @@ export default defineComponent({
       tags,
       dueDate,
       opacity,
+      backgroundAndTextColor,
       startDrag,
       endDrag,
       edit
