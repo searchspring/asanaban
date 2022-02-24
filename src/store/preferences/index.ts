@@ -2,6 +2,7 @@ import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
 import { Assignee, TaskAndSectionId } from "@/types/asana";
+import { format, isValid } from "date-fns";
 
 export default {
   namespaced: true,
@@ -10,11 +11,26 @@ export default {
     swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
-    disableSave: false,
+    dateFormatString: "yyyy-MM-dd"
   } as State,
   getters: {
-    isSaveDisabled: (state: State) => {
-      return state.disableSave;
+    isSaveDisabled: (state: State) => (date: string) => {
+      if (date === "Invalid Date") {
+        return true;
+      }
+      return false;
+    },
+    formattedDate: (state: State) => (date: Date | undefined) => {
+      if (isValid(date)) {
+        return format(date!, state.dateFormatString);
+      }
+      if (date === undefined) {
+        return "";
+      }
+      return "Invalid Date";
+    },
+    dateFormatString: (state: State) => {
+      return state.dateFormatString;
     }
   },
   mutations: {
@@ -61,9 +77,6 @@ export default {
     setDueDate(state: State, date: string) {
       if (date === "Invalid Date") {
         date = ""
-        state.disableSave = true
-      } else {
-        state.disableSave = false
       }
       state.taskEditorSectionIdAndTask!.task.due_on = date;
     },
@@ -84,8 +97,9 @@ export default {
     setNewTags({ commit }, tags: string[]) {
       commit("setNewTags", tags);
     },
-    setDueDate({ commit }, date: string) {
-      commit("setDueDate", date);
+    setDueDate({ commit, getters }, date: Date) {
+      const dateString = getters.formattedDate(date);
+      commit("setDueDate", dateString);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");

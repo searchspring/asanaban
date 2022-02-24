@@ -13,5 +13,5 @@ export interface State {
   swimlaneStates: SwimlaneState,
   search: string,
   taskEditorSectionIdAndTask: TaskAndSectionId | null,
-  disableSave: boolean,
+  dateFormatString: string,
 }

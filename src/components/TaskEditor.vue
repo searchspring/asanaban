@@ -41,7 +41,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
-      <DateSelector :task="taskEditorSectionIdAndTask.task"></DateSelector>
+      <DateSelector :date="taskEditorSectionIdAndTask.task.due_on ?? ''" @custom-change="setSelectedDueDate"></DateSelector>
       <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
       <div class="new comment" v-if="taskEditorSectionIdAndTask.task.gid">
@@ -52,7 +52,7 @@
         />
       </div>
       <div class="button-bar">
-        <button :disabled="isSaveDisabled()" class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <button :disabled="isSaveDisabled" class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
         </button>
         <button
@@ -80,7 +80,7 @@
 
 <script lang="ts">
 import store from "@/store";
-import { defineComponent } from "vue";
+import { defineComponent, ref, watch, computed } from "vue";
 import { createNamespacedHelpers } from "vuex";
 import AssigneeSelector from "./AssigneeSelector.vue";
 import TextEditor from "./TextEditor.vue";
@@ -92,50 +92,6 @@ const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
   components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
-  watch: {
-    taskEditorSectionIdAndTask(val) {
-      if (val) {
-        window.setTimeout(() => {
-          document.getElementById("name")?.focus();
-        }, 0);
-      }
-    },
-  },
-  methods: {
-    save(taskEditorSectionIdAndTask: TaskAndSectionId) {
-      if (taskEditorSectionIdAndTask.task.gid) {
-        store.dispatch("asana/updateTask", taskEditorSectionIdAndTask);
-      } else {
-        store.dispatch("asana/createTask", taskEditorSectionIdAndTask);
-      }
-      store.dispatch("preferences/hideTaskEditor");
-    },
-    deleteTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
-      const response = confirm(
-        `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
-      );
-      if (response) {
-        store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
-        store.dispatch("preferences/hideTaskEditor");
-      }
-    },
-    hide() {
-      store.dispatch("preferences/hideTaskEditor");
-    },
-    updateHtmlNotes(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
-      taskEditorSectionIdAndTask.task.html_notes = html;
-    },
-    updateHtmlText(html: string, taskEditorSectionIdAndTask: TaskAndSectionId) {
-      taskEditorSectionIdAndTask.htmlText = html;
-    },
-    completeTask(taskEditorSectionIdAndTask: TaskAndSectionId) {
-      store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
-      store.dispatch("preferences/hideTaskEditor");
-    },
-    isSaveDisabled() {
-      return store.getters['preferences/isSaveDisabled'];
-    },
-  },
   computed: {
     ...mapState(["taskEditorSectionIdAndTask"]),
     projectId: {
@@ -145,6 +101,71 @@ export default defineComponent({
       set(val: string) {
         store.dispatch("asana/setSelectedProject", val);
       },
+    },
+  },
+  setup() {
+    const isSaveDisabled = ref<boolean>();
+
+    const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      if (taskEditorSectionIdAndTask.task.gid) {
+        store.dispatch("asana/updateTask", taskEditorSectionIdAndTask);
+      } else {
+        store.dispatch("asana/createTask", taskEditorSectionIdAndTask);
+      }
+      store.dispatch("preferences/hideTaskEditor");
+    };
+
+    const deleteTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      const response = confirm(
+        `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
+      );
+      if (response) {
+        store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
+        store.dispatch("preferences/hideTaskEditor");
+      }
+    };
+
+    const hide = () => {
+      store.dispatch("preferences/hideTaskEditor");
+    };
+
+    const updateHtmlNotes = (html: string, taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      taskEditorSectionIdAndTask.task.html_notes = html;
+    };
+
+    const updateHtmlText = (html: string, taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      taskEditorSectionIdAndTask.htmlText = html;
+    };
+
+    const completeTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
+      store.dispatch("preferences/hideTaskEditor");
+    };
+
+    const setSelectedDueDate = (date: Date) => {
+      const dateString = store.getters["preferences/formattedDate"](date);
+      isSaveDisabled.value = store.getters["preferences/isSaveDisabled"](dateString);
+      store.dispatch("preferences/setDueDate", date);
+    };
+
+    return {
+      isSaveDisabled,
+      save,
+      deleteTask,
+      hide,
+      updateHtmlNotes,
+      updateHtmlText, 
+      completeTask,
+      setSelectedDueDate,
+    }
+  },
+  watch: {
+    taskEditorSectionIdAndTask(val) {
+      if (val) {
+        window.setTimeout(() => {
+          document.getElementById("name")?.focus();
+        }, 0);
+      }
     },
   },
 });
