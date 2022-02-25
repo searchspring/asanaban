@@ -29,9 +29,6 @@ export default {
       }
       return "Invalid Date";
     },
-    dateFormatString: (state: State) => {
-      return state.dateFormatString;
-    }
   },
   mutations: {
     toggleColumn(state: State, gid: string) {
