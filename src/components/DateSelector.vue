@@ -25,7 +25,7 @@ export default defineComponent ({
   },
   setup(props, { emit }) {
     const value = ref<Date>();
-    const formatString = store.getters["preferences/dateFormatString"] as string;
+    const formatString = store.state["preferences"].dateFormatString as string;
     const placeholder = formatString.toLowerCase();
 
     const formatDate = (date: Date | undefined) => {

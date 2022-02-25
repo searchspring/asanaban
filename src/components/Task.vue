@@ -77,7 +77,7 @@ export default defineComponent({
     });
 
     const backgroundAndTextColor = computed(() => {
-      const formatString = store.getters["preferences/dateFormatString"];
+      const formatString = store.state["preferences"].dateFormatString as string;
       const dueDate = props.task?.due_on?.substring(0, 10) ?? "";
       if (dueDate) {
         if (differenceInDays(parse(dueDate, formatString, new Date()), new Date()) < 5) {
@@ -90,7 +90,6 @@ export default defineComponent({
           "background-color": "purple",
           "color": "white"
         }
-      
       }
       return {
         "background-color": "white",

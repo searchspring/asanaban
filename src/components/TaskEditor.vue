@@ -81,30 +81,38 @@
 <script lang="ts">
 import store from "@/store";
 import { defineComponent, ref, watch, computed } from "vue";
-import { createNamespacedHelpers } from "vuex";
 import AssigneeSelector from "./AssigneeSelector.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
-const { mapState } = createNamespacedHelpers("preferences");
 
 export default defineComponent({
   components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
-  computed: {
-    ...mapState(["taskEditorSectionIdAndTask"]),
-    projectId: {
-      get() {
-        return store.state["asana"].selectedProject;
-      },
-      set(val: string) {
-        store.dispatch("asana/setSelectedProject", val);
-      },
-    },
-  },
   setup() {
     const isSaveDisabled = ref<boolean>();
+
+    const projectId = computed({ 
+      get() { 
+        return store.state["asana"].selectedProject;
+      }, 
+      set(val: string) { 
+        store.dispatch("asana/setSelectedProject", val);
+      } 
+    });
+
+    const taskEditorSectionIdAndTask = computed(() => {
+      return store.state["preferences"].taskEditorSectionIdAndTask;
+    });
+
+    watch([taskEditorSectionIdAndTask], () => {
+      if (taskEditorSectionIdAndTask.value) {
+        window.setTimeout(() => {
+          document.getElementById("name")?.focus();
+        }, 0);
+      }
+    });
 
     const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
       if (taskEditorSectionIdAndTask.task.gid) {
@@ -150,6 +158,8 @@ export default defineComponent({
 
     return {
       isSaveDisabled,
+      taskEditorSectionIdAndTask,
+      projectId,
       save,
       deleteTask,
       hide,
@@ -158,15 +168,6 @@ export default defineComponent({
       completeTask,
       setSelectedDueDate,
     }
-  },
-  watch: {
-    taskEditorSectionIdAndTask(val) {
-      if (val) {
-        window.setTimeout(() => {
-          document.getElementById("name")?.focus();
-        }, 0);
-      }
-    },
   },
 });
 </script>
