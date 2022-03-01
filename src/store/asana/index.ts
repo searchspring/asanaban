@@ -9,7 +9,6 @@ import { startWorkers } from "./worker";
 import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource, PaginationParams, Resource } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 
-
 let asanaClient: AsanaSdk.Client | null = null;
 if (jsonstore.has("refresh_token")) {
   asanaClient = createClient(
@@ -396,7 +395,7 @@ export default {
       commit("tokenReceived", payload);
       rootState.signedIn = true; // can't figure out how to get root state inside the mutation.
     },
-    async signIn(): Promise<void> {
+    signIn(): void {
       const codeVerifier = "12345678901234567890123456789012345678901234567890";
       const codeChallenge = base64URL(CryptoJS.SHA256(codeVerifier));
       const url =
