@@ -1,34 +1,21 @@
 # asanaban-vue
 
+## Requirements
+* npm
+* vue-cli (```npm install -g @vue/cli ```)
+* linter (```brew install golangci-lint```)
+
 ## Project setup
-```
-npm install
-```
+* Download the [.env](https://start.1password.com/open/i?a=7BICDIKH2ZHQZIH6N3APRMZKLU&v=zu4fcddpxze65mjtzpq6fcadim&i=ve3tq2p6dvfw5fsxffgl42hbpa&h=team-swec.1password.ca) and put it in the project folder
+* Run ```make get```
 
-### Compiles and hot-reloads for development
+## Run Locally
 ```
-npm run serve
+make run
 ```
+The app will be running on http://localhost:8080
 
-### Compiles and minifies for production
+## Run Tests
 ```
-npm run build
+make tests
 ```
-
-### Run your unit tests
-```
-npm run test:unit
-```
-
-### Run your end-to-end tests
-```
-npm run test:e2e
-```
-
-### Lints and fixes files
-```
-npm run lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
