@@ -1,54 +1,14 @@
-package handler
+package api
 
 import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
+
+	"github.com/gorilla/mux"
+	"github.com/searchspring/asanaban/config"
 )
-
-var (
-	githubDAO    = NewDAO()
-	clientID     = "1201298517859389"
-	clientSecret = os.Getenv("ASANA_CLIENT_SECRET")
-	redirectURL  = os.Getenv("ASANA_REDIRECT_URL")
-)
-
-func checks() {
-	if os.Getenv("ASANA_REDIRECT_URL") == "" {
-		panic("must set ASANA_REDIRECT_URL variable")
-	}
-	if os.Getenv("ASANA_CLIENT_SECRET") == "" {
-		panic("must set ASANA_CLIENT_SECRET variable")
-	}
-}
-
-func Handler(w http.ResponseWriter, r *http.Request) {
-	checks()
-	code := r.URL.Query().Get("code")
-	if code == "" {
-		http.Error(w, "no asana code found in request", http.StatusBadRequest)
-		return
-	}
-
-	tokenResponse, err := githubDAO.GetTokenResponse(code)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusForbidden)
-		return
-	}
-	html := `
-		<script>
-			let tokenResponse = ` + string(tokenResponse) + `;
-			window.location.href = '/token?payload=' + encodeURIComponent(JSON.stringify(tokenResponse));
-		</script>
-		`
-	_, err = w.Write([]byte(html))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusForbidden)
-		return
-	}
-}
 
 // dao
 type DAO interface {
@@ -79,13 +39,57 @@ func NewDAO() DAO {
 	}
 }
 
+func CreateRouter() (*mux.Router, error) {
+	router := mux.NewRouter().StrictSlash(true).UseEncodedPath()
+	router.HandleFunc("/api", Handler).Methods(http.MethodGet)
+	return router, nil
+}
+
+func Handler(w http.ResponseWriter, r *http.Request) {
+	code := r.URL.Query().Get("code")
+	if code == "" {
+		http.Error(w, "no asana code found in request", http.StatusBadRequest)
+		return
+	}
+
+	githubDAO := NewDAO()
+	tokenResponse, err := githubDAO.GetTokenResponse(code)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+
+	env := config.Load()
+	html := `
+		<script>
+			let tokenResponse = ` + string(tokenResponse) + `;
+			window.location.href = '` + env.AppUrl + `' + '/?payload=' + encodeURIComponent(JSON.stringify(tokenResponse));
+		</script>
+		`
+	_, err = w.Write([]byte(html))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusForbidden)
+		return
+	}
+}
+
 func (d *DAOImpl) GetTokenResponse(code string) ([]byte, error) {
-	data := fmt.Sprintf("grant_type=authorization_code"+
-		"&client_id=%s"+
-		"&client_secret=%s"+
-		"&redirect_uri=%s"+
-		"&code=%s"+
-		"&code_verifier=12345678901234567890123456789012345678901234567890", clientID, clientSecret, redirectURL, code)
+	env := config.Load()
+
+	data := fmt.Sprintf(
+		"grant_type=authorization_code"+
+			"&client_id=%s"+
+			"&client_secret=%s"+
+			"&redirect_uri=%s/api"+
+			"&code=%s"+
+			"&code_verifier=%s",
+		env.ClientId,
+		env.AsanaClientSecret,
+		env.RedirectUrl,
+		code,
+		env.CodeVerifier,
+	)
+
 	payload := strings.NewReader(data)
 
 	req, err := http.NewRequest("POST", "https://app.asana.com/-/oauth_token", payload)
