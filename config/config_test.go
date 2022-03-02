@@ -15,13 +15,13 @@ func TestGetEnvStringReturnsOsVal(t *testing.T) {
 	const expected = "asanaban_test_val"
 	os.Setenv(key, expected)
 
-	actual := GetEnvString(key)
+	actual := getEnvString(key)
 
 	require.Equal(t, expected, actual)
 }
 
 func TestGetEnvStringAllowsMissing(t *testing.T) {
-	actual := GetEnvString("some_unset_key")
+	actual := getEnvString("some_unset_key")
 	require.Equal(t, "", actual)
 }
 
@@ -33,14 +33,14 @@ func TestGetEnvIntParseFromString(t *testing.T) {
 	val := strconv.Itoa(expected)
 	os.Setenv(key, val)
 
-	actual := GetEnvInt(key)
+	actual := getEnvInt(key)
 
 	require.Equal(t, expected, actual)
 }
 
 func TestGetEnvIntPanicIfNoKey(t *testing.T) {
 	tester := func() {
-		GetEnvInt("some_unset_key")
+		getEnvInt("some_unset_key")
 	}
 
 	require.Panics(t, tester)
@@ -51,7 +51,7 @@ func TestGetEnvPanicsIfCantParse(t *testing.T) {
 	const val = "not-an-int"
 	os.Setenv(key, val)
 	tester := func() {
-		GetEnvInt(key)
+		getEnvInt(key)
 	}
 
 	require.Panics(t, tester)
@@ -64,14 +64,14 @@ func TestRequireEnvStringReturnsIfExists(t *testing.T) {
 	const expected = "asanaban_test_require_val"
 	os.Setenv(key, expected)
 
-	actual := RequireEnvString(key)
+	actual := requireEnvString(key)
 
 	require.Equal(t, expected, actual)
 }
 
 func TestRequireEnvStringPanicsIfNoKey(t *testing.T) {
 	tester := func() {
-		RequireEnvString("some_unset_key")
+		requireEnvString("some_unset_key")
 	}
 
 	require.Panics(t, tester)
