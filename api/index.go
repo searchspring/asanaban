@@ -63,7 +63,7 @@ func Handler(w http.ResponseWriter, r *http.Request) {
 	html := `
 		<script>
 			let tokenResponse = ` + string(tokenResponse) + `;
-			window.location.href = '` + env.AppUrl + `' + '/?payload=' + encodeURIComponent(JSON.stringify(tokenResponse));
+			window.location.href = '` + env.RedirectUrl + `' + '/?payload=' + encodeURIComponent(JSON.stringify(tokenResponse));
 		</script>
 		`
 	_, err = w.Write([]byte(html))
