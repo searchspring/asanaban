@@ -41,7 +41,7 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
-      <DateSelector :date="taskEditorSectionIdAndTask.task.due_on ?? ''" @custom-change="setSelectedDueDate"></DateSelector>
+      <DateSelector v-model:date="dueDate"></DateSelector>
       <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
       <div class="new comment" v-if="taskEditorSectionIdAndTask.task.gid">
@@ -87,11 +87,14 @@ import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
+import { isInvalidAsanaDate, asanaDateFormat } from "../utils/date";
+import { parse } from "date-fns";
 
 export default defineComponent({
   components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
   setup() {
     const isSaveDisabled = ref<boolean>();
+    const dueDate = ref<Date>();
 
     const projectId = computed({ 
       get() { 
@@ -111,7 +114,20 @@ export default defineComponent({
         window.setTimeout(() => {
           document.getElementById("name")?.focus();
         }, 0);
+
+        const dueDateString = store.state["preferences"].taskEditorSectionIdAndTask.task?.due_on;
+        // to prevent disabling save when creating a new task or a task initially has no due date
+        if (dueDateString === null || dueDateString === undefined) {
+          dueDate.value = undefined;
+        } else {
+          dueDate.value = parse(dueDateString, asanaDateFormat, new Date());
+        }
       }
+    });
+
+    watch([dueDate], () => {
+      isSaveDisabled.value = isInvalidAsanaDate(dueDate.value);
+      store.dispatch("preferences/setDueDate", dueDate.value);
     });
 
     const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
@@ -128,12 +144,14 @@ export default defineComponent({
         `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
       );
       if (response) {
+        isSaveDisabled.value = false;
         store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
         store.dispatch("preferences/hideTaskEditor");
       }
     };
 
     const hide = () => {
+      isSaveDisabled.value = false;
       store.dispatch("preferences/hideTaskEditor");
     };
 
@@ -146,27 +164,22 @@ export default defineComponent({
     };
 
     const completeTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      isSaveDisabled.value = false;
       store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
       store.dispatch("preferences/hideTaskEditor");
-    };
-
-    const setSelectedDueDate = (date: Date) => {
-      const dateString = store.getters["preferences/formattedDate"](date);
-      isSaveDisabled.value = store.getters["preferences/isSaveDisabled"](dateString);
-      store.dispatch("preferences/setDueDate", date);
     };
 
     return {
       isSaveDisabled,
       taskEditorSectionIdAndTask,
       projectId,
+      dueDate,
       save,
       deleteTask,
       hide,
       updateHtmlNotes,
       updateHtmlText, 
       completeTask,
-      setSelectedDueDate,
     }
   },
 });

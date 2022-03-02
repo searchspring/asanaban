@@ -35,6 +35,7 @@ import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
 import { parse } from "date-fns";
+import { asanaDateFormat } from "../utils/date";
 
 export default defineComponent({
   props: {
@@ -77,10 +78,9 @@ export default defineComponent({
     });
 
     const backgroundAndTextColor = computed(() => {
-      const formatString = store.state["preferences"].dateFormatString as string;
       const dueDate = props.task?.due_on?.substring(0, 10) ?? "";
       if (dueDate) {
-        if (differenceInDays(parse(dueDate, formatString, new Date()), new Date()) < 5) {
+        if (differenceInDays(parse(dueDate, asanaDateFormat, new Date()), new Date()) < 5) {
           return {
             "background-color": "red",
             "color": "white"

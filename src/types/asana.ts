@@ -47,3 +47,5 @@ export type TaskAndSectionId = {
   newTags: string[],
   sectionId: string,
 }
+
+export type SelectedAsanaDate = Date | undefined | "Invalid Date";
