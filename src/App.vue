@@ -12,10 +12,13 @@
 </template>
 
 <script lang="ts">
+import router from "@/router";
+import store from "@/store";
+import { parse } from "query-string";
 import ProjectSelector from "@/components/ProjectSelector.vue";
 import SignIn from "@/components/SignIn.vue";
 import Actions from "@/components/Actions.vue";
-import { defineComponent } from "vue";
+import { defineComponent, onMounted } from "vue";
 import Search from "./components/Search.vue";
 
 export default defineComponent({
@@ -25,6 +28,15 @@ export default defineComponent({
     Actions,
     Search,
   },
+  setup() {
+    onMounted(() => {
+      if (parse(location.search).payload) {
+        let payload = JSON.parse(parse(location.search).payload);
+        store.dispatch("asana/tokenReceived", payload);
+        router.push({ name: "Home" });
+      }
+    });
+  }
 });
 </script>
 
