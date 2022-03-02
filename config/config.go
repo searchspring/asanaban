@@ -27,12 +27,12 @@ type Config struct {
 
 func Load() *Config {
 	return &Config{
-		HttpPort:          GetEnvInt("HTTP_PORT"),
-		ClientId:          RequireEnvString("CLIENT_ID"),
-		RedirectUrl:       RequireEnvString("REDIRECT_URL"),
-		AppUrl:            RequireEnvString("APP_URL"),
-		CodeVerifier:      RequireEnvString("CODE_VERIFIER"),
-		AsanaClientSecret: RequireEnvString("ASANA_CLIENT_SECRET"),
+		HttpPort:          getEnvInt("HTTP_PORT"),
+		ClientId:          requireEnvString("CLIENT_ID"),
+		RedirectUrl:       requireEnvString("REDIRECT_URL"),
+		AppUrl:            requireEnvString("APP_URL"),
+		CodeVerifier:      requireEnvString("CODE_VERIFIER"),
+		AsanaClientSecret: requireEnvString("ASANA_CLIENT_SECRET"),
 		Version:           getOsArg(1, Version),
 		Hash:              getOsArg(2, Hash),
 	}
@@ -45,8 +45,8 @@ func getOsArg(idx int, fallback string) string {
 	return fallback
 }
 
-func RequireEnvString(envName string) string {
-	value := GetEnvString(envName)
+func requireEnvString(envName string) string {
+	value := getEnvString(envName)
 
 	if value == "" {
 		panic("Require ENV: " + envName)
@@ -55,7 +55,7 @@ func RequireEnvString(envName string) string {
 	return value
 }
 
-func GetEnvString(envName string) string {
+func getEnvString(envName string) string {
 	value, present := os.LookupEnv(envName)
 
 	if !present || strings.TrimSpace(value) == "" {
@@ -66,12 +66,9 @@ func GetEnvString(envName string) string {
 	return value
 }
 
-func GetEnvInt(envName string) int {
-	value, _ := os.LookupEnv(envName)
+func getEnvInt(envName string) int {
+	value := requireEnvString(envName)
 
-	if value == "" {
-		panic("Could not find from ENV: " + envName)
-	}
 	parsed, err := strconv.Atoi(value)
 	if err != nil {
 		// Even though a Try* func, we still want to panic if we cannot parse (i.e. there is an error in the data that we want people to be aware of)

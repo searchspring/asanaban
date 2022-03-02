@@ -42,11 +42,6 @@ spec:
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 3000
-          startupProbe: # Startup probe makes newly deployed pod wait for cache refresh to finish before marking it as ready
-            tcpSocket:
-              port: 3000
-            failureThreshold: 30
-            periodSeconds: 10 
           resources:
             limits:
               memory: "500Mi"

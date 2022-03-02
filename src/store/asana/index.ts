@@ -404,7 +404,7 @@ export default {
         "&redirect_uri=" +
         location.protocol +
         "//" +
-        "localhost:3000" +
+        location.host +
         "/api" +
         "&response_type=code" +
         "&code_challenge_method=S256" +
