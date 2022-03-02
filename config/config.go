@@ -18,7 +18,6 @@ type Config struct {
 	HttpPort          int
 	ClientId          string
 	RedirectUrl       string
-	AppUrl            string
 	AsanaClientSecret string
 	CodeVerifier      string
 	Version           string
@@ -30,7 +29,6 @@ func Load() *Config {
 		HttpPort:          getEnvInt("HTTP_PORT"),
 		ClientId:          requireEnvString("CLIENT_ID"),
 		RedirectUrl:       requireEnvString("REDIRECT_URL"),
-		AppUrl:            requireEnvString("APP_URL"),
 		CodeVerifier:      requireEnvString("CODE_VERIFIER"),
 		AsanaClientSecret: requireEnvString("ASANA_CLIENT_SECRET"),
 		Version:           getOsArg(1, Version),
