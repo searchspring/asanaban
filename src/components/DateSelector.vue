@@ -7,46 +7,43 @@
     :placeholder="placeholder"
     clearable
     manual-input
-    @update:modelValue="customChange"
+    @update:modelValue="inputDate"
   />
 </template>
 
 <script lang="ts">
 import { defineComponent, ref, onMounted } from "vue";
-import { parse } from "date-fns";
-import store from "@/store";
+import { parse, isValid } from "date-fns";
+import { asanaDateFormat, formattedDate } from "../utils/date";
 
 export default defineComponent ({
   props: {
     date: {
-      type: String,
-      required: true
+      type: Date,
     }
   },
   setup(props, { emit }) {
     const value = ref<Date>();
-    const formatString = store.state["preferences"].dateFormatString as string;
-    const placeholder = formatString.toLowerCase();
+    const placeholder = asanaDateFormat.toLowerCase();
 
     const formatDate = (date: Date | undefined) => {
-      return store.getters["preferences/formattedDate"](date);
+      return formattedDate(date);
     };
 
     const parseFn = (event: Event) => {
       const dateString = (event.target as HTMLInputElement).value;
-      return parse(dateString, formatString, new Date());
+      return parse(dateString, asanaDateFormat, new Date());
     };
 
-    const customChange = (date: Date) => {
-      emit("customChange", date);
-    }
+    const inputDate = (date: Date) => {
+      emit("update:date", date);
+    };
 
     onMounted(() => {
-      const date = props.date;
-      if (date === "") {
-        value.value = undefined;
+      if (isValid(props.date)) {
+        value.value = props.date;
       } else {
-        value.value = parse(date, formatString, new Date());
+        value.value = undefined;
       }
     });
 
@@ -55,7 +52,7 @@ export default defineComponent ({
       placeholder,
       formatDate,
       parseFn,
-      customChange,
+      inputDate,
     }
   }
 });

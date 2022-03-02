@@ -2,7 +2,7 @@ import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
 import { Assignee, TaskAndSectionId } from "@/types/asana";
-import { format, isValid } from "date-fns";
+import { formattedDate } from "../../utils/date";
 
 export default {
   namespaced: true,
@@ -11,25 +11,7 @@ export default {
     swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
-    dateFormatString: "yyyy-MM-dd"
   } as State,
-  getters: {
-    isSaveDisabled: (state: State) => (date: string) => {
-      if (date === "Invalid Date") {
-        return true;
-      }
-      return false;
-    },
-    formattedDate: (state: State) => (date: Date | undefined) => {
-      if (isValid(date)) {
-        return format(date!, state.dateFormatString);
-      }
-      if (date === undefined) {
-        return "";
-      }
-      return "Invalid Date";
-    },
-  },
   mutations: {
     toggleColumn(state: State, gid: string) {
       if (!state.columnStates[gid]) {
@@ -71,11 +53,12 @@ export default {
     setNewTags(state: State, tags: string[]) {
       state.taskEditorSectionIdAndTask!.newTags = tags;
     },
-    setDueDate(state: State, date: string) {
-      if (date === "Invalid Date") {
-        date = ""
+    setDueDate(state: State, date: Date) {
+      let dateString = formattedDate(date)
+      if (dateString === "Invalid Date") {
+        dateString = "";
       }
-      state.taskEditorSectionIdAndTask!.task.due_on = date;
+      state.taskEditorSectionIdAndTask!.task.due_on = dateString;
     },
   },
   actions: {
@@ -94,9 +77,8 @@ export default {
     setNewTags({ commit }, tags: string[]) {
       commit("setNewTags", tags);
     },
-    setDueDate({ commit, getters }, date: Date) {
-      const dateString = getters.formattedDate(date);
-      commit("setDueDate", dateString);
+    setDueDate({ commit }, date: Date) {
+      commit("setDueDate", date);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");
