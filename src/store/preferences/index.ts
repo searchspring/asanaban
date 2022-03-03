@@ -2,6 +2,7 @@ import jsonstore from "../../utils/jsonstore";
 import store from "@/store";
 import { State } from "./state";
 import { Assignee, TaskAndSectionId } from "@/types/asana";
+import { formattedDate } from "../../utils/date";
 
 export default {
   namespaced: true,
@@ -11,7 +12,6 @@ export default {
     search: "",
     taskEditorSectionIdAndTask: null,
   } as State,
-  getters: {},
   mutations: {
     toggleColumn(state: State, gid: string) {
       if (!state.columnStates[gid]) {
@@ -53,6 +53,13 @@ export default {
     setNewTags(state: State, tags: string[]) {
       state.taskEditorSectionIdAndTask!.newTags = tags;
     },
+    setDueDate(state: State, date: Date) {
+      let dateString = formattedDate(date)
+      if (dateString === "Invalid Date") {
+        dateString = "";
+      }
+      state.taskEditorSectionIdAndTask!.task.due_on = dateString;
+    },
   },
   actions: {
     toggleColumn({ commit }, gid: string) {
@@ -69,6 +76,9 @@ export default {
     },
     setNewTags({ commit }, tags: string[]) {
       commit("setNewTags", tags);
+    },
+    setDueDate({ commit }, date: Date) {
+      commit("setDueDate", date);
     },
     hideTaskEditor({ commit }) {
       commit("setTaskEditorSectionId", "");

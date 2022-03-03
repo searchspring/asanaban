@@ -305,6 +305,7 @@ export default {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
             html_notes: taskAndSectionId.task.html_notes,
+            due_on: taskAndSectionId.task.due_on,
           });
         },
       });
