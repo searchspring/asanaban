@@ -23,24 +23,22 @@ async function processAction(): Promise<void> {
   const state = store.state["asana"];
   while (state.actions.length > 0) {
     const action = state.actions[0];
-    await action
-      .func()
-      .then(() => {
-        state.actions.shift();
-        console.info("completed action");
-      })
-      .catch((error) => {
-        state.actions.shift();
-        if (
-          error.value.errors[0].message.indexOf("does not exist in parent") ===
-          -1
-        ) {
-          state.errors.push(error as AsanaError);
-        }
-        if (error.status !== 400) {
-          state.actions.push(action);
-        }
-      });
+    try {
+      await action.func();
+      state.actions.shift();
+      console.info("completed action");
+    } catch (error: any) {
+      state.actions.shift();
+      if (
+        error.value.errors[0].message.indexOf("does not exist in parent") ===
+        -1
+      ) {
+        state.errors.push(error as AsanaError);
+      }
+      if (error.status !== 400) {
+        state.actions.push(action);
+      }
+    }
   }
 }
 
