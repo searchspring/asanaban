@@ -20,13 +20,12 @@ startWorkers();
 
 function createClient(accessToken: string, refreshToken: string) {
   const client = AsanaSdk.Client.create();
-  client.dispatcher.handleUnauthorized = () => {
+  client.dispatcher.handleUnauthorized = (async () => {
     console.error("failed to perform action - signing in again");
     store.commit("asana/clearActions");
     store.commit("asana/clearErrors");
-    store.dispatch("asana/signIn");
-    return true;
-  };
+    await store.dispatch("asana/signIn");
+  }) as any;
   client.dispatcher.retryOnRateLimit = true;
   const credentials = {
     access_token: accessToken,
@@ -95,20 +94,23 @@ export default {
   },
   mutations: {
     setStories(state: State, task: Task): void {
-      if (asanaClient) {
-        asanaClient.stories
-          // asana interface has incorrect type defintion for this function
-          .findByTask(task.gid, {
-            limit: 100,
-            fields:
-              "html_text,created_by.name,resource_subtype,type,created_at"
-          } as any)
-          .then(storiesResponse => {
+      state.actions.push({
+        description: "loading stories",
+        func: async () => {
+          if (asanaClient) {
+            const storiesResponse = await asanaClient?.stories
+              // asana interface has incorrect type defintion for this function
+              .findByTask(task.gid, {
+                limit: 100,
+                fields:
+                  "html_text,created_by.name,resource_subtype,type,created_at"
+              } as any)
             task.stories = storiesResponse.data.filter(story => {
               return story["resource_subtype"] === "comment_added";
             });
-          });
-      }
+          }
+        }
+      })
     },
     tokenReceived(state: State, payload: any): void {
       const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
@@ -118,7 +120,7 @@ export default {
       const data = payload.data ?? {};
       
       Cookies.set("access_token", access_token, {
-        expires: oneHourFromNow,
+        expires: oneHourFromNow ,
       });
       jsonstore.set("refresh_token", refresh_token);
       jsonstore.set("user", data);
@@ -227,7 +229,7 @@ export default {
       state.actions.push({
         description: "moving task",
         func: async () => {
-          asanaClient?.sections.addTask(payload.endSectionId, {
+          await asanaClient?.sections.addTask(payload.endSectionId, {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
           });
@@ -251,7 +253,7 @@ export default {
       state.actions.push({
         description: "updating custom fields",
         func: async () => {
-          asanaClient?.tasks.update(task.gid, body);
+          await asanaClient?.tasks.update(task.gid, body);
         }
       })
     },
@@ -294,14 +296,14 @@ export default {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
           if (taskAndSectionId.htmlText) {
-            asanaClient?.stories.createOnTask(
+            await asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
               { htmlText: taskAndSectionId.htmlText, }
             )
           }
           taskAndSectionId.htmlText = "";
 
-          asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+          await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
             assignee: taskAndSectionId.task.assignee?.gid,
             html_notes: taskAndSectionId.task.html_notes,
@@ -320,7 +322,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          asanaClient?.tasks.delete(taskAndSectionId.task.gid);
+          await asanaClient?.tasks.delete(taskAndSectionId.task.gid);
         },
       });
     },
@@ -334,7 +336,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+          await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             completed: true,
           });
         },
@@ -350,7 +352,7 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1);
           }
-          asanaClient?.tasks.update(task.gid, {
+          await asanaClient?.tasks.update(task.gid, {
             completed: true,
           });
         },
@@ -360,7 +362,7 @@ export default {
       state.actions.push({
         description: "adding task tag",
         func: async () => {
-          asanaClient?.tasks.addTag(payload.task.gid, {
+          await asanaClient?.tasks.addTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
@@ -370,7 +372,7 @@ export default {
       state.actions.push({
         description: "removing task tag",
         func: async () => {
-          asanaClient?.tasks.removeTag(payload.task.gid, {
+          await asanaClient?.tasks.removeTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
@@ -381,7 +383,7 @@ export default {
         state.actions.push({
           description: "adding stories",
           func: async () => {
-            asanaClient?.stories.createOnTask(
+            await asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
               { html_text: taskAndSectionId.htmlText }
             )
@@ -417,14 +419,18 @@ export default {
       commit("signOut");
       rootState.signedIn = false; // can't figure out how to get root state inside the mutation.
     },
-    loadProjects({ commit }): void {
-      if (asanaClient) {
-        asanaClient.workspaces.findAll().then(workspaceResponse => {
-          workspaceResponse.data.forEach(workspace => {
-            loadProjectsWithOffset("", workspace.gid, commit);
-          });
-        });
-      }
+    loadProjects({ commit, state }): void {
+      state.actions.push({
+        description: "loading projects",
+        func: async () => {
+          if (asanaClient) {
+            const workspaces = await asanaClient.workspaces.findAll();
+            workspaces.data.forEach(workspace => {
+              loadProjectsWithOffset("", workspace.gid, commit);
+            });
+          }
+        }
+      });
     },
     setSelectedProject({ commit, dispatch }, project: string): void {
       commit("setSelectedProject", project);
@@ -442,36 +448,40 @@ export default {
       }
     },
     async loadQueriedTask({ commit, state }, query: string): Promise<Resource[] | undefined> {
-      return await asanaClient?.workspaces.typeahead(
+      const taskResponse = await asanaClient?.workspaces.typeahead(
         state.workspace, {
           // interface wrong, casted to any
           resource_type: "task",
           query: query,
           count: 5,
           opt_fields: "name,completed,projects.name"
-        } as any
-      ).then(taskResponse => taskResponse.data);
+        } as any);
+        return taskResponse?.data;
     },
     loadSections({ commit, state }): void {
-      if (asanaClient && state.selectedProject) {
-        asanaClient.sections
-          .findByProject(state.selectedProject)
-          .then((sectionResponse) => {
+      state.actions.push({
+        description: "loading sections",
+        func: async () => {
+          if (asanaClient && state.selectedProject) {
+            const sectionResponse = await asanaClient.sections.findByProject(state.selectedProject);
             commit("setSections", sectionResponse);
-          });
-      }
+          }
+        }
+      })
     },
     loadUsers({ commit, state }): void {
-      if (asanaClient && state.workspace) {
-        asanaClient.users.findByWorkspace(
-          state.workspace,
-          {
-            opt_fields: "name,photo.image_60x60,resource_type,email",
-          })
-          .then(userResponse => {
-          commit("setUsers", userResponse.data);
-        });
-      }
+      state.actions.push({
+        description: "loading users",
+        func: async () => {
+          if (asanaClient && state.workspace) {
+            const userResponse = await asanaClient.users.findByWorkspace(
+              state.workspace, {
+                opt_fields: "name,photo.image_60x60,resource_type,email",
+              })
+            commit("setUsers", userResponse.data);
+          }
+        }
+      })
     },
     loadAllTags({ commit, state }): void {
       if (asanaClient && state.selectedProject) {
