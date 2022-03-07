@@ -1,4 +1,3 @@
-import store from '@/store'
 import { VueRenderer } from '@tiptap/vue-3'
 import tippy from 'tippy.js'
 import { Instance, Props } from 'tippy.js'
@@ -7,6 +6,7 @@ import TaskMentionList from '../components/TaskMentionList.vue'
 import { SuggestionKeyDownProps, SuggestionOptions, SuggestionProps } from '@tiptap/suggestion'
 import { PluginKey } from 'prosemirror-state';
 import { Component, ComputedOptions, MethodOptions } from 'vue'
+import { useAsanaStore } from '@/store/asana/index2'
 
 // adapted from this demo: https://tiptap.dev/api/nodes/mention
 
@@ -15,7 +15,7 @@ export const userSuggestion: Omit<SuggestionOptions, "editor"> = {
   allowSpaces: true,
   pluginKey: new PluginKey("userSuggestion"),
   items: ({ query }) => {
-    const users = store.getters["asana/users"];
+    const users = useAsanaStore().users;
     return users.filter(u => u.name.toLowerCase().startsWith(query.toLowerCase())).slice(0, 5);
   },
   render: newRender(UserMentionList)
@@ -26,7 +26,7 @@ export const taskSuggestion: Omit<SuggestionOptions, "editor"> = {
   allowSpaces: true,
   pluginKey: new PluginKey("taskSuggestion"),
   items: async ({ query }) => {
-    return await store.dispatch("asana/loadQueriedTask", query);
+    return await useAsanaStore().LOAD_QUERIED_TASK(query) ?? [];
   },
   render: newRender(TaskMentionList)
 };

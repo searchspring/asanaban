@@ -1,5 +1,5 @@
-import store from "@/store";
 import { AsanaError } from "@/types/asana";
+import { useAsanaStore } from "./index2";
 
 // export start function
 export function startWorkers() {
@@ -13,38 +13,39 @@ export function startWorkers() {
 
 async function processActions() {
   await processAction();
-  const nextTimeout = store.state["asana"].actions.length > 0 ? 0 : 1000;
+  const nextTimeout = useAsanaStore().actions.length > 0 ? 0 : 1000;
   self.setTimeout(() => {
     processActions();
   }, nextTimeout);
 }
 
 async function processAction(): Promise<void> {
-  const state = store.state["asana"];
-  while (state.actions.length > 0) {
-    const action = state.actions[0];
+  const asanaStore = useAsanaStore();
+  while (asanaStore.actions.length > 0) {
+    const action = asanaStore.actions[0];
     try {
       await action.func();
-      state.actions.shift();
+      asanaStore.actions.shift();
       console.info("completed action");
     } catch (error: any) {
-      state.actions.shift();
+      asanaStore.actions.shift();
       if (
         error.value.errors[0].message.indexOf("does not exist in parent") ===
         -1
       ) {
-        state.errors.push(error as AsanaError);
+        asanaStore.errors.push(error as AsanaError);
       }
-      if (error.status !== 400) {
-        state.actions.push(action);
+      if (error.status !== 400 && error.status !== 401) {
+        asanaStore.actions.push(action);
       }
     }
   }
 }
 
 async function reloadTasks() {
-  if (store.state["asana"].actions.length === 0) {
-    await store.dispatch("asana/mergeTasks");
+  const asanaStore = useAsanaStore();
+  if (asanaStore.actions.length === 0) {
+    asanaStore.LOAD_AND_MERGE_TASKS();
   }
   self.setTimeout(() => {
     reloadTasks();
