@@ -1,6 +1,6 @@
 <template>
   <div>
-    <select v-if="signedIn()" v-model="selectedProject" @change="onChange">
+    <select v-if="loggedIn" v-model="selectedProject">
       <option disabled value="null">Select a project</option>
       <option
         v-for="project in projects"
@@ -14,28 +14,34 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { defineComponent } from "vue";
-import { createNamespacedHelpers } from "vuex";
-const { mapState } = createNamespacedHelpers("asana");
+import { useAsanaStore } from "@/store/asana/index2";
+import { useAuthStore } from "@/store/auth";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 
 export default defineComponent({
-  computed: {
-    ...mapState(["projects"]),
-  },
-  data() {
+  setup() {
+    const asanaStore = useAsanaStore();
+    const authStore = useAuthStore();
+
+    const selectedProject = ref<string | null>();
+    const loggedIn = computed(() => authStore.LOGGED_IN);
+    const projects = computed(() => asanaStore.projects);
+
+    onMounted(() => {
+      selectedProject.value = asanaStore.selectedProject;
+    })
+
+    watch([selectedProject], () => {
+      if (selectedProject.value) {
+        asanaStore.LOAD_SELECTED_PROJECT(selectedProject.value);
+      }
+    })
+
     return {
-      selectedProject: store.state["asana"].selectedProject,
-    };
-  },
-  methods: {
-    onChange(event: Event) {
-      const selectedProject = (event.target as HTMLSelectElement).value;
-      store.dispatch("asana/setSelectedProject", selectedProject);
-    },
-    signedIn() {
-      return store.state.signedIn;
-    },
-  },
+      selectedProject,
+      projects,
+      loggedIn
+    }
+  }
 });
 </script>

@@ -13,13 +13,13 @@
 
 <script lang="ts">
 import router from "@/router";
-import store from "@/store";
 import { parse } from "query-string";
 import ProjectSelector from "@/components/ProjectSelector.vue";
 import SignIn from "@/components/SignIn.vue";
 import Actions from "@/components/Actions.vue";
 import { defineComponent, onMounted } from "vue";
 import Search from "./components/Search.vue";
+import { useAuthStore } from "./store/auth";
 
 export default defineComponent({
   components: {
@@ -29,10 +29,17 @@ export default defineComponent({
     Search,
   },
   setup() {
+    const authStore = useAuthStore();
+
+    const tryLoginFromSession = () => authStore.LOGIN_FRON_SESSION();
+
+    onMounted(tryLoginFromSession);
     onMounted(() => {
       if (parse(location.search).payload) {
         let payload = JSON.parse(parse(location.search).payload);
-        store.dispatch("asana/tokenReceived", payload);
+        authStore.TOKEN_RECIEVED(payload);
+      }
+      if (authStore.LOGGED_IN) {
         router.push({ name: "Home" });
       }
     });

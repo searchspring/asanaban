@@ -26,9 +26,10 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, PropType, watch } from "vue";
-import store from "@/store";
 import { Task, TaskTag } from "@/types/asana";
 import { TagOption } from "@/types/vue";
+import { useAsanaStore } from "@/store/asana/index2";
+import { usePrefStore } from "@/store/preferences/index2";
 
 export default defineComponent ({
   props: {
@@ -38,10 +39,13 @@ export default defineComponent ({
     }
   },
   setup(props) {
+    const asanaStore = useAsanaStore();
+    const prefStore = usePrefStore();
+    
     const value = ref<TagOption[]>([]);
 
     const options = computed(() => {
-      const tags = store.getters['asana/getTags'];
+      const tags = asanaStore.allTags;
       return makeTagOption(tags);
     });
 
@@ -55,7 +59,7 @@ export default defineComponent ({
 
     watch([value], () => {
       const tagIds = value.value.map((tag) => tag.gid);
-      store.dispatch("preferences/setNewTags", tagIds);
+      prefStore.SET_NEW_TAGS(tagIds);
     })
 
     return {

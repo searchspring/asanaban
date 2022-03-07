@@ -24,7 +24,7 @@ function createClient(accessToken: string, refreshToken: string) {
     console.error("failed to perform action - signing in again");
     store.commit("asana/clearActions");
     store.commit("asana/clearErrors");
-    await store.dispatch("asana/signIn");
+    store.dispatch("asana/signIn");
   }) as any;
   client.dispatcher.retryOnRateLimit = true;
   const credentials = {
@@ -112,7 +112,12 @@ export default {
         }
       })
     },
-    tokenReceived(state: State, payload: any): void {
+    tokenReceived(state: State, payload: any): boolean {
+      if (payload.error) {
+        console.error(payload);
+        return false;
+      }
+
       const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
 
       const access_token = payload.access_token ?? "";
@@ -125,6 +130,8 @@ export default {
       jsonstore.set("refresh_token", refresh_token);
       jsonstore.set("user", data);
       asanaClient = createClient(access_token, refresh_token);
+
+      return true;
     },
     signOut(state: State): void {
       Cookies.remove("access_token");
@@ -295,13 +302,13 @@ export default {
           if (index !== -1) {
             state.tasks.splice(index, 1, taskAndSectionId.task);
           }
-          if (taskAndSectionId.htmlText) {
-            await asanaClient?.stories.createOnTask(
-              taskAndSectionId.task.gid,
-              { htmlText: taskAndSectionId.htmlText, }
-            )
-          }
-          taskAndSectionId.htmlText = "";
+          // if (taskAndSectionId.htmlText) {
+          //   await asanaClient?.stories.createOnTask(
+          //     taskAndSectionId.task.gid,
+          //     { htmlText: taskAndSectionId.htmlText, }
+          //   )
+          // }
+          // taskAndSectionId.htmlText = "";
 
           await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
             name: taskAndSectionId.task.name,
@@ -379,7 +386,9 @@ export default {
       });
     },
     updateStories(state: State, taskAndSectionId: TaskAndSectionId): void {
+      console.log(taskAndSectionId);
       if (taskAndSectionId.htmlText) {
+        console.log(taskAndSectionId.htmlText);
         state.actions.push({
           description: "adding stories",
           func: async () => {
@@ -387,10 +396,10 @@ export default {
               taskAndSectionId.task.gid,
               { html_text: taskAndSectionId.htmlText }
             )
+            taskAndSectionId.htmlText = "";
           }
         });
       }
-      taskAndSectionId.htmlText = "";
     }
   },
   actions: {
@@ -580,18 +589,23 @@ async function loadTasksWithOffset(
     options["offset"] = offset;
   }
   if (asanaClient) {
-    const taskResponse = await asanaClient.tasks.findAll(options);
-    if (state.actions.length === 0) {
-      commit(commitAction, taskResponse.data as Task[]);
-      if (taskResponse._response.next_page) {
-        loadTasksWithOffset(
-          taskResponse._response.next_page.offset,
-          state,
-          commit,
-          commitAction
-        );
+    let taskResponse: any = await asanaClient.tasks.findAll(options);
+    for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
+      if (state.actions.length === 0) {
+        commit(commitAction, taskResponse.data as Task[]);
       }
     }
+    // if (state.actions.length === 0) {
+    //   commit(commitAction, taskResponse.data as Task[]);
+    //   if (taskResponse._response.next_page) {
+    //     loadTasksWithOffset(
+    //       taskResponse._response.next_page.offset,
+    //       state,
+    //       commit,
+    //       commitAction
+    //     );
+    //   }
+    // }
   }
 }
 
@@ -608,15 +622,18 @@ async function loadAllTagsWithOffset(
     options["offset"] = offset;
   }
   if (asanaClient) {
-    const tagResponse = await asanaClient.tags.findByWorkspace(workspaceGid, options);
-    commit("setAllTags", tagResponse.data as TaskTag[])
-    if (tagResponse._response.next_page) {
-      loadAllTagsWithOffset(
-        tagResponse._response.next_page.offset,
-        workspaceGid,
-        commit
-      );
+    let tagResponse: any = await asanaClient.tags.findByWorkspace(workspaceGid, options);
+    for (; tagResponse; tagResponse = await tagResponse.nextPage()) {
+      commit("setAllTags", tagResponse.data as TaskTag[]);
     }
+    // commit("setAllTags", tagResponse.data as TaskTag[])
+    // if (tagResponse._response.next_page) {
+    //   loadAllTagsWithOffset(
+    //     tagResponse._response.next_page.offset,
+    //     workspaceGid,
+    //     commit
+    //   );
+    // }
   }
 }
 
@@ -635,21 +652,23 @@ async function loadProjectsWithOffset(
   }
 
   if (asanaClient) {
-    const projectResponse = await asanaClient.projects.findAll(options);
-    const projects = projectResponse.data.map(p => {
-      return {
-        ...p,
-        workspaceGid: workspaceGid
-      } as Project
-    });
-    commit("addProjects", projects);
-    if (projectResponse._response.next_page) {
-      loadProjectsWithOffset(
-        projectResponse._response.next_page.offset,
-        workspaceGid,
-        commit
-      );
+    let projectResponse: any = await asanaClient.projects.findAll(options);
+    for (; projectResponse; projectResponse = await projectResponse.nextPage()) {
+      const projects = projectResponse.data.map(p => {
+        return {
+          ...p,
+          workspaceGid: workspaceGid
+        } as Project
+      });
+      commit("addProjects", projects);
     }
+    // if (projectResponse._response.next_page) {
+    //   loadProjectsWithOffset(
+    //     projectResponse._response.next_page.offset,
+    //     workspaceGid,
+    //     commit
+    //   );
+    // }
   }
 }
 
