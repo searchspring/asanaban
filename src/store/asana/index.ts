@@ -177,7 +177,7 @@ export const useAsanaStore = defineStore("deploy", {
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
       const task = this.tasks.find(task => task.gid === taskId)!;
-      const columnChangeIdx = task.custom_fields?.findIndex(
+      const columnChangeIdx = task?.custom_fields?.findIndex(
         field => field.name === "column-change"
       );
 
@@ -202,8 +202,7 @@ export const useAsanaStore = defineStore("deploy", {
     CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const createTask = async () => {
         // asana interface has incorrect type defintion for this function
-        const task = await asanaClient!.tasks
-          .create({
+        const task = await asanaClient!.tasks.create({
             ...taskAndSectionId.task,
             tags: taskAndSectionId.newTags,
             projects: [this.selectedProject],
@@ -403,7 +402,7 @@ export const useAsanaStore = defineStore("deploy", {
     LOAD_TASKS(): void {
       this.actions.push({
         description: "loading tasks",
-        func: async () => loadTasks(this.SET_TASKS)
+        func: async () => loadTasks(this.ADD_TASKS)
       });
     },
 
