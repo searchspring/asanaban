@@ -31,13 +31,13 @@ export default defineComponent({
   setup() {
     const authStore = useAuthStore();
 
-    const tryLoginFromSession = () => authStore.LOGIN_FRON_SESSION();
+    const tryLoginFromSession = () => authStore.LOGIN_FROM_SESSION();
 
     onMounted(tryLoginFromSession);
     onMounted(() => {
       if (parse(location.search).payload) {
         let payload = JSON.parse(parse(location.search).payload);
-        authStore.TOKEN_RECIEVED(payload);
+        authStore.TOKEN_RECEIVED(payload);
       }
       if (authStore.LOGGED_IN) {
         router.push({ name: "Home" });

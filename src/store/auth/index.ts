@@ -33,7 +33,7 @@ export const useAuthStore = defineStore("auth", {
       self.location.href = url;
     },
 
-    LOGIN_FRON_SESSION(): void {
+    LOGIN_FROM_SESSION(): void {
       if (jsonstore.has("refresh_token")) {
         asanaClient = this.CREATE_CLIENT(
           Cookies.get("access_token")!,
@@ -57,7 +57,7 @@ export const useAuthStore = defineStore("auth", {
       jsonstore.set("user", user);
     },
 
-    TOKEN_RECIEVED(payload: any): boolean {
+    TOKEN_RECEIVED(payload: any): boolean {
       if (payload.error) {
         console.error(payload);
         return false;
