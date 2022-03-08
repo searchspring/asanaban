@@ -15,7 +15,7 @@
       <div
         class="tag"
         v-for="tag in tags"
-        :key="tag"
+        :key="tag.name"
         :style="{
           'background-color': tag.hexes?.background,
           color: tag.hexes?.font,
@@ -35,7 +35,7 @@ import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
 import { parse } from "date-fns";
 import { asanaDateFormat } from "../utils/date";
-import { usePrefStore } from "@/store/preferences/index2";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   props: {

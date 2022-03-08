@@ -14,7 +14,7 @@
 </template>
 
 <script lang="ts">
-import { useAsanaStore } from "@/store/asana/index2";
+import { useAsanaStore } from "@/store/asana";
 import { useAuthStore } from "@/store/auth";
 import { computed, defineComponent, onMounted, ref, watch } from "vue";
 

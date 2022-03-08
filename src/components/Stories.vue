@@ -27,7 +27,7 @@
 import { computed, defineComponent } from "vue";
 import dayjs from "dayjs";
 import { xmlToHtml } from "@/utils/asana-specific";
-import { usePrefStore } from "@/store/preferences/index2";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   setup() {

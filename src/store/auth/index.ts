@@ -4,7 +4,7 @@ import jsonstore from "@/utils/jsonstore";
 import asana from "asana";
 import Cookies from "js-cookie";
 import CryptoJS from "crypto-js";
-import { useAsanaStore } from "../asana/index2";
+import { useAsanaStore } from "../asana";
 import { User } from "@/types/asana";
 import { startWorkers } from "../asana/worker";
 
@@ -50,7 +50,6 @@ export const useAuthStore = defineStore("auth", {
       asanaClient = null;
       asanaStore.$reset();
       this.user = null;
-      console.log("logged out");
     },
 
     SET_USER(user: User): void {
@@ -77,7 +76,6 @@ export const useAuthStore = defineStore("auth", {
       this.SET_USER(data);
 
       asanaClient = this.CREATE_CLIENT(access_token, refresh_token);
-      console.log("logged in");
 
       return true;
     },

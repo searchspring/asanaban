@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div v-if="loggedIn" class="tag-container">
+    <div v-if="loggedIn" class="tag-container" data-ser>
       <div
         v-for="tag in tags"
         class="tag"
-        :key="tag"
+        :key="tag.gid"
         @click="click(tag)"
         :style="{
           'background-color': tag.hexes?.background,
@@ -18,9 +18,9 @@
 </template>
 
 <script lang="ts">
-import { useAsanaStore } from "@/store/asana/index2";
+import { useAsanaStore } from "@/store/asana";
 import { useAuthStore } from "@/store/auth";
-import { usePrefStore } from "@/store/preferences/index2";
+import { usePrefStore } from "@/store/preferences";
 import { TaskTag } from "@/types/asana";
 import { computed, defineComponent } from "vue";
 

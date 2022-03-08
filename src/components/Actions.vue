@@ -19,7 +19,7 @@
 </template>
 
 <script lang="ts">
-import { useAsanaStore } from "@/store/asana/index2";
+import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, ref } from "vue";
 
 export default defineComponent({

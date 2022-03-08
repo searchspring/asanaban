@@ -1,5 +1,5 @@
 import { AsanaError } from "@/types/asana";
-import { useAsanaStore } from "./index2";
+import { useAsanaStore } from ".";
 
 // export start function
 export function startWorkers() {
@@ -29,6 +29,7 @@ async function processAction(): Promise<void> {
       console.info("completed action");
     } catch (error: any) {
       asanaStore.actions.shift();
+      console.log(error);
       if (
         error.value.errors[0].message.indexOf("does not exist in parent") ===
         -1

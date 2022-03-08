@@ -12,7 +12,7 @@
 <script lang="ts">
 import { Swimlane } from "@/types/layout";
 import { defineComponent, PropType } from "vue";
-import { usePrefStore } from "@/store/preferences/index2";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   props: {
