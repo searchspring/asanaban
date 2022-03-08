@@ -13,7 +13,7 @@
 
 <script lang="ts">
 import { useAuthStore } from "@/store/auth";
-import { usePrefStore } from "@/store/preferences/index2";
+import { usePrefStore } from "@/store/preferences";
 import { computed, defineComponent, ref, watch } from "vue";
 
 export default defineComponent({

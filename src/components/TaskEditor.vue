@@ -88,8 +88,8 @@ import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { isInvalidAsanaDate, asanaDateFormat } from "../utils/date";
 import { parse } from "date-fns";
-import { useAsanaStore } from "@/store/asana/index2";
-import { usePrefStore } from "@/store/preferences/index2";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },

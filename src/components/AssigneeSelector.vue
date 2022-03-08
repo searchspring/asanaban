@@ -12,8 +12,8 @@
 </template>
 
 <script lang="ts">
-import { useAsanaStore } from "@/store/asana/index2";
-import { usePrefStore } from "@/store/preferences/index2";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 import { computed, defineComponent, onMounted, ref, watch } from "vue";
 
 export default defineComponent({

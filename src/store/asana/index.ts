@@ -1,67 +1,45 @@
-import store from "@/store";
-import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
-import AsanaSdk from "asana";
-import CryptoJS from "crypto-js";
-import Cookies from "js-cookie";
+import { State } from "./state";
+import { defineStore } from "pinia";
 import jsonstore from "@/utils/jsonstore";
-import { Action, State } from "./state";
-import { startWorkers } from "./worker";
-import { Section, TaskAndSectionId, Task, User, Project, ProjectParams, TaskTag, AsanaError, BaseResource, PaginationParams, Resource } from "@/types/asana";
+import { 
+  Section,
+  TaskAndSectionId,
+  Task,
+  User,
+  Project,
+  ProjectParams,
+  TaskTag,
+  BaseResource,
+  PaginationParams,
+  Resource
+} from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
+import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
+import { asanaClient } from "../auth";
 
-let asanaClient: AsanaSdk.Client | null = null;
-if (jsonstore.has("refresh_token")) {
-  asanaClient = createClient(
-    Cookies.get("access_token")!,
-    jsonstore.get("refresh_token")
-  );
-}
-startWorkers();
 
-function createClient(accessToken: string, refreshToken: string) {
-  const client = AsanaSdk.Client.create();
-  client.dispatcher.handleUnauthorized = (async () => {
-    console.error("failed to perform action - signing in again");
-    store.commit("asana/clearActions");
-    store.commit("asana/clearErrors");
-    store.dispatch("asana/signIn");
-  }) as any;
-  client.dispatcher.retryOnRateLimit = true;
-  const credentials = {
-    access_token: accessToken,
-    refresh_token: refreshToken,
-  };
-  client.useOauth({
-    credentials: credentials,
-  });
-  return client;
-}
-
-export default {
-  namespaced: true,
-  state: {
+export const useAsanaStore = defineStore("deploy", {
+  state: (): State => ({
     workspace: jsonstore.get("workspace", null) as string | null,
     projects: jsonstore.get("projects", []) as Project[],
     selectedProject: jsonstore.get("selectedProject", null) as string | null,
     tasks: jsonstore.get("tasks", []) as Task[],
     sections: jsonstore.get("sections", []) as Section[],
-    actions: [] as Action[],
-    errors: [] as AsanaError[],
+    actions: [],
+    errors: [],
     tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
     allTags: jsonstore.get("allTags", []) as TaskTag[],
-  } as State,
+  }),
   getters: {
-    getTags: (state: State) => {
-      return state.allTags;
-    },
-    isSectionComplete: (state: State) => (columnName: string) => {
+    IS_SECTION_COMPLETE: (state) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
       return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
     },
-    swimlanes: (state: State) => {
+    SWIMLANES: (state) => {
       const swimlanes: Swimlane[] = [];
       const found: Set<string> = new Set();
+
       state.sections.forEach(section => {
         if (section.name.indexOf(":") === -1) {
           section.name = "no swimlane:" + section.name;
@@ -74,9 +52,9 @@ export default {
           }
         } else {
           // count tasks in this section
-          const tasks = store.state["asana"].tasks.filter((task) => {
+          const tasks = state.tasks.filter((task) => {
             return task.memberships.some((membership) => {
-              return membership.section.gid === section.gid;
+              return membership.section?.gid === section.gid;
             });
           });
           if (tasks.length > 0) {
@@ -90,163 +68,119 @@ export default {
       });
       return swimlanes;
     },
-    users: (state: State) => state.users,
   },
-  mutations: {
-    setStories(state: State, task: Task): void {
-      state.actions.push({
-        description: "loading stories",
-        func: async () => {
-          if (asanaClient) {
-            const storiesResponse = await asanaClient?.stories
-              // asana interface has incorrect type defintion for this function
-              .findByTask(task.gid, {
-                limit: 100,
-                fields:
-                  "html_text,created_by.name,resource_subtype,type,created_at"
-              } as any)
-            task.stories = storiesResponse.data.filter(story => {
-              return story["resource_subtype"] === "comment_added";
-            });
-          }
-        }
-      })
+  actions: {
+    SET_WORKSPACE(): void {
+      const match = this.projects.find(p => p.gid === this.selectedProject);
+      this.workspace =  match?.workspaceGid ?? null;
+      jsonstore.set("workspace", this.workspace);
     },
-    tokenReceived(state: State, payload: any): boolean {
-      if (payload.error) {
-        console.error(payload);
-        return false;
-      }
 
-      const oneHourFromNow = new Date(new Date().getTime() + 60 * 60 * 1000);
+    ADD_PROJECTS(payload: Project[]): void {
+      this.projects.push(...payload);
+      this.projects = sortAndUnique(this.projects);
+      jsonstore.set("projects", this.projects);
+    },
 
-      const access_token = payload.access_token ?? "";
-      const refresh_token = payload.refresh_token ?? "";
-      const data = payload.data ?? {};
-      
-      Cookies.set("access_token", access_token, {
-        expires: oneHourFromNow ,
-      });
-      jsonstore.set("refresh_token", refresh_token);
-      jsonstore.set("user", data);
-      asanaClient = createClient(access_token, refresh_token);
+    ADD_ALL_TAGS(payload: TaskTag[]): void {
+      this.allTags.push(...payload);
+      this.allTags = sortAndUnique(this.allTags);
+      colorizeTags(this.allTags);
+      jsonstore.set("allTags", this.allTags);
+    },
 
-      return true;
+    SET_USERS(payload: User[]): void {
+      this.users = payload;
+      this.users = sortAndUnique(this.users);
+      jsonstore.set("users", this.users);
     },
-    signOut(state: State): void {
-      Cookies.remove("access_token");
-      jsonstore.remove("refresh_token");
-      jsonstore.remove("user");
-      jsonstore.remove("selectedProject");
-      jsonstore.remove("sections");
-      jsonstore.remove("projects");
-      jsonstore.remove("tags");
-      jsonstore.remove("users");
-      jsonstore.remove("allTags");
-      asanaClient = null;
-      state.projects = [];
-      state.sections = [];
-      state.tasks = [];
-      state.tags = [];
-      state.selectedProject = null;
-      state.users = [];
-      state.allTags = [];
+
+    SET_SELECTED_PROJECT(payload: string | null): void {
+      this.selectedProject = payload;
+      jsonstore.set("selectedProject", this.selectedProject);
     },
-    setWorkspace(state: State): void {
-      state.workspace = currentWorkspace(state) ?? null;
-      jsonstore.set("workspace", state.workspace);
+
+    SET_TAGS(payload: TaskTag[]): void {
+      this.tags = sortAndUnique(payload);
+      jsonstore.set("tags", this.tags);
     },
-    setProjects(state: State, payload: Project[]): void {
-      state.projects = payload;
-      state.projects = sortAndUnique(state.projects);
-      jsonstore.set("projects", state.projects);
-    },
-    addProjects(state: State, payload: Project[]): void {
-      state.projects.push(...payload);
-      state.projects = sortAndUnique(state.projects);
-      jsonstore.set("projects", state.projects);
-    },
-    setAllTags(state: State, payload: TaskTag[]): void {
-      state.allTags.push(...payload);
-      state.allTags = sortAndUnique(state.allTags);
-      colorizeAllTags(state)
-      jsonstore.set("allTags", state.allTags);
-    },
-    setUsers(state: State, payload: User[]): void {
-      state.users = payload;
-      state.users = sortAndUnique(state.users);
-      jsonstore.set("users", state.users);
-    },
-    addUsers(state: State, payload: User[]): void {
-      state.users.push(...payload);
-      state.users = sortAndUnique(state.users);
-      jsonstore.set("users", state.users);
-    },
-    setSelectedProject(state: State, payload: string | null): void {
-      state.selectedProject = payload;
-      jsonstore.set("selectedProject", state.selectedProject);
-    },
-    addTasks(state: State, payload: Task[]): void {
-      state.tasks.push(...payload);
-      colorizeTaskTags(state);
-      setTags(state, getTags(state.tasks));
-    },
-    setTasks(state: State, payload: Task[]): void {
-      state.tasks = payload;
-      colorizeTaskTags(state);
-      setTags(state, getTags(state.tasks));
-    },
-    mergeTasks(state: State, payload: Task[]): void {
-      // replace individual task with each task in payload
-      payload.forEach(task => {
-        const index = state.tasks.findIndex((t) => t.gid === task.gid);
-        if (index !== -1) {
-          state.tasks.splice(index, 1, task);
-        } else {
-          state.tasks.push(task);
-        }
-      });
-      colorizeTaskTags(state);
-      setTags(state, getTags(state.tasks));
-    },
-    setTags(state: State, payload: TaskTag[]): void {
-      setTags(state, payload);
-    },
-    setSections(state: State, payload: Section[]): void {
-      state.sections = payload;
-      state.sections.forEach(section => {
+
+    SET_SECTIONS(payload: Section[]): void {
+      this.sections = payload;
+      this.sections.forEach(section => {
         section.maxTaskCount = getColumnCount(section.name);
       });
-
-      jsonstore.set("sections", state.sections);
+      jsonstore.set("sections", this.sections);
     },
-    moveTask(state: State, payload: Move): void {
-      const task = state.tasks.find(task => task.gid === payload.taskId);
+
+    SET_TASKS(payload: Task[]): void {
+      this.tasks = payload;
+      colorizeTaskTags(this.tasks);
+      this.SET_TAGS(getAllTaskTags(this.tasks));
+    },
+
+    ADD_TASKS(payload: Task[]): void {
+      this.tasks.push(...payload);
+      colorizeTaskTags(this.tasks);
+      this.SET_TAGS(getAllTaskTags(this.tasks));
+    },
+
+    CLEAR_ERRORS(): void {
+      this.errors = [];
+    },
+
+    CLEAR_ACTIONS(): void {
+      this.actions = [];
+    },
+
+    MERGE_TASKS(payload: Task[]): void {
+      // replace individual task with each task in payload
+      payload.forEach(task => {
+        const index = this.tasks.findIndex((t) => t.gid === task.gid);
+        if (index !== -1) {
+          this.tasks.splice(index, 1, task);
+        } else {
+          this.tasks.push(task);
+        }
+      });
+      colorizeTaskTags(this.tasks);
+      this.SET_TAGS(getAllTaskTags(this.tasks));
+    },
+
+    MOVE_TASK(payload: Move): void {
+      const task = this.tasks.find(task => task.gid === payload.taskId);
+
       if (task?.memberships[0].section?.gid) {
         task.memberships[0].section.gid = payload.endSectionId;
-        const siblingTask = state.tasks.find(
+        const siblingTask = this.tasks.find(
           task => task.gid === payload.siblingTaskId
         );
-        const index = state.tasks.indexOf(task);
-        const siblingIndex = state.tasks.indexOf(siblingTask!);
-        state.tasks.splice(index, 1);
-        state.tasks.splice(siblingIndex, 0, task);
+
+        const index = this.tasks.indexOf(task);
+        const siblingIndex = this.tasks.indexOf(siblingTask!);
+
+        this.tasks.splice(index, 1);
+        this.tasks.splice(siblingIndex, 0, task);
       }
 
-      state.actions.push({
+      this.actions.push({
         description: "moving task",
         func: async () => {
           await asanaClient?.sections.addTask(payload.endSectionId, {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
           });
+          this.UPDATE_CUSTOM_FIELDS(payload.taskId);
         },
       });
     },
-    updateCustomFields(state: State, taskId: string): void {
-      const task = state.tasks.find(task => task.gid === taskId)!;
-      const columnChangeIdx = task.custom_fields?.findIndex(field => field.name === "column-change");
-      
+
+    UPDATE_CUSTOM_FIELDS(taskId: string): void {
+      const task = this.tasks.find(task => task.gid === taskId)!;
+      const columnChangeIdx = task.custom_fields?.findIndex(
+        field => field.name === "column-change"
+      );
+
       if (columnChangeIdx === undefined) return;
 
       const body = {
@@ -257,116 +191,100 @@ export default {
         (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
       }
       
-      state.actions.push({
+      this.actions.push({
         description: "updating custom fields",
         func: async () => {
           await asanaClient?.tasks.update(task.gid, body);
         }
       })
     },
-    clearErrors(state: State): void {
-      state.errors = [];
-    },
-    clearActions(state: State): void {
-      state.actions = [];
-    },
-    createTask(state: State, taskAndSectionId: TaskAndSectionId): void {
-      state.actions.push({
-        description: "creating task",
-        func: async () => {
-          // asana interface has incorrect type defintion for this function
-          const task = await asanaClient!.tasks
-            .create({
-              ...taskAndSectionId.task,
-              tags: taskAndSectionId.newTags,
-              projects: [state.selectedProject],
-              memberships: [
-                {
-                  section: taskAndSectionId.sectionId,
-                  project: state.selectedProject,
-                },
-              ],
-            } as any);
-          state.tasks.push(task as Task);
-          store.commit("asana/updateCustomFields", task.gid);
-        },
-      });
-    },
-    updateTask(state: State, taskAndSectionId: TaskAndSectionId): void {
-      state.actions.push({
-        description: "updating task",
-        func: async () => {
-          const index = state.tasks.findIndex(
-            t => t.gid === taskAndSectionId.task.gid
-          );
-          if (index !== -1) {
-            state.tasks.splice(index, 1, taskAndSectionId.task);
-          }
-          // if (taskAndSectionId.htmlText) {
-          //   await asanaClient?.stories.createOnTask(
-          //     taskAndSectionId.task.gid,
-          //     { htmlText: taskAndSectionId.htmlText, }
-          //   )
-          // }
-          // taskAndSectionId.htmlText = "";
 
-          await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
-            name: taskAndSectionId.task.name,
-            assignee: taskAndSectionId.task.assignee?.gid,
-            html_notes: taskAndSectionId.task.html_notes,
-            due_on: taskAndSectionId.task.due_on,
-          });
-        },
+    CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
+      const createTask = async () => {
+        // asana interface has incorrect type defintion for this function
+        const task = await asanaClient!.tasks
+          .create({
+            ...taskAndSectionId.task,
+            tags: taskAndSectionId.newTags,
+            projects: [this.selectedProject],
+            memberships: [{
+                section: taskAndSectionId.sectionId,
+                project: this.selectedProject,
+              }],
+          } as any);
+        this.tasks.push(task as Task);
+        this.UPDATE_CUSTOM_FIELDS(task.gid);
+      }
+
+      this.actions.push({
+        description: "creating task",
+        func: createTask
       });
     },
-    deleteTask(state: State, taskAndSectionId: TaskAndSectionId): void {
-      state.actions.push({
+
+    UPDATE_TASK(taskAndSectionId: TaskAndSectionId): void {
+      const updateTask = async () => {
+        const index = this.tasks.findIndex(
+          t => t.gid === taskAndSectionId.task.gid
+        );
+        if (index !== -1) {
+          this.tasks.splice(index, 1, taskAndSectionId.task);
+        }
+
+        await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
+          name: taskAndSectionId.task.name,
+          assignee: taskAndSectionId.task.assignee?.gid,
+          html_notes: taskAndSectionId.task.html_notes,
+          due_on: taskAndSectionId.task.due_on,
+        });
+        
+        this.UPDATE_STORIES(taskAndSectionId);
+        this.UPDATE_TASK_TAGS(taskAndSectionId);
+      }
+
+      this.actions.push({
+        description: "updating task",
+        func: updateTask
+      });
+    },
+
+    DELETE_TASK(taskAndSectionId: TaskAndSectionId): void {
+      const deleteTask = async () => {
+        const index = this.tasks.findIndex(
+          t => t.gid === taskAndSectionId.task.gid
+        );
+        if (index !== -1) {
+          this.tasks.splice(index, 1);
+        }
+        await asanaClient?.tasks.delete(taskAndSectionId.task.gid);
+      }
+
+      this.actions.push({
         description: "deleting task",
-        func: async () => {
-          const index = state.tasks.findIndex(
-            t => t.gid === taskAndSectionId.task.gid
-          );
-          if (index !== -1) {
-            state.tasks.splice(index, 1);
-          }
-          await asanaClient?.tasks.delete(taskAndSectionId.task.gid);
-        },
+        func: deleteTask
       });
     },
-    completeTask(state: State, taskAndSectionId: TaskAndSectionId): void {
-      state.actions.push({
+
+    COMPLETE_TASK(taskAndSectionId: TaskAndSectionId): void {
+      this.actions.push({
         description: "completing task",
         func: async () => {
-          const index = state.tasks.findIndex(
-            t => t.gid === taskAndSectionId.task.gid
-          );
-          if (index !== -1) {
-            state.tasks.splice(index, 1);
-          }
-          await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
-            completed: true,
-          });
-        },
+          completeTask(this.tasks, taskAndSectionId.task.gid);
+        }
       });
     },
-    releaseTask(state: State, task: Task): void {
-      state.actions.push({
+
+    RELEASE_TASK(task: Task): void {
+      this.actions.push({
         description: "releasing task",
         func: async () => {
-          const index = state.tasks.findIndex(
-            t => t.gid === task.gid
-            );
-          if (index !== -1) {
-            state.tasks.splice(index, 1);
-          }
-          await asanaClient?.tasks.update(task.gid, {
-            completed: true,
-          });
+          completeTask(this.tasks, task.gid);
         },
       });
     },
-    addTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
-      state.actions.push({
+
+    ADD_TASK_TAG(payload: { task: Task, tagGid: string}): void {
+      this.actions.push({
         description: "adding task tag",
         func: async () => {
           await asanaClient?.tasks.addTag(payload.task.gid, {
@@ -375,8 +293,9 @@ export default {
         },
       });
     },
-    removeTaskTag(state: State, payload: { task: Task, tagGid: string}): void {
-      state.actions.push({
+
+    REMOVE_TASK_TAG(payload: { task: Task, tagGid: string}): void {
+      this.actions.push({
         description: "removing task tag",
         func: async () => {
           await asanaClient?.tasks.removeTag(payload.task.gid, {
@@ -385,341 +304,234 @@ export default {
         },
       });
     },
-    updateStories(state: State, taskAndSectionId: TaskAndSectionId): void {
-      console.log(taskAndSectionId);
+
+    UPDATE_TASK_TAGS(taskAndSectionId: TaskAndSectionId): void {
+      const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
+
+      const removedTags = originalTagIds.filter(
+        tagId => !taskAndSectionId.newTags.includes(tagId)
+      );
+      removedTags.forEach((tagGid) => {
+        this.ADD_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
+      });
+
+      const addedTags = taskAndSectionId.newTags.filter(
+        tagId => !originalTagIds.includes(tagId)
+      );
+      addedTags.forEach((tagGid) => {
+        this.REMOVE_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
+      });
+    },
+
+    UPDATE_STORIES(taskAndSectionId: TaskAndSectionId): void {
       if (taskAndSectionId.htmlText) {
-        console.log(taskAndSectionId.htmlText);
-        state.actions.push({
+        this.actions.push({
           description: "adding stories",
           func: async () => {
             await asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
               { html_text: taskAndSectionId.htmlText }
-            )
+            );
             taskAndSectionId.htmlText = "";
           }
         });
       }
-    }
-  },
-  actions: {
-    tokenReceived({ commit, rootState }, payload: any): void {
-      commit("tokenReceived", payload);
-      rootState.signedIn = true; // can't figure out how to get root state inside the mutation.
     },
-    signIn(): void {
-      const codeVerifier = "12345678901234567890123456789012345678901234567890";
-      const codeChallenge = base64URL(CryptoJS.SHA256(codeVerifier));
-      const url =
-        "https://app.asana.com/-/oauth_authorize" +
-        "?client_id=1201298517859389" +
-        "&redirect_uri=" +
-        location.protocol +
-        "//" +
-        location.host +
-        "/api" +
-        "&response_type=code" +
-        "&code_challenge_method=S256" +
-        "&code_challenge=" +
-        codeChallenge;
-      self.location.href = url;
+
+    LOAD_STORIES(task: Task): void {
+      const loadStories = async () => {
+        if (asanaClient) {
+          const storiesResponse = await asanaClient.stories
+            // asana interface has incorrect type defintion for this function
+            .findByTask(task.gid, {
+              limit: 100,
+              fields:
+                "html_text,\
+                created_by.name,\
+                resource_subtype,\
+                type,created_at"
+            } as any)
+          task.stories = storiesResponse.data.filter(story => {
+            return story["resource_subtype"] === "comment_added";
+          });
+        }
+      }
+      this.actions.push({
+        description: "loading stories",
+        func: loadStories
+      })
     },
-    signOut({ commit, rootState }): void {
-      commit("signOut");
-      rootState.signedIn = false; // can't figure out how to get root state inside the mutation.
-    },
-    loadProjects({ commit, state }): void {
-      state.actions.push({
+
+    LOAD_PROJECTS(): void {
+      const loadProjects = async () => {
+        if (asanaClient) {
+          const workspaces = await asanaClient.workspaces.findAll();
+          workspaces.data.forEach(async (workspace) => {
+            const options: ProjectParams = {
+              limit: 100,
+              workspace: workspace.gid,
+              archived: false,
+            };
+            let projectResponse: any = await asanaClient?.projects.findAll(options);
+            for (; projectResponse; projectResponse = await projectResponse.nextPage()) {
+              const projects = projectResponse.data.map(p => {
+                return {
+                  ...p,
+                  workspaceGid: workspace.gid
+                } as Project
+              });
+              this.ADD_PROJECTS(projects);
+            }
+          });
+        }
+      }
+      this.actions.push({
         description: "loading projects",
+        func: loadProjects
+      });
+    },
+
+    LOAD_SELECTED_PROJECT(project: string): void {
+      this.SET_SELECTED_PROJECT(project);
+      this.SET_WORKSPACE();
+      this.LOAD_TASKS();
+      this.LOAD_SECTIONS();
+      this.LOAD_USERS();
+      this.LOAD_ALL_TAGS();
+    },
+
+    LOAD_TASKS(): void {
+      this.actions.push({
+        description: "loading tasks",
+        func: async () => loadTasks(this.SET_TASKS)
+      });
+    },
+
+    LOAD_SECTIONS(): void {
+      this.actions.push({
+        description: "loading sections",
         func: async () => {
-          if (asanaClient) {
-            const workspaces = await asanaClient.workspaces.findAll();
-            workspaces.data.forEach(workspace => {
-              loadProjectsWithOffset("", workspace.gid, commit);
-            });
+          if (asanaClient && this.selectedProject) {
+            const sectionResponse = await asanaClient.sections.findByProject(this.selectedProject);
+            this.SET_SECTIONS(sectionResponse as Section[]);
           }
         }
       });
     },
-    setSelectedProject({ commit, dispatch }, project: string): void {
-      commit("setSelectedProject", project);
-      commit("setWorkspace");
-      dispatch("loadTasks");
-      dispatch("loadSections");
-      dispatch("loadUsers");
-      dispatch("loadAllTags");
+
+    LOAD_USERS(): void {
+      this.actions.push({
+        description: "loading users",
+        func: async () => {
+          if (asanaClient && this.workspace) {
+            const userResponse = await asanaClient.users.findByWorkspace(
+              this.workspace, {
+                opt_fields: 
+                  "name,\
+                  photo.image_60x60,\
+                  resource_type,email",
+              })
+            this.SET_USERS(userResponse.data as User[]);
+          }
+        }
+      });
     },
-    loadTasks({ commit, state }): void {
-      commit("setTasks", []);
-      commit("setTags", []);
-      if (asanaClient && state.selectedProject) {
-        loadTasksWithOffset("", state, commit, "addTasks");
+
+    LOAD_ALL_TAGS(): void {
+      const loadAllTags = async () => {
+        if (asanaClient && this.selectedProject) {
+          const options: PaginationParams = {
+            limit: 100,
+            opt_fields: "color,name",
+          };
+          let tagResponse: any = await asanaClient.tags.findByWorkspace(this.workspace!, options);
+          for (; tagResponse; tagResponse = await tagResponse.nextPage()) {
+            this.ADD_ALL_TAGS(tagResponse.data as TaskTag[]);
+          }
+        }
       }
+      this.actions.push({
+        description: "loading all tags",
+        func: loadAllTags
+      })
     },
-    async loadQueriedTask({ commit, state }, query: string): Promise<Resource[] | undefined> {
+
+    LOAD_AND_MERGE_TASKS(): void {
+      loadTasks(this.MERGE_TASKS);
+    },
+
+    async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
       const taskResponse = await asanaClient?.workspaces.typeahead(
-        state.workspace, {
+        this.workspace!, {
           // interface wrong, casted to any
           resource_type: "task",
           query: query,
           count: 5,
           opt_fields: "name,completed,projects.name"
         } as any);
-        return taskResponse?.data;
+      return taskResponse?.data;
     },
-    loadSections({ commit, state }): void {
-      state.actions.push({
-        description: "loading sections",
-        func: async () => {
-          if (asanaClient && state.selectedProject) {
-            const sectionResponse = await asanaClient.sections.findByProject(state.selectedProject);
-            commit("setSections", sectionResponse);
-          }
-        }
-      })
-    },
-    loadUsers({ commit, state }): void {
-      state.actions.push({
-        description: "loading users",
-        func: async () => {
-          if (asanaClient && state.workspace) {
-            const userResponse = await asanaClient.users.findByWorkspace(
-              state.workspace, {
-                opt_fields: "name,photo.image_60x60,resource_type,email",
-              })
-            commit("setUsers", userResponse.data);
-          }
-        }
-      })
-    },
-    loadAllTags({ commit, state }): void {
-      if (asanaClient && state.selectedProject) {
-        state.allTags = [];
-        loadAllTagsWithOffset("", currentWorkspace(state)!, commit);
-      }
-    },
-    moveTask({ commit }, payload: Move) {
-      commit("moveTask", payload);
-      commit("updateCustomFields", payload.taskId)
-    },
-    processAction({ commit, state }): void {
-      if (state.actions.length > 0) {
-        commit("processAction");
-      }
-    },
-    clearErrors({ commit }): void {
-      commit("clearErrors");
-    },
-    mergeTasks({ commit, state }): void {
-      if (asanaClient && state.selectedProject) {
-        loadTasksWithOffset("", state, commit, "mergeTasks");
-      }
-    },
-    createTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
-      commit("createTask", taskAndSectionId);
-    },
-    updateTask({ commit, dispatch }, taskAndSectionId: TaskAndSectionId): void {
-      commit("updateTask", taskAndSectionId);
-      commit("updateStories", taskAndSectionId);
-      dispatch("updateTaskTags", taskAndSectionId);
-    },
-    deleteTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
-      commit("deleteTask", taskAndSectionId);
-    },
-    loadStories({ commit }, task: Task): void {
-      commit("setStories", task);
-    },
-    completeTask({ commit }, taskAndSectionId: TaskAndSectionId): void {
-      commit("completeTask", taskAndSectionId);
-    },
-    releaseSection({ commit }, taskList: Task[]): void {
-      console.log("Releasing Tasks: ", taskList);
-      taskList.forEach((task) => {
-        commit("releaseTask", task);
-      });
-    },
-    updateTaskTags({ commit }, taskAndSectionId: TaskAndSectionId): void {
-      const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
 
-      const removedTags = originalTagIds.filter(tagId => !taskAndSectionId.newTags.includes(tagId))
-      removedTags.forEach((tagGid) => {
-        commit("removeTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
-      });
-
-      const addedTags = taskAndSectionId.newTags.filter(tagId => !originalTagIds.includes(tagId))
-      addedTags.forEach((tagGid) => {
-        commit("addTaskTag", { task: taskAndSectionId.task, tagGid: tagGid});
-      });
-    },
-  },
-};
-
-// load tasks with offset
-async function loadTasksWithOffset(
-  offset: string,
-  state: State,
-  commit: (cmd: string, payload: Task[]) => void,
-  commitAction: string
-): Promise<void> {
-  // asana interface has incorrect type definition
-  const options: any = {
-    project: state.selectedProject!,
-    completed_since: "now",
-    limit: 100,
-    fields:
-      "custom_fields,\
-      created_by,\
-      created_at,\
-      created_by.name,\
-      tags.name,\
-      tags.color,\
-      memberships.section.name,\
-      memberships.project.name,\
-      name,\
-      assignee.photo,\
-      assignee.name,\
-      assignee.email,\
-      due_on,\
-      modified_at,\
-      html_notes,\
-      notes,\
-      stories",
-  };
-  if (offset) {
-    options["offset"] = offset;
+    RELEASE_SECTION(tasks: Task[]): void {
+      tasks.forEach(task => this.RELEASE_TASK(task));
+    }
   }
-  if (asanaClient) {
+});
+
+async function loadTasks(action: (tasks: Task[]) => any) {
+  const asanaStore = useAsanaStore();
+  if (asanaClient && asanaStore.selectedProject) {
+    const options = {
+      project: asanaStore.selectedProject!,
+      completed_since: "now",
+      limit: 100,
+      fields:
+        "custom_fields,\
+        created_by,\
+        created_at,\
+        created_by.name,\
+        tags.name,\
+        tags.color,\
+        memberships.section.name,\
+        memberships.project.name,\
+        name,\
+        assignee.photo,\
+        assignee.name,\
+        assignee.email,\
+        due_on,\
+        modified_at,\
+        html_notes,\
+        notes,\
+        stories",
+    };
     let taskResponse: any = await asanaClient.tasks.findAll(options);
-    for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
-      if (state.actions.length === 0) {
-        commit(commitAction, taskResponse.data as Task[]);
-      }
+    asanaStore.SET_TASKS([]);
+    asanaStore.SET_TAGS([]);
+    for (; taskResponse; taskResponse = await taskResponse.nextPage()) { 
+      action(taskResponse.data);
     }
-    // if (state.actions.length === 0) {
-    //   commit(commitAction, taskResponse.data as Task[]);
-    //   if (taskResponse._response.next_page) {
-    //     loadTasksWithOffset(
-    //       taskResponse._response.next_page.offset,
-    //       state,
-    //       commit,
-    //       commitAction
-    //     );
-    //   }
-    // }
   }
 }
 
-async function loadAllTagsWithOffset(
-  offset: string,
-  workspaceGid: string,
-  commit: (cmd: string, payload: TaskTag[]) => void
-  ): Promise<void> {
-  const options: PaginationParams = {
-    limit: 100,
-    opt_fields: "color,name",
-  };
-  if (offset) {
-    options["offset"] = offset;
+async function completeTask(tasks: Task[], gid: string) {
+  const index = tasks.findIndex(t => t.gid === gid);
+  if (index !== -1) {
+    tasks.splice(index, 1);
   }
-  if (asanaClient) {
-    let tagResponse: any = await asanaClient.tags.findByWorkspace(workspaceGid, options);
-    for (; tagResponse; tagResponse = await tagResponse.nextPage()) {
-      commit("setAllTags", tagResponse.data as TaskTag[]);
-    }
-    // commit("setAllTags", tagResponse.data as TaskTag[])
-    // if (tagResponse._response.next_page) {
-    //   loadAllTagsWithOffset(
-    //     tagResponse._response.next_page.offset,
-    //     workspaceGid,
-    //     commit
-    //   );
-    // }
-  }
-}
-
-async function loadProjectsWithOffset(
-  offset: string,
-  workspaceGid: string,
-  commit: (cmd: string, payload: Project[]) => void
-): Promise<void> {
-  const options: ProjectParams = {
-    limit: 100,
-    workspace: workspaceGid,
-    archived: false,
-  };
-  if (offset) {
-    options["offset"] = offset;
-  }
-
-  if (asanaClient) {
-    let projectResponse: any = await asanaClient.projects.findAll(options);
-    for (; projectResponse; projectResponse = await projectResponse.nextPage()) {
-      const projects = projectResponse.data.map(p => {
-        return {
-          ...p,
-          workspaceGid: workspaceGid
-        } as Project
-      });
-      commit("addProjects", projects);
-    }
-    // if (projectResponse._response.next_page) {
-    //   loadProjectsWithOffset(
-    //     projectResponse._response.next_page.offset,
-    //     workspaceGid,
-    //     commit
-    //   );
-    // }
-  }
-}
-
-function colorizeTaskTags(state: State): void {
-  state.tasks.forEach(task => {
-    task.tags.forEach(tag => {
-      tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
-    });
+  await asanaClient?.tasks.update(gid, {
+    completed: true,
   });
 }
 
-function colorizeAllTags(state: State): void {
-  state.allTags.forEach(tag => {
-    tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
-  });
-}
-
-function setTags(state: State, payload: TaskTag[]): void {
-  state.tags = sortAndUnique(payload);
-  jsonstore.set("tags", state.tags);
-}
-
-function getTags(tasks: Task[]): TaskTag[] {
-  const tags: TaskTag[] = [];
-  tasks.forEach(task => {
-    task.tags.forEach(tag => {
-      if (!tags.find(t => t.gid === tag.gid)) {
-        tags.push(tag);
-      }
-    });
-  });
-  return tags;
-}
-
-function base64URL(string: CryptoJS.lib.WordArray) {
-  return string
-    .toString(CryptoJS.enc.Base64)
-    .replace(/=/g, "")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_");
-}
-
-function sortAndUnique<AsanaType extends BaseResource>(stuff: AsanaType[]): AsanaType[] {
+function sortAndUnique<T extends BaseResource>(stuff: T[]): T[] {
   const uniqueStuff = unique(stuff);
   uniqueStuff.sort((a, b) => {
     return a.name.localeCompare(b.name);
   });
-
   return uniqueStuff;
 }
-function unique<AsanaType extends BaseResource>(stuff: AsanaType[]): AsanaType[] {
+
+function unique<T extends BaseResource>(stuff: T[]): T[] {
   stuff.sort((a, b) => {
     return a.gid.localeCompare(b.gid) ?? 0;
   });
@@ -729,7 +541,24 @@ function unique<AsanaType extends BaseResource>(stuff: AsanaType[]): AsanaType[]
   return uniqueStuff;
 }
 
-function currentWorkspace(state: State): string | undefined {
-  const match = state.projects.find(p => p.gid === state.selectedProject);
-  return match?.workspaceGid;
+function colorizeTaskTags(tasks: Task[]): void {
+  tasks.forEach(task => colorizeTags(task.tags));
+}
+
+function colorizeTags(tags: TaskTag[]): void {
+  tags.forEach(tag => {
+    tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
+  });
+}
+
+function getAllTaskTags(tasks: Task[]): TaskTag[] {
+  const tags: TaskTag[] = [];
+  tasks.forEach(task => {
+    task.tags.forEach(tag => {
+      if (!tags.find(t => t.gid === tag.gid)) {
+        tags.push(tag);
+      }
+    });
+  });
+  return tags;
 }

@@ -28,8 +28,8 @@
 import { defineComponent, ref, computed, onMounted, PropType, watch } from "vue";
 import { Task, TaskTag } from "@/types/asana";
 import { TagOption } from "@/types/vue";
-import { useAsanaStore } from "@/store/asana/index2";
-import { usePrefStore } from "@/store/preferences/index2";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent ({
   props: {

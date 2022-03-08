@@ -6,7 +6,7 @@ import TaskMentionList from '../components/TaskMentionList.vue'
 import { SuggestionKeyDownProps, SuggestionOptions, SuggestionProps } from '@tiptap/suggestion'
 import { PluginKey } from 'prosemirror-state';
 import { Component, ComputedOptions, MethodOptions } from 'vue'
-import { useAsanaStore } from '@/store/asana/index2'
+import { useAsanaStore } from '@/store/asana'
 
 // adapted from this demo: https://tiptap.dev/api/nodes/mention
 

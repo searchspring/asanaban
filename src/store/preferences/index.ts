@@ -1,97 +1,81 @@
 import jsonstore from "../../utils/jsonstore";
-import store from "@/store";
 import { State } from "./state";
 import { Assignee, TaskAndSectionId } from "@/types/asana";
 import { formattedDate } from "../../utils/date";
+import { defineStore } from "pinia";
+import { useAsanaStore } from "../asana";
 
-export default {
-  namespaced: true,
-  state: {
+export const usePrefStore = defineStore("preferences", {
+  state: (): State => ({
     columnStates: jsonstore.get("columnStates", {}),
     swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
-  } as State,
-  mutations: {
-    toggleColumn(state: State, gid: string) {
-      if (!state.columnStates[gid]) {
-        state.columnStates[gid] = { collapsed: false };
+  }),
+  actions: {
+    TOGGLE_COLUMN(gid: string) {
+      if (!this.columnStates[gid]) {
+        this.columnStates[gid] = { collapsed: false };
       }
-      state.columnStates[gid] = {
-        collapsed: !state.columnStates[gid].collapsed,
+      this.columnStates[gid] = {
+        collapsed: !this.columnStates[gid].collapsed,
       };
-      jsonstore.set("columnStates", state.columnStates);
+      jsonstore.set("columnStates", this.columnStates);
     },
-    toggleSwimlane(state: State, swimlaneName: string) {
-      if (!state.swimlaneStates[swimlaneName]) {
-        state.swimlaneStates[swimlaneName] = { collapsed: false };
+
+    TOGGLE_SWIMLANE(swimlaneName: string) {
+      if (!this.swimlaneStates[swimlaneName]) {
+        this.swimlaneStates[swimlaneName] = { collapsed: false };
       }
-      state.swimlaneStates[swimlaneName] = {
-        collapsed: !state.swimlaneStates[swimlaneName].collapsed,
+      this.swimlaneStates[swimlaneName] = {
+        collapsed: !this.swimlaneStates[swimlaneName].collapsed,
       };
-      jsonstore.set("swimlaneStates", state.swimlaneStates);
+      jsonstore.set("swimlaneStates", this.swimlaneStates);
     },
-    setSearch(state: State, search: string) {
-      state.search = search;
+
+    SET_SEARCH(search: string) {
+      this.search = search;
     },
-    setTaskEditorSectionId(state: State, sectionIdAndTask: TaskAndSectionId) {
-      state.taskEditorSectionIdAndTask = sectionIdAndTask;
-    },
-    setTaskAssignee(state: State, gid: string | null) {
+
+    SET_TASK_ASSIGNEE(gid: string | null) {
       if (gid === null) {
-        state.taskEditorSectionIdAndTask!.task.assignee = null;
+        this.taskEditorSectionIdAndTask!.task.assignee = null;
         return;
       }
-      if (state.taskEditorSectionIdAndTask?.task.assignee) {
-        state.taskEditorSectionIdAndTask.task.assignee.gid = gid;
+      if (this.taskEditorSectionIdAndTask?.task.assignee) {
+        this.taskEditorSectionIdAndTask.task.assignee.gid = gid;
       } else {
-        state.taskEditorSectionIdAndTask!.task.assignee = {
+        this.taskEditorSectionIdAndTask!.task.assignee = {
           gid: gid,
         } as Assignee;
       }
     },
-    setNewTags(state: State, tags: string[]) {
-      state.taskEditorSectionIdAndTask!.newTags = tags;
+
+    SET_NEW_TAGS(tags: string[]) {
+      this.taskEditorSectionIdAndTask!.newTags = tags;
     },
-    setDueDate(state: State, date: Date) {
+
+    SET_DUE_DATE(date: Date | undefined) {
       let dateString = formattedDate(date)
       if (dateString === "Invalid Date") {
         dateString = "";
       }
-      state.taskEditorSectionIdAndTask!.task.due_on = dateString;
+      this.taskEditorSectionIdAndTask!.task.due_on = dateString;
     },
-  },
-  actions: {
-    toggleColumn({ commit }, gid: string) {
-      commit("toggleColumn", gid);
+
+    HIDE_TASK_EDITOR() {
+      this.taskEditorSectionIdAndTask = null;
     },
-    toggleSwimlane({ commit }, swimlaneName: string) {
-      commit("toggleSwimlane", swimlaneName);
-    },
-    setSearch({ commit }, search: string) {
-      commit("setSearch", search);
-    },
-    setTaskAssignee({ commit }, assignee: string | null) {
-      commit("setTaskAssignee", assignee);
-    },
-    setNewTags({ commit }, tags: string[]) {
-      commit("setNewTags", tags);
-    },
-    setDueDate({ commit }, date: Date) {
-      commit("setDueDate", date);
-    },
-    hideTaskEditor({ commit }) {
-      commit("setTaskEditorSectionId", "");
-    },
-    showTaskEditor({ commit }, sectionIdAndTask: TaskAndSectionId) {
-      commit("setTaskEditorSectionId", sectionIdAndTask);
+
+    SHOW_TASK_EDITOR(sectionIdAndTask: TaskAndSectionId) {
+      this.taskEditorSectionIdAndTask = sectionIdAndTask;
       if (
         sectionIdAndTask &&
         sectionIdAndTask.task &&
         sectionIdAndTask.task.gid
       ) {
-        store.dispatch("asana/loadStories", sectionIdAndTask.task);
+        useAsanaStore().LOAD_STORIES(sectionIdAndTask.task);
       }
-    },
-  },
-};
+    }
+  }
+});

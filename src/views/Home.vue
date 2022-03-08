@@ -24,7 +24,7 @@ import Swimlane from "@/components/Swimlane.vue";
 import Column from "@/components/Column.vue";
 import TagBar from "@/components/TagBar.vue";
 import TaskEditor from "@/components/TaskEditor.vue";
-import { useAsanaStore } from "@/store/asana/index2";
+import { useAsanaStore } from "@/store/asana";
 
 export default defineComponent({
   components: {

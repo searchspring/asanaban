@@ -48,8 +48,8 @@
 </template>
 
 <script lang="ts">
-import { useAsanaStore } from "@/store/asana/index2";
-import { usePrefStore } from "@/store/preferences/index2";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 import { Section, Task as TaskType } from "@/types/asana";
 import { defineComponent, PropType, computed, ref } from "vue";
 import { getPrettyColumnName } from "../utils/asana-specific";
