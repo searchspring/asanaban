@@ -18,7 +18,7 @@ import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
 import { asanaClient } from "../auth";
 
 
-export const useAsanaStore = defineStore("deploy", {
+export const useAsanaStore = defineStore("asana", {
   state: (): State => ({
     workspace: jsonstore.get("workspace", null) as string | null,
     projects: jsonstore.get("projects", []) as Project[],
