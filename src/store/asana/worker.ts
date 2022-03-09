@@ -1,5 +1,6 @@
 import { AsanaError } from "@/types/asana";
 import { useAsanaStore } from ".";
+import { Action } from "./state";
 
 // export start function
 export function startWorkers() {
@@ -12,32 +13,32 @@ export function startWorkers() {
 }
 
 async function processActions() {
-  await processAction();
-  const nextTimeout = useAsanaStore().actions.length > 0 ? 0 : 1000;
+  const asanaStore = useAsanaStore();
+  await processAction(asanaStore.actions, asanaStore.errors);
+  const nextTimeout = asanaStore.actions.length > 0 ? 0 : 1000;
   self.setTimeout(() => {
     processActions();
   }, nextTimeout);
 }
 
-async function processAction(): Promise<void> {
-  const asanaStore = useAsanaStore();
-  while (asanaStore.actions.length > 0) {
-    const action = asanaStore.actions[0];
+async function processAction(actions: Action[], errors: AsanaError[]): Promise<void> {
+  while (actions.length > 0) {
+    const action = actions[0];
     try {
       await action.func();
-      asanaStore.actions.shift();
+      actions.shift();
       console.info("completed action");
     } catch (error: any) {
-      asanaStore.actions.shift();
+      actions.shift();
       console.log(error);
       if (
         error.value.errors[0].message.indexOf("does not exist in parent") ===
         -1
       ) {
-        asanaStore.errors.push(error as AsanaError);
+        errors.push(error as AsanaError);
       }
       if (error.status !== 400 && error.status !== 401) {
-        asanaStore.actions.push(action);
+        actions.push(action);
       }
     }
   }
