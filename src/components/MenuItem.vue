@@ -11,10 +11,11 @@
   </button>
 </template>
 
-<script>
+<script lang="ts">
 import remixiconUrl from "remixicon/fonts/remixicon.symbol.svg";
+import { defineComponent } from "vue";
 
-export default {
+export default defineComponent({
   props: {
     icon: {
       type: String,
@@ -37,12 +38,12 @@ export default {
     },
   },
 
-  data() {
+  setup() {
     return {
       remixiconUrl,
     };
   },
-};
+});
 </script>
 
 <style lang="scss">

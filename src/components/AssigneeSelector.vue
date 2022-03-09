@@ -12,27 +12,28 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { defineComponent, onMounted, ref, watch } from "vue";
-import { createNamespacedHelpers } from "vuex";
-const { mapState } = createNamespacedHelpers("asana");
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
+import { computed, defineComponent, onMounted, ref, watch } from "vue";
 
 export default defineComponent({
-  computed: {
-    ...mapState(["users"]),
-  },
   setup() {
-    const assignee = ref<string | null>();
+    const asanaStore = useAsanaStore();
+    const prefStore = usePrefStore();
+
+    const assignee = ref<string | null>(null);
+    const users = computed(() => asanaStore.users)
 
     onMounted(() => {
-      assignee.value = store.state["preferences"].taskEditorSectionIdAndTask.task.assignee?.gid ?? null;
+      assignee.value = prefStore.taskEditorSectionIdAndTask?.task.assignee?.gid ?? null;
     })
 
     watch([assignee], () => {
-      store.dispatch("preferences/setTaskAssignee", assignee.value);
+      prefStore.SET_TASK_ASSIGNEE(assignee.value);
     })
 
     return {
+      users,
       assignee
     };
   },

@@ -1,10 +1,10 @@
 <template>
   <div>
-    <div v-if="signedIn" class="tag-container">
+    <div v-if="loggedIn" class="tag-container" data-ser>
       <div
         v-for="tag in tags"
         class="tag"
-        :key="tag"
+        :key="tag.gid"
         @click="click(tag)"
         :style="{
           'background-color': tag.hexes?.background,
@@ -18,27 +18,34 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
+import { useAsanaStore } from "@/store/asana";
+import { useAuthStore } from "@/store/auth";
+import { usePrefStore } from "@/store/preferences";
 import { TaskTag } from "@/types/asana";
-import { defineComponent } from "vue";
-import { createNamespacedHelpers } from "vuex";
-const { mapState } = createNamespacedHelpers("asana");
+import { computed, defineComponent } from "vue";
 
 export default defineComponent({
-  computed: {
-    ...mapState(["tags"]),
-  },
-  methods: {
-    signedIn() {
-      return store.state.signedIn;
-    },
-    click(tag: TaskTag) {
-      if (store.state["preferences"].search === tag.name) {
-        store.dispatch("preferences/setSearch", "");
+  setup() {
+    const prefStore = usePrefStore();
+    const asanaStore = useAsanaStore();
+    const authStore = useAuthStore();
+
+    const tags = computed(() => asanaStore.tags);
+    const loggedIn = computed(() => authStore.LOGGED_IN);
+
+    const click = (tag: TaskTag) => {
+      if (prefStore.search === tag.name) {
+        prefStore.SET_SEARCH("");
       } else {
-        store.dispatch("preferences/setSearch", tag.name);
+        prefStore.SET_SEARCH(tag.name);
       }
-    },
+    };
+
+    return {
+      tags,
+      loggedIn,
+      click
+    };
   },
 });
 </script>

@@ -1,39 +1,37 @@
 <template>
   <div>
     <!-- show search bar if signed in -->
-    <div v-if="signedIn">
+    <div v-if="loggedIn">
       <input
         type="text"
         v-model="search"
         placeholder="Search for a task..."
-        @keyup="onChange()"
       />
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { defineComponent } from "vue";
+import { useAuthStore } from "@/store/auth";
+import { usePrefStore } from "@/store/preferences";
+import { computed, defineComponent, ref, watch } from "vue";
 
 export default defineComponent({
-  computed: {
-    search: {
-      get() {
-        return store.state["preferences"].search;
-      },
-      set(value) {
-        store.dispatch("preferences/setSearch", value);
-      },
-    },
-  },
-  methods: {
-    onChange() {
-      store.dispatch("preferences/setSearch", this.search);
-    },
-    signedIn() {
-      return store.state.signedIn;
-    },
+  setup() {
+    const prefStore = usePrefStore();
+    const authStore = useAuthStore();
+
+    const search = ref("");
+    const loggedIn = computed(() => authStore.LOGGED_IN);
+
+    watch([search], () => {
+      prefStore.SET_SEARCH(search.value);
+    });
+
+    return {
+      search,
+      loggedIn
+    };
   },
 });
 </script>

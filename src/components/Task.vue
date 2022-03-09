@@ -15,7 +15,7 @@
       <div
         class="tag"
         v-for="tag in tags"
-        :key="tag"
+        :key="tag.name"
         :style="{
           'background-color': tag.hexes?.background,
           color: tag.hexes?.font,
@@ -29,13 +29,13 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
 import { Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
 import { parse } from "date-fns";
 import { asanaDateFormat } from "../utils/date";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   props: {
@@ -45,6 +45,8 @@ export default defineComponent({
     },
   },
   setup(props) {
+    const prefStore = usePrefStore();
+
     const assignee = computed(() => {
       return props.task &&
         props.task.assignee &&
@@ -113,7 +115,12 @@ export default defineComponent({
     };
 
     const edit = () => {
-      store.dispatch("preferences/showTaskEditor", { task: props.task });
+      prefStore.SHOW_TASK_EDITOR({
+        task: props.task,
+        htmlText: "",
+        newTags: [],
+        sectionId: ""
+      });
     };
 
     return {

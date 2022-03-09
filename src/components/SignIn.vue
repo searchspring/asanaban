@@ -1,32 +1,37 @@
 <template>
   <div>
-    <button v-if="!signedIn" v-on:click="signIn">Sign In</button>
-    <button v-if="signedIn" v-on:click="signOut">Sign Out</button>
-    <div v-if="signingIn">Signing in...</div>
+    <button v-if="!loggedIn" v-on:click="login">Sign In</button>
+    <button v-if="loggedIn" v-on:click="logout">Sign Out</button>
+    <div v-if="loggingIn">Signing in...</div>
   </div>
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { defineComponent } from "vue";
+import { useAuthStore } from "@/store/auth";
+import { computed, defineComponent, ref } from "vue";
 
 export default defineComponent({
-  data() {
-    return { signingIn: false };
-  },
-  computed: {
-    signedIn() {
-      return store.state.signedIn;
-    },
-  },
-  methods: {
-    signOut() {
-      store.dispatch("asana/signOut");
-    },
-    signIn() {
-      this.signingIn = true;
-      store.dispatch("asana/signIn");
-    },
-  },
+  setup() {
+    const authStore = useAuthStore();
+
+    const loggedIn = computed(() => authStore.LOGGED_IN);
+    const loggingIn = ref(false);
+    
+    const login = () => {
+      loggingIn.value = true;
+      authStore.LOGIN();
+    }
+
+    const logout = () => {
+      authStore.LOGOUT()
+    };
+
+    return {
+      loggedIn,
+      loggingIn,
+      login,
+      logout
+    };
+  }
 });
 </script>

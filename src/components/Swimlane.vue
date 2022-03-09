@@ -12,22 +12,26 @@
 <script lang="ts">
 import { Swimlane } from "@/types/layout";
 import { defineComponent, PropType } from "vue";
-import store from "@/store";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   props: {
     swimlane: Object as PropType<Swimlane>,
   },
   setup() {
+    const prefStore = usePrefStore();
+
     const toggle = (swimlaneName: string) => {
-      store.dispatch("preferences/toggleSwimlane", swimlaneName);
+      prefStore.TOGGLE_SWIMLANE(swimlaneName);
     };
+
     const collapsed = (swimlaneName: string) => {
-      if (!store.state["preferences"].swimlaneStates[swimlaneName]) {
+      if (!prefStore.swimlaneStates[swimlaneName]) {
         return false;
       }
-      return store.state["preferences"].swimlaneStates[swimlaneName].collapsed;
+      return prefStore.swimlaneStates[swimlaneName].collapsed;
     };
+
     return {
       collapsed,
       toggle,

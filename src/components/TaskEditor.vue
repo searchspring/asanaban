@@ -79,7 +79,6 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
 import { defineComponent, ref, watch, computed } from "vue";
 import AssigneeSelector from "./AssigneeSelector.vue";
 import TextEditor from "./TextEditor.vue";
@@ -89,24 +88,22 @@ import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { isInvalidAsanaDate, asanaDateFormat } from "../utils/date";
 import { parse } from "date-fns";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
   setup() {
+    const asanaStore = useAsanaStore();
+    const prefStore = usePrefStore();
+
     const isSaveDisabled = ref<boolean>();
     const dueDate = ref<Date>();
 
-    const projectId = computed({ 
-      get() { 
-        return store.state["asana"].selectedProject;
-      }, 
-      set(val: string) { 
-        store.dispatch("asana/setSelectedProject", val);
-      } 
-    });
+    const projectId = asanaStore.selectedProject;
 
     const taskEditorSectionIdAndTask = computed(() => {
-      return store.state["preferences"].taskEditorSectionIdAndTask;
+      return prefStore.taskEditorSectionIdAndTask;
     });
 
     watch([taskEditorSectionIdAndTask], () => {
@@ -115,7 +112,7 @@ export default defineComponent({
           document.getElementById("name")?.focus();
         }, 0);
 
-        const dueDateString = store.state["preferences"].taskEditorSectionIdAndTask.task?.due_on;
+        const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
         // to prevent disabling save when creating a new task or a task initially has no due date
         if (dueDateString === null || dueDateString === undefined) {
           dueDate.value = undefined;
@@ -127,16 +124,16 @@ export default defineComponent({
 
     watch([dueDate], () => {
       isSaveDisabled.value = isInvalidAsanaDate(dueDate.value);
-      store.dispatch("preferences/setDueDate", dueDate.value);
+      prefStore.SET_DUE_DATE(dueDate.value);
     });
 
     const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
       if (taskEditorSectionIdAndTask.task.gid) {
-        store.dispatch("asana/updateTask", taskEditorSectionIdAndTask);
+        asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
       } else {
-        store.dispatch("asana/createTask", taskEditorSectionIdAndTask);
+        asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
-      store.dispatch("preferences/hideTaskEditor");
+      hide();
     };
 
     const deleteTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
@@ -145,14 +142,14 @@ export default defineComponent({
       );
       if (response) {
         isSaveDisabled.value = false;
-        store.dispatch("asana/deleteTask", taskEditorSectionIdAndTask);
-        store.dispatch("preferences/hideTaskEditor");
+        asanaStore.DELETE_TASK(taskEditorSectionIdAndTask);
+        hide();
       }
     };
 
     const hide = () => {
       isSaveDisabled.value = false;
-      store.dispatch("preferences/hideTaskEditor");
+      prefStore.HIDE_TASK_EDITOR();
     };
 
     const updateHtmlNotes = (html: string, taskEditorSectionIdAndTask: TaskAndSectionId) => {
@@ -164,9 +161,8 @@ export default defineComponent({
     };
 
     const completeTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
-      isSaveDisabled.value = false;
-      store.dispatch("asana/completeTask", taskEditorSectionIdAndTask);
-      store.dispatch("preferences/hideTaskEditor");
+      asanaStore.COMPLETE_TASK(taskEditorSectionIdAndTask);
+      hide();
     };
 
     return {

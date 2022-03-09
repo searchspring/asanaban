@@ -48,9 +48,10 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
+import { useAsanaStore } from "@/store/asana";
+import { usePrefStore } from "@/store/preferences";
 import { Section, Task as TaskType } from "@/types/asana";
-import { defineComponent, PropType, computed } from "vue";
+import { defineComponent, PropType, computed, ref } from "vue";
 import { getPrettyColumnName } from "../utils/asana-specific";
 import Task from "./Task.vue";
 export default defineComponent({
@@ -58,12 +59,11 @@ export default defineComponent({
   props: {
     section: Object as PropType<Section>,
   },
-  data() {
-    return {
-      mouseInside: false,
-    };
-  },
   setup(props) {
+    const asanaStore = useAsanaStore();
+    const prefStore = usePrefStore();
+
+    const mouseInside = ref(false);
     const columnName = computed(() => {
       return getPrettyColumnName(props.section?.name ?? "");
     });
@@ -80,14 +80,16 @@ export default defineComponent({
     });
 
     const showTaskEditor = (sectionId: string) => {
-      store.dispatch("preferences/showTaskEditor", {
+      prefStore.SHOW_TASK_EDITOR({
         sectionId: sectionId,
-        task: {},
+        htmlText: "",
+        newTags: [],
+        task: {} as TaskType
       });
     };
 
     const isSectionComplete = (columnName: string) => {
-      return store.getters['asana/isSectionComplete'](columnName)
+      return asanaStore.IS_SECTION_COMPLETE(columnName)
     };
 
     const release = (sectionId: string) => {
@@ -96,15 +98,15 @@ export default defineComponent({
         `Release ${count} task${count > 1 ? 's' : ''} and mark as complete?`
       );
       if (response) {
-        store.dispatch("asana/releaseSection", tasks(sectionId));
+        asanaStore.RELEASE_SECTION(tasks(sectionId));
       }
     };
 
     const columnCollapsed = (gid: string) => {
-      if (!store.state["preferences"].columnStates[gid]) {
+      if (!prefStore.columnStates[gid]) {
         return false;
       }
-      return store.state["preferences"].columnStates[gid].collapsed;
+      return prefStore.columnStates[gid].collapsed;
     };
 
     const overBudget = () => {
@@ -112,16 +114,16 @@ export default defineComponent({
       if (section) {
         return (
           section.maxTaskCount !== "-1" &&
-          taskCount(section.gid) > section.maxTaskCount
+          taskCount(section.gid) > parseInt(section.maxTaskCount)
         );
       }
       return false;
     };
 
     const taskCount = (sectionId: string) => {
-      return store.state["asana"].tasks.filter((task) => {
+      return asanaStore.tasks.filter((task) => {
         return task.memberships.some((membership) => {
-          return membership.section.gid === sectionId;
+          return membership.section?.gid === sectionId;
         });
       }).length;
     };
@@ -138,19 +140,19 @@ export default defineComponent({
     };
 
     const tasks = (sectionId: string) => {
-      return store.state["asana"].tasks.filter((task) => {
+      return asanaStore.tasks.filter((task) => {
         return task.memberships.some((membership) => {
-          const isInSection = membership.section.gid === sectionId;
+          const isInSection = membership.section?.gid === sectionId;
           const isInSearch =
             emptySearch() ||
-            taskHasSearchHit(task, store.state["preferences"].search);
+            taskHasSearchHit(task, prefStore.search);
           return isInSection && isInSearch;
         });
       });
     };
 
     const toggleColumn = (gid: string) => {
-      store.dispatch("preferences/toggleColumn", gid);
+      prefStore.TOGGLE_COLUMN(gid);
     };
 
     const onDrop = (event, endSectionId: string) => {
@@ -164,7 +166,7 @@ export default defineComponent({
         ? el.getAttribute("id")
         : getLastTaskId(endSectionId);
       removeDragOverClass();
-      store.dispatch("asana/moveTask", {
+      asanaStore.MOVE_TASK({
         startSectionId: startSectionId,
         endSectionId: endSectionId,
         taskId: taskId,
@@ -182,6 +184,7 @@ export default defineComponent({
     };
 
     return {
+      mouseInside,
       columnName,
       classObject,
       showTaskEditor,
@@ -201,7 +204,7 @@ export default defineComponent({
 });
 
 function emptySearch() {
-  return store.state["preferences"].search.trim() === "";
+  return usePrefStore().search.trim() === "";
 }
 function taskHasSearchHit(task: TaskType, search: string) {
   let text = task.name + " " + task.notes;
@@ -215,7 +218,7 @@ function taskHasSearchHit(task: TaskType, search: string) {
 }
 
 function getLastTaskId(sectionId: string) {
-  const tasks = store.state["asana"].tasks.filter((task) => {
+  const tasks = useAsanaStore().tasks.filter((task) => {
     return task.memberships[0].section?.gid === sectionId;
   });
 

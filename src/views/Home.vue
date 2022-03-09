@@ -19,13 +19,12 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { mapGetters } from "vuex";
-import { defineComponent, onMounted } from "vue";
+import { computed, defineComponent, onMounted } from "vue";
 import Swimlane from "@/components/Swimlane.vue";
 import Column from "@/components/Column.vue";
 import TagBar from "@/components/TagBar.vue";
 import TaskEditor from "@/components/TaskEditor.vue";
+import { useAsanaStore } from "@/store/asana";
 
 export default defineComponent({
   components: {
@@ -35,22 +34,27 @@ export default defineComponent({
     TaskEditor,
   },
   setup() {
-    onMounted(async () => {
-      store.dispatch("asana/loadProjects");
-      store.dispatch("asana/loadTasks");
-      store.dispatch("asana/loadSections");
-    });
-  },
-  computed: {
-    ...mapGetters({ swimlanes: "asana/swimlanes" }),
-  },
-  methods: {
-    sections(swimlane: string) {
-      return store.state["asana"].sections.filter((section) =>
+    const asanaStore = useAsanaStore();
+
+    const swimlanes = computed(() => asanaStore.SWIMLANES);
+
+    const sections = (swimlane: string) => {
+      return asanaStore.sections.filter((section) =>
         section.name.startsWith(swimlane)
       );
-    },
-  },
+    };
+
+    onMounted(() => {
+      asanaStore.LOAD_PROJECTS();
+      asanaStore.LOAD_TASKS();
+      asanaStore.LOAD_SECTIONS();
+    });
+
+    return {
+      swimlanes,
+      sections
+    };
+  }
 });
 </script>
 

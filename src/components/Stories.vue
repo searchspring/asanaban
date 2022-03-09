@@ -24,23 +24,29 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from "vue";
+import { computed, defineComponent } from "vue";
 import dayjs from "dayjs";
-import { createNamespacedHelpers } from "vuex";
 import { xmlToHtml } from "@/utils/asana-specific";
-const { mapState } = createNamespacedHelpers("preferences");
+import { usePrefStore } from "@/store/preferences";
+
 export default defineComponent({
-  computed: {
-    ...mapState(["taskEditorSectionIdAndTask"]),
-  },
-  methods: {
-    formatDate(dateString) {
+  setup() {
+    const prefStore = usePrefStore();
+
+    const taskEditorSectionIdAndTask = computed(() => prefStore.taskEditorSectionIdAndTask);
+
+    const formatDate = (dateString: string) => {
       const date = dayjs(dateString);
       return date.format("YYYY-MM-DD HH:mm");
-    },
-    formatStory(text) {
-      return xmlToHtml(text);
-    },
+    };
+
+    const formatStory = (text: string) => xmlToHtml(text);
+
+    return {
+      taskEditorSectionIdAndTask,
+      formatDate,
+      formatStory
+    };
   },
 });
 </script>

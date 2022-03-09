@@ -19,37 +19,37 @@
 </template>
 
 <script lang="ts">
-import store from "@/store";
-import { defineComponent } from "vue";
+import { useAsanaStore } from "@/store/asana";
+import { computed, defineComponent, ref } from "vue";
 
 export default defineComponent({
-  data() {
-    return {
-      showErrors: false,
-      errors: store.state["asana"].errors,
-      actions: store.state["asana"].actions,
-    };
-  },
-  methods: {
-    toggleErrors() {
-      this.showErrors = !this.showErrors;
-      if (!this.showErrors) {
-        store.dispatch("asana/clearErrors");
-        this.errors = store.state["asana"].errors;
+  setup() {
+    const asanaStore = useAsanaStore();
+
+    const showErrors = ref(false);
+    const errors = computed(() => asanaStore.errors);
+    const actions = computed(() => asanaStore.actions);
+    const hasErrors = computed(() => asanaStore.errors.length > 0);
+    const hasActions = computed(() => asanaStore.actions.length > 0);
+    const currentAction = computed(() => asanaStore.actions[0].description);
+
+    const toggleErrors = () => {
+      showErrors.value = !showErrors.value;
+      if (!showErrors.value) {
+        asanaStore.CLEAR_ERRORS();
       }
-    },
-  },
-  computed: {
-    hasErrors() {
-      return store.state["asana"].errors.length > 0;
-    },
-    hasActions() {
-      return store.state["asana"].actions.length > 0;
-    },
-    currentAction() {
-      return store.state["asana"].actions[0].description;
-    },
-  },
+    };
+
+    return {
+      showErrors,
+      errors,
+      actions,
+      hasErrors,
+      hasActions,
+      currentAction,
+      toggleErrors
+    };
+  }
 });
 </script>
 
