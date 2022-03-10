@@ -28,7 +28,7 @@ export type User = asana.resources.Users.Type & {
 };
 export type Stories = asana.resources.Stories.Type;
 export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
-  created_by: Resource,
+  created_by: { name: string },
   html_notes: string | undefined,
   stories: Stories[],
   tags: TaskTag[],

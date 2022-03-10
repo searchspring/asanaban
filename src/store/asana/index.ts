@@ -15,7 +15,7 @@ import {
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
-import { asanaClient } from "../auth";
+import { asanaClient, useAuthStore } from "../auth";
 
 
 export const useAsanaStore = defineStore("asana", {
@@ -210,8 +210,9 @@ export const useAsanaStore = defineStore("asana", {
                 section: taskAndSectionId.sectionId,
                 project: this.selectedProject,
               }],
-          } as any);
-        this.tasks.push(task as Task);
+          } as any) as Task;
+        task.created_by = { name: useAuthStore().user?.name ?? "" };
+        this.tasks.push(task);
         this.UPDATE_CUSTOM_FIELDS(task.gid);
       }
 
