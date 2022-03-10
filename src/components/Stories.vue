@@ -1,5 +1,5 @@
 <template>
-  <div v-if="taskEditorSectionIdAndTask.task.gid">
+  <div v-if="taskEditorSectionIdAndTask?.task.gid">
     <div class="story">
       <span class="story-date">{{
         formatDate(taskEditorSectionIdAndTask.task.created_at)
