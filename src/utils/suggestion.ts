@@ -66,7 +66,7 @@ function newRender(mentionList: Component<any, any, any, ComputedOptions, Method
           popup[0].hide();
           return true;
         }
-        return component.ref?.onKeyDown(props);
+        return component?.ref?.onKeyDown(props);
       },
   
       onExit: (): void => {
