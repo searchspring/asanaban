@@ -1,7 +1,7 @@
 <template>
   <div class="swimlane">
-    <div class="content" :class="{ collapsed: collapsed(swimlane?.name) }">
-      <h2 v-on:click="toggle(swimlane?.name)">{{ swimlane?.name }}</h2>
+    <div class="content" :class="{ collapsed: collapsed(swimlane.name) }">
+      <h2 v-on:click="toggle(swimlane.name)">{{ swimlane.name }}</h2>
       <div class="columns">
         <slot></slot>
       </div>
@@ -16,7 +16,10 @@ import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   props: {
-    swimlane: Object as PropType<Swimlane>,
+    swimlane: {
+      type: Object as PropType<Swimlane>,
+      required: true
+    }
   },
   setup() {
     const prefStore = usePrefStore();
