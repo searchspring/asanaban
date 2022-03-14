@@ -312,14 +312,14 @@ export const useAsanaStore = defineStore("asana", {
         tagId => !taskAndSectionId.newTags.includes(tagId)
       );
       removedTags.forEach((tagGid) => {
-        this.ADD_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
+        this.REMOVE_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
       });
 
       const addedTags = taskAndSectionId.newTags.filter(
         tagId => !originalTagIds.includes(tagId)
       );
       addedTags.forEach((tagGid) => {
-        this.REMOVE_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
+        this.ADD_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
       });
     },
 

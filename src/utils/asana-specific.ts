@@ -63,11 +63,12 @@ function htmlToXml(html: string): string {
   // data-id      => user/task gid
   // data-label   => user/task name
   // span content => user/task name
-  const regMention = /<span data-type="([A-Za-z]+)" class="mention" data-id="([0-9]+)" data-label="([A-Za-z\s]+)">[@#]([A-Za-z\s]+)/g;
-  h = h.replace(regMention, '<a href="https://app.asana.com/0/$2/" data-asana-dynamic="true" data-asana-gid="$2" data-asana-accessible="true">$3</a>')
-    .replace(/<span>/g, '')
+  const regMention = /<span data-type="([A-Za-z]+)" class="mention" data-id="([0-9]+)" data-label="(.+?)">[@#](.+?)<\/span>/g;
+  h = h.replace(regMention, (match, $1, $2, $3, $4) => {
+    return '<a href="https://app.asana.com/0/' + $2 + '" data-asana-dynamic="true" data-asana-gid="' + $2 + '" data-asana-accessible="true">' + $4.replaceAll("<", "&lt;") + '</a>';
+  }).replace(/<span>/g, '')
     .replace(/<\/span>/g, '\n')
-    .replace(/<br>/g, '\n').trim()
+    .replace(/<br>/g, '\n').trim();
   return "<body>" + h + "</body>";
 }
 
