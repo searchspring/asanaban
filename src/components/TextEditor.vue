@@ -34,7 +34,9 @@ export default defineComponent({
     const editor = useEditor({
       content: xmlToHtml(props.html ?? ""),
       extensions: [
-        StarterKit.configure({}),
+        StarterKit.configure({
+          heading: false
+        }),
         TextAlign,
         Highlight,
         Underline,
