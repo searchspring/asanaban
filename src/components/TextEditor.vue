@@ -71,11 +71,9 @@ export default defineComponent({
 <style lang="scss">
 .editor {
   font-size: 0.8rem;
-  display: flex;
-  flex-direction: column;
   color: #0d0d0d;
   margin-bottom: 0.5rem;
-  min-height:10rem;
+  min-height: 7rem;
   &__header {
     display: flex;
     align-items: center;
@@ -91,12 +89,23 @@ export default defineComponent({
     flex: 1 1 auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
+    padding: 0.3rem;
   }
 }
 .ProseMirror-focused {
   outline: none;
 }
 .ProseMirror p {
-  margin: 0;
+  margin-top: 0.8rem;
+  height: 1.5rem;
+  width: 100%;
+}
+ol li { 
+  list-style: decimal;
+  margin-left: 1.5rem;
+}
+ul li { 
+  list-style: disc;
+  margin-left: 1.5rem;
 }
 </style>
