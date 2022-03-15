@@ -34,7 +34,10 @@ export const useAsanaStore = defineStore("asana", {
   getters: {
     IS_SECTION_COMPLETE: (state) => (columnName: string) => {
       const columnNameUpper = columnName.toUpperCase()
-      return columnNameUpper === 'DONE' || columnNameUpper.startsWith('COMPLETE') || columnNameUpper.startsWith('FINISH')
+      return columnNameUpper === 'DONE' ||
+        columnNameUpper.startsWith('COMPLETE') ||
+        columnNameUpper.startsWith('FINISH') ||
+        columnNameUpper.startsWith('DEPLOYED')
     },
     SWIMLANES: (state) => {
       const swimlanes: Swimlane[] = [];
@@ -160,7 +163,7 @@ export const useAsanaStore = defineStore("asana", {
         const siblingIndex = this.tasks.indexOf(siblingTask!);
 
         this.tasks.splice(index, 1);
-        this.tasks.splice(siblingIndex, 0, task);
+        this.tasks.splice(index > siblingIndex ? siblingIndex + 1 : siblingIndex, 0, task);
       }
 
       this.actions.push({
@@ -170,7 +173,9 @@ export const useAsanaStore = defineStore("asana", {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
           });
-          this.UPDATE_CUSTOM_FIELDS(payload.taskId);
+          if (payload.startSectionId !== payload.endSectionId) {
+            this.UPDATE_CUSTOM_FIELDS(payload.taskId);
+          }
         },
       });
     },
