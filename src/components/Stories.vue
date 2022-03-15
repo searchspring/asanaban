@@ -58,7 +58,7 @@ export default defineComponent({
 }
 .story {
   text-align: left;
-  font-size: 0.6em;
+  font-size: 0.75rem;
   color: #444444;
   margin-bottom: 0.5em;
 }
