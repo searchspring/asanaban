@@ -44,7 +44,7 @@
       <DateSelector v-model:date="dueDate"></DateSelector>
       <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       <Stories></Stories>
-      <div class="new comment" v-if="taskEditorSectionIdAndTask.task.gid">
+      <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
         <label for="new comment">new comment</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.htmlText"
@@ -199,6 +199,10 @@ label {
 .description {
   text-align: left;
 }
+.new-comment {
+  text-align: left;
+}
+
 label {
   font-size: 0.5rem;
 }
