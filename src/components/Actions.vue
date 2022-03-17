@@ -12,7 +12,7 @@
     </div>
     <div v-if="showErrors" class="errors">
       <div class="error" v-for="error in errors" :key="error.message">
-        {{ error.message }} - {{ error.value.errors[0].message }}
+        {{ error.message }} - {{ error.description }}
       </div>
     </div>
   </div>

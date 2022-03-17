@@ -9,7 +9,14 @@ import {
 
 export interface Action {
   description: string,
-  func: () => Promise<any>
+  func: () => Promise<any>,
+  isProcessing: boolean,
+  retries: number,
+}
+
+export interface WorkerError {
+  message: string,
+  description: string,
 }
 
 export interface State {
@@ -19,7 +26,7 @@ export interface State {
   tasks: Task[],
   sections: Section[],
   actions: Action[],
-  errors: AsanaError[],
+  errors: WorkerError[],
   tags: TaskTag[],
   users: User[],
   allTags: TaskTag[],
