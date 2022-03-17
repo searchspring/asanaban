@@ -1,3 +1,4 @@
+import { sleep } from "@/utils/sleep";
 import { useAsanaStore } from ".";
 import { Action, WorkerError } from "./state";
 
@@ -33,8 +34,8 @@ async function processAction(actions: Action[], errors: WorkerError[]): Promise<
     const action = actions[0];
     if (action.isProcessing) {
       errors.push({
-        message: "worker error",
-        description: "please reload page"
+        message: "please reload page",
+        description: "tried to process request while already being processed"
       });
       break;
     }
@@ -81,8 +82,4 @@ async function reloadTasks() {
     }
     await sleep(5000);
   }
-}
-
-function sleep(ms: number) {
-  return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
