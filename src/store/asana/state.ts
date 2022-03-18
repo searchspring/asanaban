@@ -30,4 +30,5 @@ export interface State {
   tags: TaskTag[],
   users: User[],
   allTags: TaskTag[],
+  lastUpdatedTime: string | null
 }
