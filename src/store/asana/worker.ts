@@ -22,8 +22,7 @@ async function processActions() {
   const actions = asanaStore.actions;
   const errors = asanaStore.errors;
 
-  // eslint-disable-next-line
-  while (true) {
+  while (workersRunning) {
     await processAction(actions, errors);
     await sleep(1000);
   }
@@ -75,8 +74,7 @@ async function reloadTasks() {
   const asanaStore = useAsanaStore();
   const actions = asanaStore.actions;
 
-  // eslint-disable-next-line
-  while (true) {
+  while (workersRunning) {
     if (actions.length === 0) {
       asanaStore.LOAD_AND_MERGE_TASKS();
     }
