@@ -1,9 +1,14 @@
-import { AsanaError } from "@/types/asana";
+import { sleep } from "@/utils/sleep";
 import { useAsanaStore } from ".";
-import { Action } from "./state";
+import { Action, WorkerError } from "./state";
+
+let workersRunning = false;
 
 // export start function
 export function startWorkers() {
+  if (workersRunning) return;
+  workersRunning = true;
+
   self.setTimeout(() => {
     processActions();
   }, 1000);
@@ -14,31 +19,52 @@ export function startWorkers() {
 
 async function processActions() {
   const asanaStore = useAsanaStore();
-  await processAction(asanaStore.actions, asanaStore.errors);
-  const nextTimeout = asanaStore.actions.length > 0 ? 0 : 1000;
-  self.setTimeout(() => {
-    processActions();
-  }, nextTimeout);
+  const actions = asanaStore.actions;
+  const errors = asanaStore.errors;
+
+  while (workersRunning) {
+    await processAction(actions, errors);
+    await sleep(1000);
+  }
 }
 
-async function processAction(actions: Action[], errors: AsanaError[]): Promise<void> {
+async function processAction(actions: Action[], errors: WorkerError[]): Promise<void> {
   while (actions.length > 0) {
     const action = actions[0];
+    if (action.isProcessing) {
+      errors.push({
+        message: "please reload page",
+        description: "tried to process request while already being processed"
+      });
+      break;
+    }
+    action.isProcessing = true;
     try {
+      action.retries++;
       await action.func();
       actions.shift();
       console.info("completed action");
     } catch (error: any) {
       actions.shift();
-      console.log(error);
       if (
         error.value.errors[0].message.indexOf("does not exist in parent") ===
         -1
       ) {
-        errors.push(error as AsanaError);
+        errors.push({
+          message: error.message,
+          description: error.value.errors[0].message
+        });
       }
       if (error.status !== 400 && error.status !== 401) {
-        actions.push(action);
+        action.isProcessing = false;
+        if (action.retries > 2) {
+          errors.push({
+            message: "maximum retries for request",
+            description: action.description
+          });
+        } else {
+          actions.push(action);
+        }
       }
     }
   }
@@ -46,10 +72,12 @@ async function processAction(actions: Action[], errors: AsanaError[]): Promise<v
 
 async function reloadTasks() {
   const asanaStore = useAsanaStore();
-  if (asanaStore.actions.length === 0) {
-    asanaStore.LOAD_AND_MERGE_TASKS();
+  const actions = asanaStore.actions;
+
+  while (workersRunning) {
+    if (actions.length === 0) {
+      asanaStore.LOAD_AND_MERGE_TASKS();
+    }
+    await sleep(5000);
   }
-  self.setTimeout(() => {
-    reloadTasks();
-  }, 5000);
 }

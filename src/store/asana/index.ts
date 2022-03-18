@@ -136,6 +136,15 @@ export const useAsanaStore = defineStore("asana", {
       this.actions = [];
     },
 
+    ADD_ACTION(description: string, func: () => Promise<any>): void {
+      this.actions.push({
+        description: description,
+        func: func,
+        isProcessing: false,
+        retries: 0
+      });
+    },
+
     MERGE_TASKS(payload: Task[]): void {
       // replace individual task with each task in payload
       payload.forEach(task => {
@@ -166,9 +175,9 @@ export const useAsanaStore = defineStore("asana", {
         this.tasks.splice(index > siblingIndex ? siblingIndex + 1 : siblingIndex, 0, task);
       }
 
-      this.actions.push({
-        description: "moving task",
-        func: async () => {
+      this.ADD_ACTION(
+        "moving task",
+        async () => {
           await asanaClient?.sections.addTask(payload.endSectionId, {
             task: payload.taskId,
             insert_after: payload.siblingTaskId,
@@ -177,7 +186,7 @@ export const useAsanaStore = defineStore("asana", {
             this.UPDATE_CUSTOM_FIELDS(payload.taskId);
           }
         },
-      });
+      );
     },
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
@@ -196,12 +205,12 @@ export const useAsanaStore = defineStore("asana", {
         (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
       }
       
-      this.actions.push({
-        description: "updating custom fields",
-        func: async () => {
+      this.ADD_ACTION(
+        "updating custom fields",
+        async () => {
           await asanaClient?.tasks.update(task.gid, body);
         }
-      })
+      )
     },
 
     CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
@@ -221,10 +230,7 @@ export const useAsanaStore = defineStore("asana", {
         this.UPDATE_CUSTOM_FIELDS(task.gid);
       }
 
-      this.actions.push({
-        description: "creating task",
-        func: createTask
-      });
+      this.ADD_ACTION("creating task", createTask);
     },
 
     UPDATE_TASK(taskAndSectionId: TaskAndSectionId): void {
@@ -247,10 +253,7 @@ export const useAsanaStore = defineStore("asana", {
         this.UPDATE_TASK_TAGS(taskAndSectionId);
       }
 
-      this.actions.push({
-        description: "updating task",
-        func: updateTask
-      });
+      this.ADD_ACTION("updating task", updateTask);
     },
 
     DELETE_TASK(taskAndSectionId: TaskAndSectionId): void {
@@ -264,50 +267,47 @@ export const useAsanaStore = defineStore("asana", {
         await asanaClient?.tasks.delete(taskAndSectionId.task.gid);
       }
 
-      this.actions.push({
-        description: "deleting task",
-        func: deleteTask
-      });
+      this.ADD_ACTION("deleting task", deleteTask);
     },
 
     COMPLETE_TASK(taskAndSectionId: TaskAndSectionId): void {
-      this.actions.push({
-        description: "completing task",
-        func: async () => {
+      this.ADD_ACTION(
+        "completing task",
+        async () => {
           completeTask(this.tasks, taskAndSectionId.task.gid);
         }
-      });
+      );
     },
 
     RELEASE_TASK(task: Task): void {
-      this.actions.push({
-        description: "releasing task",
-        func: async () => {
+      this.ADD_ACTION(
+        "releasing task",
+        async () => {
           completeTask(this.tasks, task.gid);
         },
-      });
+      );
     },
 
     ADD_TASK_TAG(payload: { task: Task, tagGid: string}): void {
-      this.actions.push({
-        description: "adding task tag",
-        func: async () => {
+      this.ADD_ACTION(
+        "adding task tag",
+        async () => {
           await asanaClient?.tasks.addTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
-      });
+      );
     },
 
     REMOVE_TASK_TAG(payload: { task: Task, tagGid: string}): void {
-      this.actions.push({
-        description: "removing task tag",
-        func: async () => {
+      this.ADD_ACTION(
+        "removing task tag",
+        async () => {
           await asanaClient?.tasks.removeTag(payload.task.gid, {
             tag: payload.tagGid,
           });
         },
-      });
+      );
     },
 
     UPDATE_TASK_TAGS(taskAndSectionId: TaskAndSectionId): void {
@@ -330,16 +330,16 @@ export const useAsanaStore = defineStore("asana", {
 
     UPDATE_STORIES(taskAndSectionId: TaskAndSectionId): void {
       if (taskAndSectionId.htmlText) {
-        this.actions.push({
-          description: "adding stories",
-          func: async () => {
+        this.ADD_ACTION(
+          "adding stories",
+          async () => {
             await asanaClient?.stories.createOnTask(
               taskAndSectionId.task.gid,
               { html_text: taskAndSectionId.htmlText }
             );
             taskAndSectionId.htmlText = "";
           }
-        });
+        );
       }
     },
 
@@ -361,10 +361,7 @@ export const useAsanaStore = defineStore("asana", {
           });
         }
       }
-      this.actions.push({
-        description: "loading stories",
-        func: loadStories
-      })
+      this.ADD_ACTION("loading stories", loadStories);
     },
 
     LOAD_PROJECTS(): void {
@@ -390,10 +387,7 @@ export const useAsanaStore = defineStore("asana", {
           });
         }
       }
-      this.actions.push({
-        description: "loading projects",
-        func: loadProjects
-      });
+      this.ADD_ACTION("loading projects", loadProjects);
     },
 
     LOAD_SELECTED_PROJECT(project: string): void {
@@ -406,28 +400,28 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_TASKS(): void {
-      this.actions.push({
-        description: "loading tasks",
-        func: async () => loadTasks(this.ADD_TASKS)
-      });
+      this.ADD_ACTION(
+        "loading tasks",
+        async () => loadTasks(this.ADD_TASKS)
+      );
     },
 
     LOAD_SECTIONS(): void {
-      this.actions.push({
-        description: "loading sections",
-        func: async () => {
+      this.ADD_ACTION(
+        "loading sections",
+        async () => {
           if (asanaClient && this.selectedProject) {
             const sectionResponse = await asanaClient.sections.findByProject(this.selectedProject);
             this.SET_SECTIONS(sectionResponse as Section[]);
           }
         }
-      });
+      );
     },
 
     LOAD_USERS(): void {
-      this.actions.push({
-        description: "loading users",
-        func: async () => {
+      this.ADD_ACTION(
+        "loading users",
+        async () => {
           if (asanaClient && this.workspace) {
             const userResponse = await asanaClient.users.findByWorkspace(
               this.workspace, {
@@ -439,7 +433,7 @@ export const useAsanaStore = defineStore("asana", {
             this.SET_USERS(userResponse.data as User[]);
           }
         }
-      });
+      );
     },
 
     LOAD_ALL_TAGS(): void {
@@ -455,10 +449,7 @@ export const useAsanaStore = defineStore("asana", {
           }
         }
       }
-      this.actions.push({
-        description: "loading all tags",
-        func: loadAllTags
-      })
+      this.ADD_ACTION("loading all tags", loadAllTags);
     },
 
     LOAD_AND_MERGE_TASKS(): void {
