@@ -404,10 +404,7 @@ export const useAsanaStore = defineStore("asana", {
     LOAD_TASKS(): void {
       this.ADD_ACTION(
         "loading tasks",
-        async () => {
-          await loadTasks(this.ADD_TASKS, null);
-          console.log("after loading: ", this.tasks.length);
-        }
+        async () => loadTasks(this.ADD_TASKS, null)
       );
     },
 
@@ -457,9 +454,8 @@ export const useAsanaStore = defineStore("asana", {
       this.ADD_ACTION("loading all tags", loadAllTags);
     },
 
-    async LOAD_AND_MERGE_TASKS() {
-      await loadTasks(this.MERGE_TASKS, lastUpdatedTime);
-      console.log("after reload: ", this.tasks.length);
+    LOAD_AND_MERGE_TASKS(): void {
+      loadTasks(this.MERGE_TASKS, lastUpdatedTime);
     },
 
     async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
