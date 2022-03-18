@@ -170,23 +170,25 @@ export const useAsanaStore = defineStore("asana", {
 
         const index = this.tasks.indexOf(task);
         const siblingIndex = this.tasks.indexOf(siblingTask!);
+        const moving_up = index > siblingIndex;
 
         this.tasks.splice(index, 1);
-        this.tasks.splice(index > siblingIndex ? siblingIndex + 1 : siblingIndex, 0, task);
-      }
-
-      this.ADD_ACTION(
-        "moving task",
-        async () => {
-          await asanaClient?.sections.addTask(payload.endSectionId, {
-            task: payload.taskId,
-            insert_after: payload.siblingTaskId,
-          });
-          if (payload.startSectionId !== payload.endSectionId) {
-            this.UPDATE_CUSTOM_FIELDS(payload.taskId);
-          }
-        },
-      );
+        this.tasks.splice(siblingIndex, 0, task);
+        
+        this.ADD_ACTION(
+          "moving task",
+          async () => {
+            const relative_pos = moving_up ? "insert_before" : "insert_after";
+            await asanaClient?.sections.addTask(payload.endSectionId, {
+              task: payload.taskId,
+              [relative_pos]: payload.siblingTaskId,
+            });
+            if (payload.startSectionId !== payload.endSectionId) {
+              this.UPDATE_CUSTOM_FIELDS(payload.taskId);
+            }
+          },
+        );
+      } 
     },
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
@@ -402,7 +404,10 @@ export const useAsanaStore = defineStore("asana", {
     LOAD_TASKS(): void {
       this.ADD_ACTION(
         "loading tasks",
-        async () => loadTasks(this.ADD_TASKS)
+        async () => {
+          await loadTasks(this.ADD_TASKS, null);
+          console.log("after loading: ", this.tasks.length);
+        }
       );
     },
 
@@ -452,8 +457,9 @@ export const useAsanaStore = defineStore("asana", {
       this.ADD_ACTION("loading all tags", loadAllTags);
     },
 
-    LOAD_AND_MERGE_TASKS(): void {
-      loadTasks(this.MERGE_TASKS);
+    async LOAD_AND_MERGE_TASKS() {
+      await loadTasks(this.MERGE_TASKS, lastUpdatedTime);
+      console.log("after reload: ", this.tasks.length);
     },
 
     async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
@@ -474,7 +480,8 @@ export const useAsanaStore = defineStore("asana", {
   }
 });
 
-async function loadTasks(action: (tasks: Task[]) => any) {
+let lastUpdatedTime: string | null = null;
+async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | null) {
   const asanaStore = useAsanaStore();
   if (asanaClient && asanaStore.selectedProject) {
     const options = {
@@ -500,12 +507,18 @@ async function loadTasks(action: (tasks: Task[]) => any) {
         notes,\
         stories",
     };
+    if (lastUpdated) {
+      options["modified_since"] = lastUpdated;
+    }
     let taskResponse: any = await asanaClient.tasks.findAll(options);
-    asanaStore.SET_TASKS([]);
-    asanaStore.SET_TAGS([]);
-    for (; taskResponse; taskResponse = await taskResponse.nextPage()) { 
+    if (!lastUpdated) {
+      asanaStore.SET_TASKS([]);
+      asanaStore.SET_TAGS([]);
+    }
+    for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       action(taskResponse.data);
     }
+    lastUpdatedTime = new Date().toISOString();
   }
 }
 
