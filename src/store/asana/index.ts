@@ -30,6 +30,7 @@ export const useAsanaStore = defineStore("asana", {
     tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
     allTags: jsonstore.get("allTags", []) as TaskTag[],
+    lastUpdatedTime: null
   }),
   getters: {
     IS_SECTION_COMPLETE: (state) => (columnName: string) => {
@@ -455,7 +456,7 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_AND_MERGE_TASKS(): void {
-      loadTasks(this.MERGE_TASKS, lastUpdatedTime);
+      loadTasks(this.MERGE_TASKS, this.lastUpdatedTime);
     },
 
     async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
@@ -476,7 +477,6 @@ export const useAsanaStore = defineStore("asana", {
   }
 });
 
-let lastUpdatedTime: string | null = null;
 async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | null) {
   const asanaStore = useAsanaStore();
   if (asanaClient && asanaStore.selectedProject) {
@@ -514,7 +514,7 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       action(taskResponse.data);
     }
-    lastUpdatedTime = new Date().toISOString();
+    asanaStore.lastUpdatedTime = new Date().toISOString();
   }
 }
 
