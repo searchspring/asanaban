@@ -19,6 +19,11 @@ export interface WorkerError {
   description: string,
 }
 
+export interface ReloadLock {
+  locked: boolean,
+  lastLocked: Date | null
+}
+
 export interface State {
   workspace: string | null,
   projects: Project[],
@@ -30,5 +35,6 @@ export interface State {
   tags: TaskTag[],
   users: User[],
   allTags: TaskTag[],
-  lastUpdatedTime: string | null
+  lastUpdatedTime: string | null,
+  reloadLock: ReloadLock
 }
