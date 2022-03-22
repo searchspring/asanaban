@@ -1,0 +1,27 @@
+# IMPORTANT: any changes made here (except for the host name) should be mirrored into ingress-local.yml
+# NOTE: the format of this file is probably different because we are running and older k8s version in production than local
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: asanaban-ext
+  namespace: apps
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    kubernetes.io/ingress.class: nginx-ext
+    nginx.org/redirect-to-https: "true"
+spec:
+  rules:
+  - host: asanaban.kube.searchspring.io
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: asanaban-service
+          servicePort: 3000 
+  - host: asanaban.com
+    http:
+      paths:
+      - path: /
+        backend:
+          serviceName: asanaban-service
+          servicePort: 3000 
