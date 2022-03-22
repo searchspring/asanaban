@@ -75,7 +75,7 @@ async function reloadTasks() {
   const actions = asanaStore.actions;
 
   while (workersRunning) {
-    if (actions.length === 0 && !asanaStore.reloadLock.locked) {
+    if (actions.length === 0 && !asanaStore.reloadState.locked) {
       asanaStore.LOAD_AND_MERGE_TASKS();
     }
     await sleep(5000);
