@@ -30,6 +30,12 @@ export const useAsanaStore = defineStore("asana", {
     tags: jsonstore.get("tags", []) as TaskTag[],
     users: jsonstore.get("users", []) as User[],
     allTags: jsonstore.get("allTags", []) as TaskTag[],
+    lastUpdatedTime: null,
+    reloadState: {
+      locked: false,
+      lastLocked: null,
+      lastReloadStart: null
+    }
   }),
   getters: {
     IS_SECTION_COMPLETE: (state) => (columnName: string) => {
@@ -146,6 +152,12 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     MERGE_TASKS(payload: Task[]): void {
+      const reloadInterrupted = this.reloadState.lastLocked &&
+       this.reloadState.lastReloadStart &&
+       this.reloadState.lastLocked.getTime() > this.reloadState.lastReloadStart.getTime();
+        
+      if (this.reloadState.locked || reloadInterrupted) return;
+
       // replace individual task with each task in payload
       payload.forEach(task => {
         const index = this.tasks.findIndex((t) => t.gid === task.gid);
@@ -169,24 +181,38 @@ export const useAsanaStore = defineStore("asana", {
         );
 
         const index = this.tasks.indexOf(task);
-        const siblingIndex = this.tasks.indexOf(siblingTask!);
+        const siblingIndex = !siblingTask ? -1 : this.tasks.indexOf(siblingTask);
+        const movingUp = index > siblingIndex;
+        const columnChange = payload.startSectionId !== payload.endSectionId;
+
+        let relative_pos = "";
+        if (columnChange) {
+          relative_pos = payload.endOfColumn ? "insert_after" : "insert_before";
+        } else {
+          relative_pos = movingUp ? "insert_before" : "insert_after";
+        }
+
+        let insertIdx = columnChange && !movingUp ? siblingIndex - 1 : siblingIndex;
+        if (payload.endOfColumn) {
+          insertIdx++;
+        }
 
         this.tasks.splice(index, 1);
-        this.tasks.splice(index > siblingIndex ? siblingIndex + 1 : siblingIndex, 0, task);
-      }
-
-      this.ADD_ACTION(
-        "moving task",
-        async () => {
-          await asanaClient?.sections.addTask(payload.endSectionId, {
-            task: payload.taskId,
-            insert_after: payload.siblingTaskId,
-          });
-          if (payload.startSectionId !== payload.endSectionId) {
-            this.UPDATE_CUSTOM_FIELDS(payload.taskId);
-          }
-        },
-      );
+        this.tasks.splice(insertIdx, 0, task);
+        
+        this.ADD_ACTION(
+          "moving task",
+          async () => {
+            await asanaClient?.sections.addTask(payload.endSectionId, {
+              task: payload.taskId,
+              [relative_pos]: payload.siblingTaskId,
+            });
+            if (payload.startSectionId !== payload.endSectionId) {
+              this.UPDATE_CUSTOM_FIELDS(payload.taskId);
+            }
+          },
+        );
+      } 
     },
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
@@ -402,7 +428,7 @@ export const useAsanaStore = defineStore("asana", {
     LOAD_TASKS(): void {
       this.ADD_ACTION(
         "loading tasks",
-        async () => loadTasks(this.ADD_TASKS)
+        async () => loadTasks(this.ADD_TASKS, null)
       );
     },
 
@@ -453,7 +479,8 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_AND_MERGE_TASKS(): void {
-      loadTasks(this.MERGE_TASKS);
+      this.reloadState.lastReloadStart = new Date();
+      loadTasks(this.MERGE_TASKS, this.lastUpdatedTime);
     },
 
     async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
@@ -474,7 +501,7 @@ export const useAsanaStore = defineStore("asana", {
   }
 });
 
-async function loadTasks(action: (tasks: Task[]) => any) {
+async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | null) {
   const asanaStore = useAsanaStore();
   if (asanaClient && asanaStore.selectedProject) {
     const options = {
@@ -500,12 +527,20 @@ async function loadTasks(action: (tasks: Task[]) => any) {
         notes,\
         stories",
     };
-    let taskResponse: any = await asanaClient.tasks.findAll(options);
-    asanaStore.SET_TASKS([]);
-    asanaStore.SET_TAGS([]);
-    for (; taskResponse; taskResponse = await taskResponse.nextPage()) { 
-      action(taskResponse.data);
+    if (lastUpdated) {
+      options["modified_since"] = lastUpdated;
     }
+    let taskResponse: any = await asanaClient.tasks.findAll(options);
+    if (!lastUpdated) {
+      asanaStore.SET_TASKS([]);
+      asanaStore.SET_TAGS([]);
+    }
+    const tasks: Task[] = [];
+    for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
+      tasks.push(...taskResponse.data);
+    }
+    action(tasks);
+    asanaStore.lastUpdatedTime = new Date().toISOString();
   }
 }
 

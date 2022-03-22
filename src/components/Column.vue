@@ -33,6 +33,7 @@
       v-if="!columnCollapsed(section?.gid ?? '')"
       @drop="onDrop($event, section?.gid ?? '')"
       @dragenter="onDragEnter($event)"
+      @dragstart="onDragStart()"
       @dragend="onDragEnd()"
       @dragover.prevent
       class="droppable"
@@ -156,6 +157,9 @@ export default defineComponent({
     };
 
     const onDrop = (event, endSectionId: string) => {
+      asanaStore.reloadState.locked = false;
+      asanaStore.reloadState.lastLocked = new Date();
+
       const startSectionId = event.dataTransfer.getData("startSectionId");
       const taskId = event.dataTransfer.getData("taskId");
       let el = event.target;
@@ -171,6 +175,7 @@ export default defineComponent({
         endSectionId: endSectionId,
         taskId: taskId,
         siblingTaskId: siblingTaskId,
+        endOfColumn: el === null
       });
     };
 
@@ -178,6 +183,10 @@ export default defineComponent({
       removeDragOverClass();
       event.currentTarget.classList.add("drag-over");
     };
+
+    const onDragStart = () => {
+      asanaStore.reloadState.locked = true;
+    }
 
     const onDragEnd = () => {
       removeDragOverClass();
@@ -198,6 +207,7 @@ export default defineComponent({
       toggleColumn,
       onDrop,
       onDragEnter,
+      onDragStart,
       onDragEnd,
     };
   },
