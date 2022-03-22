@@ -1,4 +1,4 @@
-# asanaban-vue
+# Asanaban
 
 ## Requirements
 * npm
