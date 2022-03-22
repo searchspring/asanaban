@@ -157,10 +157,9 @@ export default defineComponent({
     };
 
     const onDrop = (event, endSectionId: string) => {
-      asanaStore.reloadLock = {
-        locked: false,
-        lastLocked: new Date()
-      }
+      asanaStore.reloadState.locked = false;
+      asanaStore.reloadState.lastLocked = new Date();
+
       const startSectionId = event.dataTransfer.getData("startSectionId");
       const taskId = event.dataTransfer.getData("taskId");
       let el = event.target;
@@ -186,7 +185,7 @@ export default defineComponent({
     };
 
     const onDragStart = () => {
-      asanaStore.reloadLock.locked = true;
+      asanaStore.reloadState.locked = true;
     }
 
     const onDragEnd = () => {

@@ -19,9 +19,10 @@ export interface WorkerError {
   description: string,
 }
 
-export interface ReloadLock {
+export interface ReloadState {
   locked: boolean,
-  lastLocked: Date | null
+  lastLocked: Date | null,
+  lastReloadStart: Date | null
 }
 
 export interface State {
@@ -36,5 +37,5 @@ export interface State {
   users: User[],
   allTags: TaskTag[],
   lastUpdatedTime: string | null,
-  reloadLock: ReloadLock
+  reloadState: ReloadState
 }

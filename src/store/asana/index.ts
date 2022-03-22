@@ -31,9 +31,10 @@ export const useAsanaStore = defineStore("asana", {
     users: jsonstore.get("users", []) as User[],
     allTags: jsonstore.get("allTags", []) as TaskTag[],
     lastUpdatedTime: null,
-    reloadLock: {
+    reloadState: {
       locked: false,
-      lastLocked: null
+      lastLocked: null,
+      lastReloadStart: null
     }
   }),
   getters: {
@@ -151,10 +152,11 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     MERGE_TASKS(payload: Task[]): void {
-      const reloadRecentlyLocked = this.reloadLock.lastLocked &&
-        (new Date().getTime() - this.reloadLock.lastLocked.getTime()) < 5000;
+      const reloadInterrupted = this.reloadState.lastLocked &&
+       this.reloadState.lastReloadStart &&
+       this.reloadState.lastLocked.getTime() > this.reloadState.lastReloadStart.getTime();
         
-      if (this.reloadLock.locked || reloadRecentlyLocked) return;
+      if (this.reloadState.locked || reloadInterrupted) return;
 
       // replace individual task with each task in payload
       payload.forEach(task => {
@@ -477,6 +479,7 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_AND_MERGE_TASKS(): void {
+      this.reloadState.lastReloadStart = new Date();
       loadTasks(this.MERGE_TASKS, this.lastUpdatedTime);
     },
 
