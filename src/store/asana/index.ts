@@ -151,11 +151,12 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     MERGE_TASKS(payload: Task[]): void {
-      // replace individual task with each task in payload
-      if (this.reloadLock.locked ||
-        (this.reloadLock.lastLocked &&
-          new Date().getTime() - this.reloadLock.lastLocked.getTime() < 5000)) return;
+      const reloadRecentlyLocked = this.reloadLock.lastLocked &&
+        (new Date().getTime() - this.reloadLock.lastLocked.getTime()) < 5000;
+        
+      if (this.reloadLock.locked || reloadRecentlyLocked) return;
 
+      // replace individual task with each task in payload
       payload.forEach(task => {
         const index = this.tasks.findIndex((t) => t.gid === task.gid);
         if (index !== -1) {
