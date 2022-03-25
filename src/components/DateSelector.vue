@@ -30,9 +30,9 @@ export default defineComponent({
       var date: Date;
 
       if (timestamp === null) {
-        date = new Date("")
+        date = new Date("");
       } else {
-        date = new Date(timestamp)
+        date = new Date(timestamp);
       }
 
       emit("update:date", date);
