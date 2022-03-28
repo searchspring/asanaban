@@ -56,10 +56,7 @@ export const usePrefStore = defineStore("preferences", {
     },
 
     SET_DUE_DATE(date: Date | undefined) {
-      let dateString = formattedDate(date)
-      if (dateString === "Invalid Date") {
-        dateString = "";
-      }
+      const dateString = formattedDate(date);
       this.taskEditorSectionIdAndTask!.task.due_on = dateString;
     },
 
