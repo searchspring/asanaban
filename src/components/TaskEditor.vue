@@ -52,7 +52,7 @@
         />
       </div>
       <div class="button-bar">
-        <button :disabled="isSaveDisabled" class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
         </button>
         <button
@@ -86,7 +86,7 @@ import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
-import { isInvalidAsanaDate, asanaDateFormat } from "../utils/date";
+import { asanaDateFormat } from "../utils/date";
 import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
@@ -96,10 +96,7 @@ export default defineComponent({
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
-
-    const isSaveDisabled = ref<boolean>();
     const dueDate = ref<Date>();
-
     const projectId = asanaStore.selectedProject;
 
     const taskEditorSectionIdAndTask = computed(() => {
@@ -113,7 +110,7 @@ export default defineComponent({
         }, 0);
 
         const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
-        // to prevent disabling save when creating a new task or a task initially has no due date
+        // to handle when creating a new task with no date or a task initially has no due date
         if (dueDateString === null || dueDateString === undefined) {
           dueDate.value = undefined;
         } else {
@@ -123,7 +120,6 @@ export default defineComponent({
     });
 
     watch([dueDate], () => {
-      isSaveDisabled.value = isInvalidAsanaDate(dueDate.value);
       prefStore.SET_DUE_DATE(dueDate.value);
     });
 
@@ -141,14 +137,12 @@ export default defineComponent({
         `Are you sure you want to delete task "${taskEditorSectionIdAndTask.task.name}"?`
       );
       if (response) {
-        isSaveDisabled.value = false;
         asanaStore.DELETE_TASK(taskEditorSectionIdAndTask);
         hide();
       }
     };
 
     const hide = () => {
-      isSaveDisabled.value = false;
       prefStore.HIDE_TASK_EDITOR();
     };
 
@@ -166,7 +160,6 @@ export default defineComponent({
     };
 
     return {
-      isSaveDisabled,
       taskEditorSectionIdAndTask,
       projectId,
       dueDate,

@@ -1,57 +1,54 @@
 <template>
-    <va-date-input
-    label="due date"
-    v-model="value"
-    :format="formatDate"
-    :parse="parseFn"
+  <n-date-picker 
+    v-model:value="timestamp" 
+    type="date"
     :placeholder="placeholder"
-    clearable
-    manual-input
-    @update:modelValue="inputDate"
+    placement="bottom"
+    clearable 
+    @update:value="inputDate"
   />
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, onMounted } from "vue";
-import { parse, isValid } from "date-fns";
-import { asanaDateFormat, formattedDate } from "../utils/date";
+import { defineComponent, onMounted, ref } from 'vue';
+import { NDatePicker } from 'naive-ui';
+import { isValid } from "date-fns";
+import { asanaDateFormat } from "../utils/date";
 
-export default defineComponent ({
+export default defineComponent({
+  components: { NDatePicker },
   props: {
     date: {
       type: Date,
     }
   },
-  setup(props, { emit }) {
-    const value = ref<Date>();
+  setup (props, { emit }) {
+    const timestamp = ref<number | null>();
     const placeholder = asanaDateFormat.toLowerCase();
 
-    const formatDate = (date: Date | undefined) => {
-      return formattedDate(date);
-    };
+    const inputDate = (timestamp: number) => {
+      var date: Date;
 
-    const parseFn = (event: Event) => {
-      const dateString = (event.target as HTMLInputElement).value;
-      return parse(dateString, asanaDateFormat, new Date());
-    };
+      if (timestamp === null) {
+        date = new Date("");
+      } else {
+        date = new Date(timestamp);
+      }
 
-    const inputDate = (date: Date) => {
       emit("update:date", date);
     };
 
     onMounted(() => {
       if (isValid(props.date)) {
-        value.value = props.date;
+        timestamp.value = props.date?.getTime();
       } else {
-        value.value = undefined;
+        timestamp.value = null;
       }
     });
 
     return {
-      value,
+      timestamp,
       placeholder,
-      formatDate,
-      parseFn,
       inputDate,
     }
   }
