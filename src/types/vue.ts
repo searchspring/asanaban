@@ -1,5 +1,6 @@
-import { TaskTag } from "./asana";
-
-export type TagOption = TaskTag & {
-  text?: string
+export type TagOption = {
+  label: string,
+  value: string, 
+  color: string,
+  font: string,
 }

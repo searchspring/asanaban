@@ -41,8 +41,14 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
-      <DateSelector v-model:date="dueDate"></DateSelector>
-      <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
+      <div class="due-date">
+        <label>due date</label>
+        <DateSelector v-model:date="dueDate"></DateSelector>
+      </div>
+      <div class="tags">
+        <label>tags</label>
+        <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
+      </div>
       <Stories></Stories>
       <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
         <label for="new comment">new comment</label>
@@ -92,7 +98,7 @@ import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
-  components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
+  components: { AssigneeSelector, TextEditor, Stories, DateSelector, TagSelector },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -188,6 +194,9 @@ export default defineComponent({
 label {
   display: block;
 }
+
+.due-date,
+.tags,
 .name,
 .description {
   text-align: left;
