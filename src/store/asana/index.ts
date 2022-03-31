@@ -579,7 +579,7 @@ function colorizeTaskTags(tasks: Task[]): void {
 
 function colorizeTags(tags: TaskTag[]): void {
   tags.forEach(tag => {
-    tag.hexes = convertAsanaColorToHex(tag.color)
+    tag.hexes = convertAsanaColorToHex(tag.color);
   });
 }
 

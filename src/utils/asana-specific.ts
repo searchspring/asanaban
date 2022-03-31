@@ -1,7 +1,4 @@
-import colorConvert from "color-convert";
-import { LightenDarkenColor } from "lighten-darken-color";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
-import { KEYWORD } from "color-convert/conversions";
 
 export interface Hex {
   background: string;
@@ -24,13 +21,13 @@ function getColumnCount(columnName: string): string {
   return "-1";
 }
 
-function convertAsanaColorToHex(color: string) {
+function convertAsanaColorToHex(color: string): Hex {
   if (!color) { // light grey color is sometimes passed as "none" or null by Asana
     color = "none";
   }
 
-  const black = "#000000"
-  const white = "#ffffff"
+  const black = "#000000";
+  const white = "#ffffff";
 
   const colors = { 
     "none": { background: "#C6C4C4", font: black },
