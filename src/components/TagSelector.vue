@@ -13,12 +13,12 @@
 
 <script lang="ts">
 import { defineComponent, ref, computed, onMounted, watch, PropType, h } from 'vue'
-import { NSelect, NSpace, NTag, SelectRenderTag } from 'naive-ui';
+import { NSelect, NSpace } from 'naive-ui';
 import { TagOption } from '@/types/vue';
 import { Task, TaskTag } from "@/types/asana";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
-import { Color } from 'csstype';
+import { renderTag } from '@/utils/renderTag';
 
 export default defineComponent({
   components: { NSelect, NSpace },
@@ -46,27 +46,6 @@ export default defineComponent({
       prefStore.SET_NEW_TAGS(tagIds.value);
     });
 
-    const renderTag: SelectRenderTag = ({ option, handleClose }) => {
-      return h(
-        NTag,
-        {
-          closable: true,
-          round: true,
-          themeOverrides: { 
-            color: option.color as Color, 
-            border: option.color as Color,
-            textColor: option.font as Color, 
-            closeColor: option.font as Color,
-          },
-          onClose: (e: MouseEvent) => {
-            e.stopPropagation()
-            handleClose()
-          }
-        },
-        { default: () => option.label }
-      );
-    }
-
     return {
       tagIds,
       options,
@@ -76,7 +55,7 @@ export default defineComponent({
 });
 
 // value prop of component only accepts an array of strings, so need array of tagIds
-function makeTagId(tags: TaskTag[]): string[] { 
+function makeTagId(tags: TaskTag[] | undefined): string[] {
   const tagIds = tags?.map((tag) => {
     return tag.gid
   });
