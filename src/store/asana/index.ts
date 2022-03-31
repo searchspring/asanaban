@@ -14,7 +14,7 @@ import {
   Resource
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
-import { convertColorToHexes, getColumnCount } from "@/utils/asana-specific";
+import { getColumnCount, convertAsanaColorToHex } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
 
 
@@ -579,7 +579,7 @@ function colorizeTaskTags(tasks: Task[]): void {
 
 function colorizeTags(tags: TaskTag[]): void {
   tags.forEach(tag => {
-    tag.hexes = convertColorToHexes(tag.color === "none"? "white": tag.color);
+    tag.hexes = convertAsanaColorToHex(tag.color)
   });
 }
 
