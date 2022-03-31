@@ -470,6 +470,7 @@ export const useAsanaStore = defineStore("asana", {
             opt_fields: "color,name",
           };
           let tagResponse: any = await asanaClient.tags.findByWorkspace(this.workspace!, options);
+          this.allTags = [];
           for (; tagResponse; tagResponse = await tagResponse.nextPage()) {
             this.ADD_ALL_TAGS(tagResponse.data as TaskTag[]);
           }
