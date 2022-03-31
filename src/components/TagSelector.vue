@@ -1,81 +1,75 @@
 <template>
-  <div>
-    <va-select
-      label="tags"
-      :options="options"
-      :track-by="(option) => option.gid"
-      v-model="value"
+  <n-space vertical>
+    <n-select 
+      v-model:value="tagIds" 
       multiple
-      searchable
-    >
-      <template #content="{ value }">
-        <va-chip
-          v-for="tag in value"
-          :key="tag"
-          size="small"
-          :color="tag.hexes?.background"
-          closeable
-          @update:modelValue="deleteTag(tag)"
-        >
-          {{ tag.name }}
-        </va-chip>
-      </template>
-    </va-select>
-  </div>
+      filterable
+      placeholder=""
+      :render-tag="renderTag"
+      :options="options"
+    />
+  </n-space>
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, PropType, watch } from "vue";
+import { defineComponent, ref, computed, onMounted, watch, PropType, h } from 'vue'
+import { NSelect, NSpace } from 'naive-ui';
+import { TagOption } from '@/types/vue';
 import { Task, TaskTag } from "@/types/asana";
-import { TagOption } from "@/types/vue";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
+import { renderTag } from '@/utils/renderTag';
 
-export default defineComponent ({
+export default defineComponent({
+  components: { NSelect, NSpace },
   props: {
     task: {
       type: Object as PropType<Task>,
       required: true
     }
   },
-  setup(props) {
+  setup (props) {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
-    
-    const value = ref<TagOption[]>([]);
+    const tagIds = ref<string[]>([]);
 
     const options = computed(() => {
       const tags = asanaStore.allTags;
       return makeTagOption(tags);
     });
 
-    const deleteTag = (tag) => {
-      value.value = value.value.filter((v) => v !== tag)
-    }
-
     onMounted(() => {
-      value.value = makeTagOption(props.task.tags);
-    })
+      tagIds.value = makeTagId(props.task.tags);
+    });
 
-    watch([value], () => {
-      const tagIds = value.value.map((tag) => tag.gid);
-      prefStore.SET_NEW_TAGS(tagIds);
-    })
+    watch([tagIds], () => {
+      prefStore.SET_NEW_TAGS(tagIds.value);
+    });
 
     return {
+      tagIds,
       options,
-      value,
-      deleteTag,
+      renderTag,
     }
-  },
+  }
 });
+
+// value prop of component only accepts an array of strings, so need array of tagIds
+function makeTagId(tags: TaskTag[] | undefined): string[] {
+  const tagIds = tags?.map((tag) => {
+    return tag.gid
+  });
+  return tagIds ?? [];
+}
 
 function makeTagOption(tags: TaskTag[]): TagOption[] {
   const tagOptions = tags?.map((tag) => {
     return {
-      ...tag, 
-      text: tag.name
-    }
+      label: tag.name,
+      value: tag.gid, 
+      color: tag.hexes?.background,
+      font: tag.hexes?.font
+    } as TagOption
   });
   return tagOptions ?? [];
 }
