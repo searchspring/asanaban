@@ -1,7 +1,4 @@
-import colorConvert from "color-convert";
-import { LightenDarkenColor } from "lighten-darken-color";
 import { XMLParser, XMLBuilder } from "fast-xml-parser";
-import { KEYWORD } from "color-convert/conversions";
 
 export interface Hex {
   background: string;
@@ -24,29 +21,34 @@ function getColumnCount(columnName: string): string {
   return "-1";
 }
 
-function convertColorToHexes(color: string): Hex {
-  if (!color) {
-    return {
-      background: "#FFFFFF",
-      font: "#000000",
-    };
+function convertAsanaColorToHex(color: string): Hex {
+  if (!color) { // light grey color is sometimes passed as "none" or null by Asana
+    color = "none";
   }
-  const parts = color.split("-");
-  const brightness = parts[0];
-  const hue = parts[parts.length - 1];
-  const hex = colorConvert.keyword.hex(hue as KEYWORD);
-  let adjustedHex = "";
-  let font = "#000000";
-  if (brightness === "dark") {
-    adjustedHex = LightenDarkenColor(hex, -50);
-    font = "#ffffff";
-  } else {
-    adjustedHex = LightenDarkenColor(hex, 100);
-  }
-  if (adjustedHex.length === 4) {
-    adjustedHex = "00" + adjustedHex;
-  }
-  return { background: "#" + adjustedHex, font: font };
+
+  const black = "#000000";
+  const white = "#ffffff";
+
+  const colors = { 
+    "none": { background: "#C6C4C4", font: black },
+    "dark-red": { background: "#E0726E", font: black }, 
+    "dark-orange": { background: "#DF9077", font: black } , 
+    "light-orange": { background: "#E9BE78", font: black }, 
+    "dark-brown": { background: "#F5DF82", font: black },
+    "light-green": { background: "#B4CC67", font: black }, 
+    "dark-green": { background: "#6D9F85", font: white },
+    "light-teal": { background: "#71C8C3", font: black },
+    "dark-teal": { background: "#ADE5E2", font: black },
+    "light-blue": { background: "#4E74CB", font: white }, 
+    "dark-purple": { background: "#8A86E1", font: white } , 
+    "light-purple": { background: "#A971CE", font: white }, 
+    "light-pink": { background: "#EDAEEB", font: black },
+    "dark-pink": { background: "#E278B0 ", font: black }, 
+    "light-red": { background: "#EE9C9C", font: black },
+    "light-warm-gray": { background: "#6D6E6F", font: white },
+  };
+
+  return colors[color];
 }
 
 function htmlToXml(html: string): string {
@@ -143,7 +145,7 @@ function recursivePTags(
 export {
   getPrettyColumnName,
   getColumnCount,
-  convertColorToHexes,
+  convertAsanaColorToHex,
   xmlToHtml,
   htmlToXml,
 };
