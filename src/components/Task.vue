@@ -11,7 +11,12 @@
     <div class="text">
       <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
     </div>
-    <div class="footer" v-if="dueDate || tags.length > 0">
+    <div class="label" v-if="dueDate">
+      <hr>
+      Due Date
+      <div class="date" v-if="dueDate">{{ dueDate }}</div>
+    </div>
+    <div class="footer" v-if="tags.length > 0">
       <div
         class="tag"
         v-for="tag in tags"
@@ -23,7 +28,6 @@
       >
         {{ tag.name }}
       </div>
-      <div class="date" v-if="dueDate">{{ dueDate }}</div>
     </div>
   </div>
 </template>
@@ -84,12 +88,12 @@ export default defineComponent({
       if (dueDate) {
         if (differenceInDays(parse(dueDate, asanaDateFormat, new Date()), new Date()) < 5) {
           return {
-            "background-color": "red",
+            "background-color": "#D44C46", // red
             "color": "white"
           }
         }
         return {
-          "background-color": "purple",
+          "background-color": "#7960CE", // purple
           "color": "white"
         }
       }
@@ -138,23 +142,48 @@ export default defineComponent({
 </script>
 
 <style scoped>
-.task {
-  margin-left: 1px;
-  margin-bottom: 1px;
+
+hr {
+  height: 0.11rem;
   background-color: white;
-  width: 8rem;
-  min-height: 2.1rem;
+  border: none;
+}
+.task {
+  border-radius: 5px;
+  padding: 0.15rem 0.5rem 0.15rem 0.5rem;
+  margin-top: 2px;
+  margin-left: 4px;
+  margin-bottom: 4px;
+  background-color: white;
+  width: 16rem;
+  min-height: 2.5rem;
   cursor: move;
   display: inline-block;
   vertical-align: top;
+  overflow: auto;
 }
 .text {
   vertical-align: top;
-  font-size: 0.6rem;
-  margin: 0.3rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+  margin: 0.35rem;
+  margin-bottom: 0.2rem;
+  margin-left: 0.1rem;
   display: inline-block;
   overflow-wrap: break-word;
-  width: 8rem;
+  width: 14rem;
+}
+.tag {
+  border-radius: 100%;
+  border: solid white;
+  border-width: thin;
+  display: inline-block;
+  font-size: 0.7rem;
+  padding: 0.1rem 0.35rem 0.1rem 0.35rem;
+  margin-top: 0.2rem;
+  margin-left: 0.09rem;
+  margin-right: 1px;
+  margin-bottom: 0.4rem;
 }
 .dragging {
   opacity: 0.5;
@@ -163,23 +192,24 @@ export default defineComponent({
   border-radius: 100%;
   display: inline-block;
 }
-.tag {
-  border-radius: 100%;
-  background-color: #cccccc;
-  display: inline-block;
-  font-size: 0.5rem;
-  padding-left: 0.2rem;
-  padding-right: 0.2rem;
-  margin-right: 1px;
-}
 .footer {
   display: flex;
   flex-direction: row;
   margin-top: 1px;
 }
+.label {
+  font-size: 0.55rem;
+  font-weight: 700;
+  text-align: left;
+  margin-bottom: 0.4rem;
+  margin-top: 0.1rem;
+  margin-left: 0.1rem;
+}
 .date {
-  font-size: 0.5rem;
+  margin-right: 0.1rem;
+  font-size: 0.55rem;
+  font-weight: 700;
   flex-grow: 1;
-  text-align: right;
+  float: right;
 }
 </style>
