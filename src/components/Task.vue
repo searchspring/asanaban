@@ -14,7 +14,7 @@
     <div class="label" v-if="dueDate">
       <hr>
       Due Date
-      <div class="date" v-if="dueDate">{{ dueDate }}</div>
+      <div class="date">{{ dueDate }}</div>
     </div>
     <div class="footer" v-if="tags.length > 0">
       <div
@@ -184,6 +184,7 @@ hr {
   margin-left: 0.09rem;
   margin-right: 1px;
   margin-bottom: 0.4rem;
+  clear: right;
 }
 .dragging {
   opacity: 0.5;
