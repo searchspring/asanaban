@@ -155,7 +155,9 @@ hr {
   margin-left: 4px;
   margin-bottom: 4px;
   background-color: white;
-  width: 16rem;
+  margin-right: 2px;
+  width: 48%; 
+  max-width: 15rem;
   min-height: 2.5rem;
   cursor: move;
   display: inline-block;
@@ -171,7 +173,7 @@ hr {
   margin-left: 0.1rem;
   display: inline-block;
   overflow-wrap: break-word;
-  width: 14rem;
+  width: 90%;
 }
 .tag {
   border-radius: 100%;

@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch, PropType, h } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue'
 import { NSelect, NSpace } from 'naive-ui';
 import { TagOption } from '@/types/vue';
 import { Task, TaskTag } from "@/types/asana";
