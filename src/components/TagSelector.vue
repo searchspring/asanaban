@@ -12,7 +12,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue'
+import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue';
 import { NSelect, NSpace } from 'naive-ui';
 import { TagOption } from '@/types/vue';
 import { Task, TaskTag } from "@/types/asana";
@@ -57,7 +57,7 @@ export default defineComponent({
 // value prop of component only accepts an array of strings, so need array of tagIds
 function makeTagId(tags: TaskTag[] | undefined): string[] {
   const tagIds = tags?.map((tag) => {
-    return tag.gid
+    return tag.gid;
   });
   return tagIds ?? [];
 }
