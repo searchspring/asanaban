@@ -22,17 +22,15 @@
           >open in asana</a
         >
         <label for="name">name</label>
-        <input
-          autocomplete="off"
-          id="name"
-          type="text"
-          v-model="taskEditorSectionIdAndTask.task.name"
-          @keydown.enter="save(taskEditorSectionIdAndTask)"
-        />
+        <BasicInput v-model:input="taskEditorSectionIdAndTask.task.name" @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
       </div>
       <div class="assignee">
         <label for="assignee">assignee</label>
         <AssigneeSelector></AssigneeSelector>
+      </div>
+      <div class="due-date">
+        <label>due date</label>
+        <DateSelector v-model:date="dueDate"></DateSelector>
       </div>
       <div class="description">
         <label for="description">description</label>
@@ -41,15 +39,13 @@
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
-      <div class="due-date">
-        <label>due date</label>
-        <DateSelector v-model:date="dueDate"></DateSelector>
-      </div>
       <div class="tags">
         <label>tags</label>
         <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       </div>
-      <Stories></Stories>
+      <div class="stories">
+        <Stories></Stories>
+      </div>
       <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
         <label for="new comment">new comment</label>
         <TextEditor
@@ -87,6 +83,7 @@
 <script lang="ts">
 import { defineComponent, ref, watch, computed } from "vue";
 import AssigneeSelector from "./AssigneeSelector.vue";
+import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
 import { TaskAndSectionId } from "@/types/asana";
@@ -97,8 +94,8 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 
-export default defineComponent({
-  components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector },
+export default defineComponent({ 
+  components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector, BasicInput },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -193,6 +190,14 @@ export default defineComponent({
 }
 label {
   display: block;
+  font-size: 0.85rem;
+  color: grey;
+  font-weight: 400;
+  margin-bottom: 0.35rem;
+  margin-top: 0.5rem;
+}
+.assignee {
+  text-align: center;
 }
 .due-date,
 
@@ -206,12 +211,11 @@ label {
 .new-comment {
   text-align: left;
 }
-
-label {
-  font-size: 0.5rem;
+.stories {
+  margin-top: 1rem;
 }
 .tiny-link {
-  font-size: 0.5rem;
+  font-size: 0.6rem;
 }
 .right {
   float: right;
@@ -223,12 +227,12 @@ textarea {
   box-sizing: border-box;
   width: 100%;
   border: 1px solid #999999;
-}
-textarea {
   min-height: 10rem;
 }
 
 .task-editor {
+  border-radius: 8px;
+  padding: 20px;
   position: fixed;
   top: 50%;
   left: 50%;
@@ -243,6 +247,7 @@ textarea {
 }
 
 button.primary {
+  margin-top: 1rem;
   width: 10rem;
   background-color: #cccccc;
   border: none;
@@ -253,6 +258,7 @@ button.primary:hover {
 }
 
 button.secondary {
+  margin-top: 1rem;
   width: 10rem;
   float: right;
   background-color: #aaaaaa;
