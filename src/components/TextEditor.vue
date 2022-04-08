@@ -97,7 +97,7 @@ export default defineComponent({
 }
 .ProseMirror p {
   margin-top: 0.8rem;
-  height: 1.5rem;
+  min-height: 2rem;
   width: 100%;
 }
 ol li { 

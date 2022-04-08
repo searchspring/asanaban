@@ -9,6 +9,7 @@ export const renderTag: SelectRenderTag = ({ option, handleClose }) => {
       closable: true,
       round: true,
       themeOverrides: { 
+        heightMedium: '24px',
         color: option.color as Color, 
         border: option.color as Color,
         textColor: option.font as Color, 
