@@ -52,12 +52,8 @@ export default defineComponent({
     const prefStore = usePrefStore();
 
     const assignee = computed(() => {
-      return props.task &&
-        props.task.assignee &&
-        props.task.assignee.photo &&
-        props.task.assignee.photo.image_21x21
-        ? props.task.assignee.photo.image_21x21
-        : "";
+      const photo = props.task?.assignee?.photo?.image_21x21 ?? "";
+      return photo;
     });
 
     const tags = computed(() => {
@@ -193,7 +189,10 @@ hr {
 }
 .photo {
   border-radius: 100%;
+  border: solid thin white;
   display: inline-block;
+  margin-right: 0.45rem;
+  vertical-align: middle;
 }
 .footer {
   display: flex;

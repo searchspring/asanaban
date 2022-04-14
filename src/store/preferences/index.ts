@@ -1,6 +1,6 @@
 import jsonstore from "../../utils/jsonstore";
 import { State } from "./state";
-import { Assignee, TaskAndSectionId } from "@/types/asana";
+import { Assignee, TaskAndSectionId, User } from "@/types/asana";
 import { formattedDate } from "../../utils/date";
 import { defineStore } from "pinia";
 import { useAsanaStore } from "../asana";
@@ -37,16 +37,17 @@ export const usePrefStore = defineStore("preferences", {
       this.search = search;
     },
 
-    SET_TASK_ASSIGNEE(gid: string | null) {
-      if (gid === null) {
-        this.taskEditorSectionIdAndTask!.task.assignee = null;
-        return;
-      }
+    SET_TASK_ASSIGNEE(assignee: User | null) {
+      const gid = assignee?.gid ?? "null"; // in asana, to update a task to be unassigned, request must be made with gid of "null"
+      const photo = (!assignee?.gid) ? undefined : assignee!.photo;
+
       if (this.taskEditorSectionIdAndTask?.task.assignee) {
         this.taskEditorSectionIdAndTask.task.assignee.gid = gid;
-      } else {
+        this.taskEditorSectionIdAndTask.task.assignee.photo = photo;
+      } else { 
         this.taskEditorSectionIdAndTask!.task.assignee = {
           gid: gid,
+          photo: photo,
         } as Assignee;
       }
     },

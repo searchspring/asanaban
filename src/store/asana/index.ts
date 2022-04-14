@@ -241,6 +241,12 @@ export const useAsanaStore = defineStore("asana", {
 
     CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const createTask = async () => {
+
+        // when creating a new task - as opposed to updating a task - to be unassigned, assignee needs to be null
+        if (taskAndSectionId.task.assignee?.gid === "null") {
+          taskAndSectionId.task.assignee = null;
+        }
+
         // asana interface has incorrect type defintion for this function
         const task = await asanaClient!.tasks.create({
             ...taskAndSectionId.task,
@@ -453,7 +459,7 @@ export const useAsanaStore = defineStore("asana", {
               this.workspace, {
                 opt_fields: 
                   "name,\
-                  photo.image_60x60,\
+                  photo.image_21x21,\
                   resource_type,email",
               })
             this.SET_USERS(userResponse.data as User[]);

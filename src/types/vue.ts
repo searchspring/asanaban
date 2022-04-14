@@ -4,3 +4,8 @@ export type TagOption = {
   color: string,
   font: string,
 }
+
+export type UserOption = {
+  label: string,
+  value: string,
+}
