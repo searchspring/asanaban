@@ -1,41 +1,68 @@
 <template>
-  <div>
-    <select v-model="assignee">
-      <option value="null">No Assignee</option>
-      <option
-        v-for="user in users"
-        :key="user.gid"
-        :value="user.gid"
-      >{{ user.name }}</option>
-    </select>
-  </div>
+  <n-space vertical>
+    <n-select 
+      v-model:value="assignee" 
+      filterable
+      clearable
+      placeholder="Unassigned"
+      :options="options"
+    />
+  </n-space>
 </template>
 
 <script lang="ts">
+import { defineComponent, ref, computed, onMounted, watch, PropType } from 'vue';
+import { NSelect, NSpace } from 'naive-ui';
+import { Task, User } from "@/types/asana";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
-import { computed, defineComponent, onMounted, ref, watch } from "vue";
+import { UserOption } from '@/types/vue';
 
 export default defineComponent({
-  setup() {
+  components: { NSelect, NSpace },
+  props: {
+    task: {
+      type: Object as PropType<Task>,
+      required: true,
+    }
+  },
+  setup (props) {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
-
     const assignee = ref<string | null>(null);
-    const users = computed(() => asanaStore.users)
+
+    const options = computed(() => {
+      const userOptions = makeUserOption(asanaStore.users);
+      return userOptions;
+    });
 
     onMounted(() => {
-      assignee.value = prefStore.taskEditorSectionIdAndTask?.task.assignee?.gid ?? null;
-    })
+      assignee.value = props.task.assignee?.gid ?? null;
+    });
 
     watch([assignee], () => {
-      prefStore.SET_TASK_ASSIGNEE(assignee.value);
-    })
+      if (!assignee.value) {
+        prefStore.SET_TASK_ASSIGNEE(null);
+        return;
+      }
+      const selectedUser = asanaStore.users.find((user) => user.gid === assignee.value);
+      prefStore.SET_TASK_ASSIGNEE(selectedUser!);
+    });
 
     return {
-      users,
-      assignee
-    };
-  },
+      assignee,
+      options,
+    }
+  }
 });
+
+function makeUserOption(users: User[]): UserOption[] {
+  const userOptions = users.map((user) => {
+    return {
+      label: user.name,
+      value: user.gid, 
+    }
+  });
+  return userOptions ?? [];
+}
 </script>

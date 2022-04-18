@@ -63,7 +63,7 @@ function makeTagId(tags: TaskTag[] | undefined): string[] {
 }
 
 function makeTagOption(tags: TaskTag[]): TagOption[] {
-  const tagOptions = tags?.map((tag) => {
+  const tagOptions = tags.map((tag) => {
     return {
       label: tag.name,
       value: tag.gid, 

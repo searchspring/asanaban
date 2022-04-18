@@ -241,6 +241,7 @@ export const useAsanaStore = defineStore("asana", {
 
     CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const createTask = async () => {
+
         // asana interface has incorrect type defintion for this function
         const task = await asanaClient!.tasks.create({
             ...taskAndSectionId.task,
@@ -270,7 +271,7 @@ export const useAsanaStore = defineStore("asana", {
 
         await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
           name: taskAndSectionId.task.name,
-          assignee: taskAndSectionId.task.assignee?.gid,
+          assignee: taskAndSectionId.task.assignee?.gid ?? null, // asana interface has incorrect type defintion for assignee, had to add null to type
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
         });
@@ -453,7 +454,7 @@ export const useAsanaStore = defineStore("asana", {
               this.workspace, {
                 opt_fields: 
                   "name,\
-                  photo.image_60x60,\
+                  photo.image_21x21,\
                   resource_type,email",
               })
             this.SET_USERS(userResponse.data as User[]);

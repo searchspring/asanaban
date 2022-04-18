@@ -24,13 +24,15 @@
         <label for="name">name</label>
         <BasicInput v-model:input="taskEditorSectionIdAndTask.task.name" @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
       </div>
-      <div class="assignee">
-        <label for="assignee">assignee</label>
-        <AssigneeSelector></AssigneeSelector>
-      </div>
-      <div class="due-date">
-        <label>due date</label>
-        <DateSelector v-model:date="dueDate"></DateSelector>
+      <div class="assignee-date-selector">
+        <div class="assignee">
+          <label for="assignee">assignee</label>
+          <AssigneeSelector :task="taskEditorSectionIdAndTask.task"></AssigneeSelector>
+         </div>
+        <div class="due-date">
+          <label>due date</label>
+          <DateSelector v-model:date="dueDate"></DateSelector>
+        </div>
       </div>
       <div class="description">
         <label for="description">description</label>
@@ -82,7 +84,6 @@
 
 <script lang="ts">
 import { defineComponent, ref, watch, computed } from "vue";
-import AssigneeSelector from "./AssigneeSelector.vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
@@ -93,9 +94,10 @@ import { asanaDateFormat } from "../utils/date";
 import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
+import AssigneeSelector from "./AssigneeSelector.vue";
 
-export default defineComponent({ 
-  components: { AssigneeSelector, TextEditor, Stories, TagSelector, DateSelector, BasicInput },
+export default defineComponent({
+  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -194,12 +196,20 @@ label {
   color: grey;
   font-weight: 400;
   margin-bottom: 0.35rem;
-  margin-top: 0.5rem;
+  margin-top: 0.7rem;
 }
 .assignee {
-  text-align: center;
+  flex: 1;
+  text-align: left;
 }
-.due-date,
+.due-date {
+  flex: 0.3;
+  margin-left: 2rem;
+  text-align: left;
+}
+.assignee-date-selector {
+  display: flex;
+}
 
 .tags,
 
