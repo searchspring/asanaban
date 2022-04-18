@@ -37,9 +37,15 @@ export const usePrefStore = defineStore("preferences", {
       this.search = search;
     },
 
-    SET_TASK_ASSIGNEE(assignee: User | null) {
-      const gid = assignee?.gid ?? "null"; // in asana, to update a task to be unassigned, request must be made with gid of "null"
-      const photo = (!assignee?.gid) ? undefined : assignee!.photo;
+    SET_TASK_ASSIGNEE(assignee: User | null) { 
+
+      if (!assignee) {
+        this.taskEditorSectionIdAndTask!.task.assignee = null;
+        return;
+      }
+
+      const gid = assignee.gid;
+      const photo = assignee.photo; 
 
       if (this.taskEditorSectionIdAndTask?.task.assignee) {
         this.taskEditorSectionIdAndTask.task.assignee.gid = gid;
@@ -48,7 +54,7 @@ export const usePrefStore = defineStore("preferences", {
         this.taskEditorSectionIdAndTask!.task.assignee = {
           gid: gid,
           photo: photo,
-        } as Assignee;
+        } as unknown as Assignee;
       }
     },
 

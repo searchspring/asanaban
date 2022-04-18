@@ -32,22 +32,21 @@ export default defineComponent({
     const assignee = ref<string | null>(null);
 
     const options = computed(() => {
-      const users = asanaStore.users;
-      const userOptions = makeUserOption(users);
+      const userOptions = makeUserOption(asanaStore.users);
       return userOptions;
     });
 
     onMounted(() => {
-      assignee.value = (!props.task.assignee?.gid || props.task.assignee?.gid === "null") ? null : props.task.assignee!.gid;
+      assignee.value = props.task.assignee?.gid ?? null;
     });
 
     watch([assignee], () => {
       if (!assignee.value) {
         prefStore.SET_TASK_ASSIGNEE(null);
         return;
-      } 
-      const selectedUser = asanaStore.users.find((user) => user.gid === assignee.value) as User;
-      prefStore.SET_TASK_ASSIGNEE(selectedUser);
+      }
+      const selectedUser = asanaStore.users.find((user) => user.gid === assignee.value);
+      prefStore.SET_TASK_ASSIGNEE(selectedUser!);
     });
 
     return {
@@ -58,7 +57,7 @@ export default defineComponent({
 });
 
 function makeUserOption(users: User[]): UserOption[] {
-  const userOptions = users?.map((user) => {
+  const userOptions = users.map((user) => {
     return {
       label: user.name,
       value: user.gid, 
