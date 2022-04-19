@@ -271,10 +271,10 @@ export const useAsanaStore = defineStore("asana", {
 
         await asanaClient?.tasks.update(taskAndSectionId.task.gid, {
           name: taskAndSectionId.task.name,
-          assignee: taskAndSectionId.task.assignee?.gid ?? null, // asana interface has incorrect type defintion for assignee, had to add null to type
+          assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
-        });
+        } as any); // asana interface has incorrect type defintion for assignee - had to typecast to allow null type for assignee field
         
         this.UPDATE_STORIES(taskAndSectionId);
         this.UPDATE_TASK_TAGS(taskAndSectionId);
