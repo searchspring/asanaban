@@ -1,7 +1,11 @@
 <template>
   <div class="editor" v-if="editor">
     <menu-bar class="editor__header" :editor="editor" />
-    <editor-content class="editor__content" :editor="editor" />
+    <editor-content 
+      :style="[ forDescription ? { 'padding-bottom': '1rem' } : { 'padding-bottom': '0.5rem' }]" 
+      class="editor__content" 
+      :editor="editor" 
+    />
   </div>
 </template>
 
@@ -28,6 +32,7 @@ export default defineComponent({
   },
   props: {
     html: String,
+    forDescription: Boolean,
   },
   emits: ["update"],
   setup(props, { emit }) {
@@ -73,8 +78,8 @@ export default defineComponent({
   font-size: 0.8rem;
   color: #0d0d0d;
   margin-bottom: 0.5rem;
-  min-height: 7rem;
-  &__header {
+  min-height: 4rem;
+  &__header { 
     display: flex;
     align-items: center;
     flex: 0 0 auto;
@@ -89,15 +94,15 @@ export default defineComponent({
     flex: 1 1 auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    padding: 0.3rem;
+    padding: 0.5rem;
   }
 }
 .ProseMirror-focused {
   outline: none;
 }
 .ProseMirror p {
-  margin-top: 0.8rem;
-  min-height: 2rem;
+  margin-top: 0.2rem;
+  min-height: 1rem;
   width: 100%;
 }
 ol li { 

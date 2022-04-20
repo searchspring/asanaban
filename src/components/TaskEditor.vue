@@ -38,6 +38,7 @@
         <label for="description">description</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.task.html_notes"
+          :forDescription="true"
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
@@ -52,6 +53,7 @@
         <label for="new comment">new comment</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.htmlText"
+          :forDescription="false"
           v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
         />
       </div>
