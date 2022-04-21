@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div class="menu-bar">
     <template v-for="(item, index) in items">
       <div
         class="divider"
@@ -98,5 +98,9 @@ export default defineComponent({
   background-color: rgba(#000, 0.1);
   margin-left: 0.5rem;
   margin-right: 0.75rem;
+}
+.menu-bar {
+  border-top-left-radius: 3px;
+  border-top-right-radius: 3px;
 }
 </style>
