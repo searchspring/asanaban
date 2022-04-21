@@ -33,7 +33,7 @@
 </template>
 
 <script lang="ts">
-import { Task, TaskAndSectionId } from "@/types/asana";
+import { Assignee, Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
@@ -115,7 +115,12 @@ export default defineComponent({
     };
 
     const edit = () => {
-      const taskCopy: Task = {...props.task}
+      const taskCopy: Task = {
+        ...props.task,
+        // deep copy the fields that are editable in task editor
+        assignee: {...props.task.assignee as Assignee},
+        tags: [...props.task.tags]
+      }
       prefStore.SHOW_TASK_EDITOR({
         task: taskCopy,
         htmlText: "",
