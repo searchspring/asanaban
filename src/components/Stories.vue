@@ -16,8 +16,7 @@
       :key="story.gid"
     >
       <span class="story-date">{{ formatDate(story.created_at) }}</span>
-      <span class="username">{{ story.created_by.name }}</span
-      >:
+      <span class="username">{{ story.created_by.name }}: </span>
       <span class="text" v-html="formatStory(story.html_text)"></span>
     </div>
   </div>
@@ -61,14 +60,21 @@ export default defineComponent({
   font-size: 0.75rem;
   color: #444444;
   margin-bottom: 0.5em;
+  padding: 0.5rem;
+  border-radius: 7px;
+  background-color: #f4f4f8;
 }
 .story p {
   margin: 0;
 }
 .even {
-  background-color: #efefef;
+  background-color: #e9e9ee;
 }
 .username {
   font-weight: bold;
+}
+.text {
+  margin-top: 1px;
+  margin-left: 2px;
 }
 </style>
