@@ -152,7 +152,7 @@ hr {
 }
 .task {
   border-radius: 5px;
-  padding: 0.15rem 0.5rem 0.15rem 0.5rem;
+  padding: 0.15rem 0.5rem 0.25rem 0.5rem;
   margin-top: 2px;
   margin-left: 4px;
   margin-bottom: 4px;

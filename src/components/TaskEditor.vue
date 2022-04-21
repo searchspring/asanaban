@@ -38,6 +38,7 @@
         <label for="description">description</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.task.html_notes"
+          :forDescription="true"
           v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
         />
       </div>
@@ -52,28 +53,33 @@
         <label for="new comment">new comment</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.htmlText"
+          :forDescription="false"
           v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
         />
       </div>
       <div class="button-bar">
-        <button class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <n-button strong secondary class="primary left" @click="hide()">cancel</n-button>
+        <n-button type="primary" class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
-        </button>
-        <button
-          class="primary right"
-          @click="completeTask(taskEditorSectionIdAndTask)"
-          v-if="taskEditorSectionIdAndTask.task.gid"
-        >
-          complete
-        </button>
-        <button class="secondary left" @click="hide()">cancel</button>
-        <button
-          class="secondary left"
-          @click="deleteTask(taskEditorSectionIdAndTask)"
-          v-if="taskEditorSectionIdAndTask.task.gid"
-        >
-          delete
-        </button>
+        </n-button>
+        <div class="middle-buttons">
+          <n-button
+            strong secondary type="error"
+            class="secondary left"
+            @click="deleteTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid"
+          >
+            delete
+          </n-button>
+          <n-button
+            strong secondary
+            class="secondary right"
+            @click="completeTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid"
+          >
+            complete
+          </n-button>
+        </div>
       </div>
       <!-- <div style="font-size: 12px; white-space: pre; text-align: left">
         {{ JSON.stringify(taskEditorSectionIdAndTask.task, "", "  ") }}
@@ -95,9 +101,10 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
+import { NButton } from 'naive-ui';
 
 export default defineComponent({
-  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector },
+  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -226,6 +233,7 @@ label {
 }
 .tiny-link {
   font-size: 0.6rem;
+  color: #4B9D5F;
 }
 .right {
   float: right;
@@ -249,7 +257,7 @@ textarea {
   transform: translate(-50%, -50%);
   width: 50%;
   max-height: 90%;
-  min-height: 50%;
+  min-height: 42%;
   background-color: #fff;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
   z-index: 11;
@@ -258,37 +266,33 @@ textarea {
 
 button.primary {
   margin-top: 1rem;
-  width: 10rem;
-  background-color: #cccccc;
+  width: 6rem;
   border: none;
   cursor: pointer;
 }
-button.primary:hover {
-  background-color: #dddddd;
-}
-
 button.secondary {
   margin-top: 1rem;
-  width: 10rem;
-  float: right;
-  background-color: #aaaaaa;
+  width: 6rem;
   border: none;
   cursor: pointer;
 }
 button.right {
   float: right;
-  margin-left: 1px;
+  margin-left: 7px;
 }
 button.left {
   float: left;
-  margin-right: 1px;
-}
-button.secondary:hover {
-  background-color: #cccccc;
+  margin-right: 7px;
 }
 
 .button-bar {
   height: 1.2rem;
   clear: both;
+  margin-bottom: 2rem;
+}
+
+.middle-buttons {
+  display: flex;
+  justify-content: center;
 }
 </style>

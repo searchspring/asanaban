@@ -1,7 +1,11 @@
 <template>
   <div class="editor" v-if="editor">
     <menu-bar class="editor__header" :editor="editor" />
-    <editor-content class="editor__content" :editor="editor" />
+    <editor-content 
+      :style="[ forDescription ? { 'min-height': '3rem' } : { 'min-height': '1rem' }]" 
+      class="editor__content" 
+      :editor="editor" 
+    />
   </div>
 </template>
 
@@ -28,6 +32,7 @@ export default defineComponent({
   },
   props: {
     html: String,
+    forDescription: Boolean,
   },
   emits: ["update"],
   setup(props, { emit }) {
@@ -73,31 +78,33 @@ export default defineComponent({
   font-size: 0.8rem;
   color: #0d0d0d;
   margin-bottom: 0.5rem;
-  min-height: 7rem;
+  min-height: 4rem;
   &__header {
     display: flex;
     align-items: center;
     flex: 0 0 auto;
     flex-wrap: wrap;
     padding: 0.25rem;
-    background: #dddddd;
+    background-color: #E0E0E5;
   }
   &__content {
-    border-left: 1px solid #dddddd;
-    border-right: 1px solid #dddddd;
-    border-bottom: 1px solid #dddddd;
+    border-left: 1px solid #E0E0E5;
+    border-right: 1px solid #E0E0E5;
+    border-bottom: 1px solid #E0E0E5;
     flex: 1 1 auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    padding: 0.3rem;
+    padding: 0.5rem;
+    border-bottom-left-radius: 3px;
+    border-bottom-right-radius: 3px;
   }
 }
 .ProseMirror-focused {
   outline: none;
 }
 .ProseMirror p {
-  margin-top: 0.8rem;
-  min-height: 2rem;
+  margin-top: 0.2rem;
+  min-height: 1rem;
   width: 100%;
 }
 ol li { 
