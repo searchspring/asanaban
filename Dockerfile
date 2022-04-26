@@ -5,8 +5,8 @@ RUN npm install
 COPY . ./
 RUN npm run build
 
-# golang:alpine on Feb 23, 2022
-FROM golang@sha256:d030a987c28ca403007a69af28ba419fca00fc15f08e7801fc8edee77c00b8ee
+# golang:1.18-alpine on Mar 24, 2022
+FROM golang@sha256:b64a34e943993228a0402595bdfec53a421efaf4aff38938d179e54cdd475a76
 
 # Create appuser
 ENV USER=appuser
@@ -29,7 +29,7 @@ RUN chown -R appuser:appuser $GOPATH/src/searchspring/asanaban
 RUN go get -d -v
 
 # Build the binary
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -o ./main .
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -ldflags='-w -s -extldflags "-static"' -a -buildvcs=false -o ./main .
 
 USER appuser:appuser
 WORKDIR $GOPATH/src/searchspring/asanaban/

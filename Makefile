@@ -23,7 +23,7 @@ build:
 .PHONY: build
 
 lint:
-	golangci-lint run --skip-dirs web
+	golangci-lint run -v
 .PHONY: lint
 
 test:

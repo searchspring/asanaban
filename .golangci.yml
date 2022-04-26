@@ -1,0 +1,6 @@
+run:
+  skip-dirs:
+    - src
+    - tests
+    - public
+    - kubernetes
