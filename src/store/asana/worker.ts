@@ -52,9 +52,7 @@ async function processAction(actions: Action[], errors: WorkerError[]): Promise<
     } catch (error: any) {
       actions.shift();
       if (
-        error.value
-        && error.value.errors
-        && error.value.errors.length >= 1
+        error.value?.errors?.length >= 1
         && error.value.errors[0].message.indexOf("does not exist in parent") === -1
       ) {
         errors.push({
