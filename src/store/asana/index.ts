@@ -1,7 +1,7 @@
 import { State } from "./state";
 import { defineStore } from "pinia";
 import jsonstore from "@/utils/jsonstore";
-import { 
+import {
   Section,
   TaskAndSectionId,
   Task,
@@ -14,7 +14,7 @@ import {
   Resource
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
-import { getColumnCount, convertAsanaColorToHex } from "@/utils/asana-specific";
+import { getColumnCount, getPrettyColumnName, convertAsanaColorToHex } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
 
 
@@ -81,7 +81,7 @@ export const useAsanaStore = defineStore("asana", {
   actions: {
     SET_WORKSPACE(): void {
       const match = this.projects.find(p => p.gid === this.selectedProject);
-      this.workspace =  match?.workspaceGid ?? null;
+      this.workspace = match?.workspaceGid ?? null;
       jsonstore.set("workspace", this.workspace);
     },
 
@@ -116,9 +116,27 @@ export const useAsanaStore = defineStore("asana", {
 
     SET_SECTIONS(payload: Section[]): void {
       this.sections = payload;
+
+      const taskLimitsByColumnName: Record<string, string> = {};
+
       this.sections.forEach(section => {
-        section.maxTaskCount = getColumnCount(section.name);
+        const thisColumnLimit = getColumnCount(section.name);
+        const justColumnName = getPrettyColumnName(section.name).toLowerCase();
+        section.maxTaskCount = thisColumnLimit;
+
+        if (thisColumnLimit !== "-1" && !taskLimitsByColumnName[justColumnName]) { // Store the limit by the _first_ column (that has a limit)
+          taskLimitsByColumnName[justColumnName] = thisColumnLimit;
+        }
       });
+
+      // Now that we have our limits, go back over each section and (re-)set the limit for columns of the same name
+      this.sections.forEach(section => {
+        const justColumnName = getPrettyColumnName(section.name).toLowerCase();
+        if (section.maxTaskCount === "-1" && taskLimitsByColumnName[justColumnName]) {
+          section.maxTaskCount = taskLimitsByColumnName[justColumnName];
+        }
+      });
+
       jsonstore.set("sections", this.sections);
     },
 
@@ -153,9 +171,9 @@ export const useAsanaStore = defineStore("asana", {
 
     MERGE_TASKS(payload: Task[]): void {
       const reloadInterrupted = this.reloadState.lastLocked &&
-       this.reloadState.lastReloadStart &&
-       this.reloadState.lastLocked.getTime() > this.reloadState.lastReloadStart.getTime();
-        
+        this.reloadState.lastReloadStart &&
+        this.reloadState.lastLocked.getTime() > this.reloadState.lastReloadStart.getTime();
+
       if (this.reloadState.locked || reloadInterrupted) return;
 
       // replace individual task with each task in payload
@@ -199,7 +217,7 @@ export const useAsanaStore = defineStore("asana", {
 
         this.tasks.splice(index, 1);
         this.tasks.splice(insertIdx, 0, task);
-        
+
         this.ADD_ACTION(
           "moving task",
           async () => {
@@ -212,7 +230,7 @@ export const useAsanaStore = defineStore("asana", {
             }
           },
         );
-      } 
+      }
     },
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
@@ -230,7 +248,7 @@ export const useAsanaStore = defineStore("asana", {
         body.custom_fields[task.custom_fields[columnChangeIdx].gid] = new Date().toISOString();
         (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
       }
-      
+
       this.ADD_ACTION(
         "updating custom fields",
         async () => {
@@ -244,14 +262,14 @@ export const useAsanaStore = defineStore("asana", {
 
         // asana interface has incorrect type defintion for this function
         const task = await asanaClient!.tasks.create({
-            ...taskAndSectionId.task,
-            tags: taskAndSectionId.newTags,
-            projects: [this.selectedProject],
-            memberships: [{
-                section: taskAndSectionId.sectionId,
-                project: this.selectedProject,
-              }],
-          } as any) as Task;
+          ...taskAndSectionId.task,
+          tags: taskAndSectionId.newTags,
+          projects: [this.selectedProject],
+          memberships: [{
+            section: taskAndSectionId.sectionId,
+            project: this.selectedProject,
+          }],
+        } as any) as Task;
         task.created_by = { name: useAuthStore().user?.name ?? "" };
         this.tasks.push(task);
         this.UPDATE_CUSTOM_FIELDS(task.gid);
@@ -275,7 +293,7 @@ export const useAsanaStore = defineStore("asana", {
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
         } as any); // asana interface has incorrect type defintion for assignee - had to typecast to allow null type for assignee field
-        
+
         this.UPDATE_STORIES(taskAndSectionId);
         this.UPDATE_TASK_TAGS(taskAndSectionId);
       }
@@ -315,7 +333,7 @@ export const useAsanaStore = defineStore("asana", {
       );
     },
 
-    ADD_TASK_TAG(payload: { task: Task, tagGid: string}): void {
+    ADD_TASK_TAG(payload: { task: Task, tagGid: string }): void {
       this.ADD_ACTION(
         "adding task tag",
         async () => {
@@ -326,7 +344,7 @@ export const useAsanaStore = defineStore("asana", {
       );
     },
 
-    REMOVE_TASK_TAG(payload: { task: Task, tagGid: string}): void {
+    REMOVE_TASK_TAG(payload: { task: Task, tagGid: string }): void {
       this.ADD_ACTION(
         "removing task tag",
         async () => {
@@ -452,11 +470,11 @@ export const useAsanaStore = defineStore("asana", {
           if (asanaClient && this.workspace) {
             const userResponse = await asanaClient.users.findByWorkspace(
               this.workspace, {
-                opt_fields: 
-                  "name,\
+              opt_fields:
+                "name,\
                   photo.image_21x21,\
                   resource_type,email",
-              })
+            })
             this.SET_USERS(userResponse.data as User[]);
           }
         }
