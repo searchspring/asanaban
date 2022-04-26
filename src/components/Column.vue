@@ -111,7 +111,7 @@ export default defineComponent({
     };
 
     const overBudget = () => {
-      const section = props["section"];
+      const section = props.section;
       if (section) {
         return (
           section.maxTaskCount !== "-1" &&
@@ -130,7 +130,7 @@ export default defineComponent({
     };
 
     const maxTaskCount = () => {
-      const section = props["section"];
+      const section = props.section;
       if (section) {
         if (section.maxTaskCount === "-1") {
           return "∞";

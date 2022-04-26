@@ -13,6 +13,7 @@ function getPrettyColumnName(columnName: string): string {
   return columnName;
 }
 
+// TODO : return a number in all cases (not a string)
 function getColumnCount(columnName: string): string {
   const parts = columnName.split(/[:|]/);
   if (parts && parts.length === 3) {
