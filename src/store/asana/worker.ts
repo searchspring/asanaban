@@ -23,7 +23,11 @@ async function processActions() {
   const errors = asanaStore.errors;
 
   while (workersRunning) {
-    await processAction(actions, errors);
+    try {
+      await processAction(actions, errors);
+    } catch (error: any) {
+      console.log("Unhandled error in processActions (continuing)", error);
+    }
     await sleep(1000);
   }
 }
@@ -38,23 +42,25 @@ async function processAction(actions: Action[], errors: WorkerError[]): Promise<
       });
       break;
     }
+
     action.isProcessing = true;
+
     try {
       action.retries++;
       await action.func();
       actions.shift();
-      console.info("completed action");
     } catch (error: any) {
       actions.shift();
       if (
-        error.value.errors[0].message.indexOf("does not exist in parent") ===
-        -1
+        error.value?.errors?.length >= 1
+        && error.value.errors[0].message.indexOf("does not exist in parent") === -1
       ) {
         errors.push({
           message: error.message,
           description: error.value.errors[0].message
         });
       }
+
       if (error.status !== 400 && error.status !== 401) {
         action.isProcessing = false;
         if (action.retries > 2) {
@@ -75,8 +81,12 @@ async function reloadTasks() {
   const actions = asanaStore.actions;
 
   while (workersRunning) {
-    if (actions.length === 0 && !asanaStore.reloadState.locked) {
-      asanaStore.LOAD_AND_MERGE_TASKS();
+    try {
+      if (actions.length === 0 && !asanaStore.reloadState.locked) {
+        asanaStore.LOAD_AND_MERGE_TASKS();
+      }
+    } catch (error: any) {
+      console.log("Unhandled error in reloadTasks (continuing)", error);
     }
     await sleep(5000);
   }
