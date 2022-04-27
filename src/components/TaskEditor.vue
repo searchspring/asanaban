@@ -1,34 +1,18 @@
 <template>
-  <div
-    tabindex="0"
-    class="overlay"
-    v-if="taskEditorSectionIdAndTask"
-    @keydown.esc="hide"
-  >
+  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide">
     <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
-        <a
-          v-if="taskEditorSectionIdAndTask.task.gid"
-          class="tiny-link right"
-          target="_blank"
-          rel="noopener"
-          :href="
-            'https://app.asana.com/0/' +
-            projectId +
-            '/' +
-            taskEditorSectionIdAndTask.task.gid +
-            ''
-          "
-          >open in asana</a
-        >
+        <a v-if="taskEditorSectionIdAndTask.task.gid" class="tiny-link right" target="_blank" rel="noopener"
+          :href="makeAsanaHref(taskEditorSectionIdAndTask.task.gid)">open in asana</a>
         <label for="name">name</label>
-        <BasicInput v-model:input="taskEditorSectionIdAndTask.task.name" @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
+        <BasicInput v-model:input="taskEditorSectionIdAndTask.task.name"
+          @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
       </div>
       <div class="assignee-date-selector">
         <div class="assignee">
           <label for="assignee">assignee</label>
           <AssigneeSelector :task="taskEditorSectionIdAndTask.task"></AssigneeSelector>
-         </div>
+        </div>
         <div class="due-date">
           <label>due date</label>
           <DateSelector v-model:date="dueDate"></DateSelector>
@@ -36,26 +20,43 @@
       </div>
       <div class="description">
         <label for="description">description</label>
-        <TextEditor
-          :html="taskEditorSectionIdAndTask.task.html_notes"
-          :forDescription="true"
-          v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)"
-        />
+        <TextEditor :html="taskEditorSectionIdAndTask.task.html_notes" :forDescription="true"
+          v-on:update="updateHtmlNotes($event, taskEditorSectionIdAndTask)" />
       </div>
       <div class="tags">
         <label>tags</label>
         <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
+      </div>
+      <div class="subtasks" v-if="taskEditorSectionIdAndTask.task.subtasks.length > 0">
+        <label>subtasks</label>
+        <n-list style="font-size: 0.8rem">
+          <n-list-item v-for="subtask in taskEditorSectionIdAndTask.task.subtasks" :key="subtask.gid">
+            <template #prefix>
+              <n-icon color="green" v-if="subtask.completed">
+                <check-circle />
+              </n-icon>
+              <n-icon v-else>
+                <check-circle-regular />
+              </n-icon>
+            </template>
+            {{ subtask.name }}
+            <template #suffix>
+              <a :href="makeAsanaHref(subtask.gid)" target="_blank">
+                <n-icon>
+                  <external-link-alt />
+                </n-icon>
+              </a>
+            </template>
+          </n-list-item>
+        </n-list>
       </div>
       <div class="stories">
         <Stories></Stories>
       </div>
       <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
         <label for="new comment">new comment</label>
-        <TextEditor
-          :html="taskEditorSectionIdAndTask.htmlText"
-          :forDescription="false"
-          v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
-        />
+        <TextEditor :html="taskEditorSectionIdAndTask.htmlText" :forDescription="false"
+          v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)" />
       </div>
       <div class="button-bar">
         <n-button strong secondary class="primary left" @click="hide()">cancel</n-button>
@@ -63,20 +64,12 @@
           save
         </n-button>
         <div class="middle-buttons">
-          <n-button
-            strong secondary type="error"
-            class="secondary left"
-            @click="deleteTask(taskEditorSectionIdAndTask)"
-            v-if="taskEditorSectionIdAndTask.task.gid"
-          >
+          <n-button strong secondary type="error" class="secondary left" @click="deleteTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid">
             delete
           </n-button>
-          <n-button
-            strong secondary
-            class="secondary right"
-            @click="completeTask(taskEditorSectionIdAndTask)"
-            v-if="taskEditorSectionIdAndTask.task.gid"
-          >
+          <n-button strong secondary class="secondary right" @click="completeTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid">
             complete
           </n-button>
         </div>
@@ -101,10 +94,11 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import { NButton } from 'naive-ui';
+import { NButton, NList, NListItem, NIcon } from 'naive-ui';
+import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 
 export default defineComponent({
-  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton },
+  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton, NList, NListItem, NIcon, ExternalLinkAlt, CheckCircleRegular, CheckCircle },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -171,6 +165,8 @@ export default defineComponent({
       hide();
     };
 
+    const makeAsanaHref = (taskId: string) => `https://app.asana.com/0/${projectId}/${taskId}`;
+
     return {
       taskEditorSectionIdAndTask,
       projectId,
@@ -179,8 +175,9 @@ export default defineComponent({
       deleteTask,
       hide,
       updateHtmlNotes,
-      updateHtmlText, 
+      updateHtmlText,
       completeTask,
+      makeAsanaHref
     }
   },
 });
@@ -197,6 +194,7 @@ export default defineComponent({
   background-color: rgba(0, 0, 0, 0.5);
   z-index: 10;
 }
+
 label {
   display: block;
   font-size: 0.85rem;
@@ -205,39 +203,46 @@ label {
   margin-bottom: 0.35rem;
   margin-top: 0.7rem;
 }
+
 .assignee {
   flex: 1;
   text-align: left;
 }
+
 .due-date {
   flex: 0.3;
   margin-left: 2rem;
   text-align: left;
 }
+
 .assignee-date-selector {
   display: flex;
 }
 
 .tags,
-
 .name,
-
-.description {
+.description,
+.subtasks {
   text-align: left;
 }
+
 .new-comment {
   text-align: left;
 }
+
 .stories {
   margin-top: 1rem;
 }
+
 .tiny-link {
   font-size: 0.6rem;
   color: #4B9D5F;
 }
+
 .right {
   float: right;
 }
+
 input,
 textarea {
   -webkit-box-sizing: border-box;
@@ -270,16 +275,19 @@ button.primary {
   border: none;
   cursor: pointer;
 }
+
 button.secondary {
   margin-top: 1rem;
   width: 6rem;
   border: none;
   cursor: pointer;
 }
+
 button.right {
   float: right;
   margin-left: 7px;
 }
+
 button.left {
   float: left;
   margin-right: 7px;

@@ -545,7 +545,10 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
         modified_at,\
         html_notes,\
         notes,\
-        stories",
+        stories,\
+        subtasks,\
+        subtasks.name,\
+        subtasks.completed", // Note: subtasks (for field retrieval) is apparently deprecated, but the only alternative is to call /tasks/<id>/subtasks (which would be crazy slow)
     };
     if (lastUpdated) {
       options["modified_since"] = lastUpdated;
