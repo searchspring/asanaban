@@ -24,13 +24,15 @@ export type TaskTag = Resource & {
 };
 export type User = asana.resources.Users.Type & {
   email: string,
-  photo: { image_60x60: string} | null,
+  photo: { image_60x60: string } | null,
 };
 export type Stories = asana.resources.Stories.Type;
+export type SubTask = { gid: string; resource_type: string; name: string; completed: boolean; };
 export type Task = Omit<asana.resources.Tasks.Type, "tags"> & {
   created_by: { name: string },
   html_notes: string | undefined,
   stories: Stories[],
+  subtasks: SubTask[],
   tags: TaskTag[],
 };
 

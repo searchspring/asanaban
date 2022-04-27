@@ -1,15 +1,9 @@
 <template>
-  <div
-    v-bind:id="task.gid"
-    class="task"
-    draggable="true"
-    :style="{ opacity: opacity, ...backgroundAndTextColor }"
-    @dragstart="startDrag($event, task)"
-    @dragend="endDrag($event)"
-    @click="edit()"
-  >
+  <div v-bind:id="task.gid" class="task" draggable="true" :style="{ opacity: opacity, ...backgroundAndTextColor }"
+    @dragstart="startDrag($event, task)" @dragend="endDrag($event)" @click="edit()">
     <div class="text">
       <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
+      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0"><tree-view-alt/></n-icon>
     </div>
     <div class="label" v-if="dueDate">
       <hr>
@@ -17,15 +11,10 @@
       <div class="date">{{ dueDate }}</div>
     </div>
     <div class="footer" v-if="tags.length > 0">
-      <div
-        class="tag"
-        v-for="tag in tags"
-        :key="tag.name"
-        :style="{
-          'background-color': tag.hexes?.background,
-          color: tag.hexes?.font,
-        }"
-      >
+      <div class="tag" v-for="tag in tags" :key="tag.name" :style="{
+        'background-color': tag.hexes?.background,
+        color: tag.hexes?.font,
+      }">
         {{ tag.name }}
       </div>
     </div>
@@ -40,6 +29,8 @@ import parseISO from "date-fns/parseISO/index";
 import { parse } from "date-fns";
 import { asanaDateFormat } from "../utils/date";
 import { usePrefStore } from "@/store/preferences";
+import { NIcon } from "naive-ui";
+import { TreeViewAlt} from "@vicons/carbon";
 
 export default defineComponent({
   props: {
@@ -47,6 +38,10 @@ export default defineComponent({
       type: Object as PropType<Task>,
       required: true
     },
+  },
+  components: {
+    NIcon,
+    TreeViewAlt
   },
   setup(props) {
     const prefStore = usePrefStore();
@@ -118,7 +113,7 @@ export default defineComponent({
       const taskCopy: Task = {
         ...props.task,
         // deep copy the fields that are editable in task editor
-        assignee: {...props.task.assignee as Assignee},
+        assignee: { ...props.task.assignee as Assignee },
         tags: [...props.task.tags]
       }
       prefStore.SHOW_TASK_EDITOR({
@@ -144,21 +139,21 @@ export default defineComponent({
 </script>
 
 <style scoped>
-
 hr {
   height: 0.11rem;
   background-color: white;
   border: none;
 }
+
 .task {
   border-radius: 5px;
-  padding: 0.15rem 0.5rem 0.25rem 0.5rem;
+  padding: 0.15rem 0.25rem 0.25rem 0.25rem;
   margin-top: 2px;
   margin-left: 4px;
   margin-bottom: 4px;
   background-color: white;
   margin-right: 2px;
-  width: 48%; 
+  width: 48%;
   max-width: 15rem;
   min-height: 2.5rem;
   cursor: move;
@@ -166,6 +161,11 @@ hr {
   vertical-align: top;
   overflow: auto;
 }
+
+.task .subtask-icon {
+  margin-left: auto;
+}
+
 .text {
   vertical-align: top;
   font-size: 0.8rem;
@@ -173,10 +173,11 @@ hr {
   margin: 0.35rem;
   margin-bottom: 0.2rem;
   margin-left: 0.1rem;
-  display: inline-block;
+  display: flex;
   overflow-wrap: break-word;
-  width: 90%;
+  padding: 0px 3px;
 }
+
 .tag {
   border-radius: 100%;
   border: solid white;
@@ -190,9 +191,11 @@ hr {
   margin-bottom: 0.4rem;
   clear: right;
 }
+
 .dragging {
   opacity: 0.5;
 }
+
 .photo {
   border-radius: 100%;
   border: solid thin white;
@@ -200,11 +203,13 @@ hr {
   margin-right: 0.45rem;
   vertical-align: middle;
 }
+
 .footer {
   display: flex;
   flex-direction: row;
   margin-top: 1px;
 }
+
 .label {
   font-size: 0.55rem;
   font-weight: 700;
@@ -213,6 +218,7 @@ hr {
   margin-top: 0.1rem;
   margin-left: 0.1rem;
 }
+
 .date {
   margin-right: 0.1rem;
   font-size: 0.55rem;
