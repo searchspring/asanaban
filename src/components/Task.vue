@@ -110,14 +110,8 @@ export default defineComponent({
     };
 
     const edit = () => {
-      const taskCopy: Task = {
-        ...props.task,
-        // deep copy the fields that are editable in task editor
-        assignee: { ...props.task.assignee as Assignee },
-        tags: [...props.task.tags]
-      }
       prefStore.SHOW_TASK_EDITOR({
-        task: taskCopy,
+        task: props.task,
         htmlText: "",
         newTags: [],
         sectionId: ""

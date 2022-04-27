@@ -73,11 +73,7 @@ export const usePrefStore = defineStore("preferences", {
 
     SHOW_TASK_EDITOR(sectionIdAndTask: TaskAndSectionId) {
       this.taskEditorSectionIdAndTask = sectionIdAndTask;
-      if (
-        sectionIdAndTask &&
-        sectionIdAndTask.task &&
-        sectionIdAndTask.task.gid
-      ) {
+      if (sectionIdAndTask?.task?.gid) {
         useAsanaStore().LOAD_STORIES(sectionIdAndTask.task);
       }
     }

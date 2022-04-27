@@ -5,17 +5,16 @@
         <a v-if="taskEditorSectionIdAndTask.task.gid" class="tiny-link right" target="_blank" rel="noopener"
           :href="makeAsanaHref(taskEditorSectionIdAndTask.task.gid)">open in asana</a>
         <label for="name">name</label>
-        <BasicInput v-model:input="taskEditorSectionIdAndTask.task.name"
-          @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
+        <BasicInput v-model:input="taskName" @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
       </div>
       <div class="assignee-date-selector">
         <div class="assignee">
           <label for="assignee">assignee</label>
-          <AssigneeSelector :task="taskEditorSectionIdAndTask.task"></AssigneeSelector>
+          <AssigneeSelector v-model:assigneeGid="assigneeGid" />
         </div>
         <div class="due-date">
           <label>due date</label>
-          <DateSelector v-model:date="dueDate"></DateSelector>
+          <DateSelector v-model:date="dueDate" />
         </div>
       </div>
       <div class="description">
@@ -86,7 +85,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { TaskAndSectionId } from "@/types/asana";
+import { Assignee, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat } from "../utils/date";
@@ -102,6 +101,8 @@ export default defineComponent({
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
+    const taskName = ref<string>();
+    const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
     const projectId = asanaStore.selectedProject;
 
@@ -114,6 +115,9 @@ export default defineComponent({
         window.setTimeout(() => {
           document.getElementById("name")?.focus();
         }, 0);
+
+        taskName.value = taskEditorSectionIdAndTask.value.task.name;
+        assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
 
         const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
         // to handle when creating a new task with no date or a task initially has no due date
@@ -130,6 +134,15 @@ export default defineComponent({
     });
 
     const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
+      taskEditorSectionIdAndTask.task.name = taskName.value ?? "";
+
+      if (!assigneeGid.value) {
+        taskEditorSectionIdAndTask.task.assignee = null;
+      } else {
+        const selectedUser = asanaStore.users.find((user) => user.gid === assigneeGid.value);
+        setAssigneeOnExistingTask(selectedUser!, taskEditorSectionIdAndTask);
+      }
+
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
       } else {
@@ -171,6 +184,8 @@ export default defineComponent({
       taskEditorSectionIdAndTask,
       projectId,
       dueDate,
+      taskName,
+      assigneeGid,
       save,
       deleteTask,
       hide,
@@ -181,6 +196,21 @@ export default defineComponent({
     }
   },
 });
+
+function setAssigneeOnExistingTask(assignee: User, taskEditorSectionIdAndTask: TaskAndSectionId) {
+  const gid = assignee.gid;
+  const photo = assignee.photo;
+
+  if (taskEditorSectionIdAndTask?.task.assignee) {
+    taskEditorSectionIdAndTask.task.assignee.gid = gid;
+    taskEditorSectionIdAndTask.task.assignee.photo = photo;
+  } else {
+    taskEditorSectionIdAndTask!.task.assignee = {
+      gid: gid,
+      photo: photo,
+    } as unknown as Assignee;
+  }
+}
 </script>
 
 <style scoped>
