@@ -37,34 +37,8 @@ export const usePrefStore = defineStore("preferences", {
       this.search = search;
     },
 
-    SET_TASK_ASSIGNEE(assignee: User | null) { 
-
-      if (!assignee) {
-        this.taskEditorSectionIdAndTask!.task.assignee = null;
-        return;
-      }
-
-      const gid = assignee.gid;
-      const photo = assignee.photo; 
-
-      if (this.taskEditorSectionIdAndTask?.task.assignee) {
-        this.taskEditorSectionIdAndTask.task.assignee.gid = gid;
-        this.taskEditorSectionIdAndTask.task.assignee.photo = photo;
-      } else { 
-        this.taskEditorSectionIdAndTask!.task.assignee = {
-          gid: gid,
-          photo: photo,
-        } as unknown as Assignee;
-      }
-    },
-
     SET_NEW_TAGS(tags: string[]) {
       this.taskEditorSectionIdAndTask!.newTags = tags;
-    },
-
-    SET_DUE_DATE(date: Date | undefined) {
-      const dateString = formattedDate(date);
-      this.taskEditorSectionIdAndTask!.task.due_on = dateString;
     },
 
     HIDE_TASK_EDITOR() {
@@ -73,11 +47,7 @@ export const usePrefStore = defineStore("preferences", {
 
     SHOW_TASK_EDITOR(sectionIdAndTask: TaskAndSectionId) {
       this.taskEditorSectionIdAndTask = sectionIdAndTask;
-      if (
-        sectionIdAndTask &&
-        sectionIdAndTask.task &&
-        sectionIdAndTask.task.gid
-      ) {
+      if (sectionIdAndTask?.task?.gid) {
         useAsanaStore().LOAD_STORIES(sectionIdAndTask.task);
       }
     }

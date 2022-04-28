@@ -400,7 +400,8 @@ export const useAsanaStore = defineStore("asana", {
                 created_by.name,\
                 resource_subtype,\
                 type,created_at"
-            } as any)
+            } as any);
+
           task.stories = storiesResponse.data.filter(story => {
             return story["resource_subtype"] === "comment_added";
           });
