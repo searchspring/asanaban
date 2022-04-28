@@ -45,7 +45,7 @@ export default defineComponent({
 
 <style scoped>
 .swimlane {
-  margin-bottom: 1px;
+  margin-bottom: 2px;
 }
 h2 {
   -webkit-touch-callout: none;
@@ -54,7 +54,7 @@ h2 {
   -moz-user-select: none;
   -ms-user-select: none;
   user-select: none;
-  font-size: 1rem;
+  font-size: 1.1rem;
   writing-mode: vertical-rl;
   background-color: #f0f0f0;
   text-align: center;

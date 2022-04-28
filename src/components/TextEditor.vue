@@ -2,7 +2,7 @@
   <div class="editor" v-if="editor">
     <menu-bar class="editor__header" :editor="editor" />
     <editor-content 
-      :style="[ forDescription ? { 'min-height': '3rem' } : { 'min-height': '1rem' }]" 
+      :style="[ forDescription ? { 'min-height': '6rem' } : { 'min-height': '2rem' }]" 
       class="editor__content" 
       :editor="editor" 
     />

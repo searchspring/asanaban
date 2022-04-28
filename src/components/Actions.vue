@@ -6,7 +6,7 @@
       <span v-if="hasActions" class="current">{{ currentAction }}</span>
     </div>
     <div v-if="hasErrors">
-      <a href="javascript:;" @click="toggleErrors">{{
+      <a class="errorToggle" href="javascript:;" @click="toggleErrors">{{
         !showErrors ? "show errors" : "hide errors"
       }}</a>
     </div>
@@ -55,14 +55,14 @@ export default defineComponent({
 
 <style scoped>
 .action {
-  background: #cccccc;
+  background: #eaeaea;
   padding: 0.2rem;
   padding-right: 1rem;
   padding-left: 1rem;
   font-size: 0.9rem;
 }
 .current {
-  font-size: 0.5rem;
+  font-size: 0.6rem;
 }
 .error {
   color: red;
@@ -76,5 +76,12 @@ export default defineComponent({
 }
 .errors {
   margin: 0;
+}
+.errorToggle {
+  color: white;
+  margin-left: 5px;
+  margin-right: 5px;
+  text-decoration: underline;
+  font-size: 0.9rem;
 }
 </style>

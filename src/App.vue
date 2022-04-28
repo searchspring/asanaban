@@ -3,10 +3,13 @@
     <div>
       <img src="./assets/logo.png" alt="logo" />
     </div>
+
     <search />
     <project-selector />
-    <sign-in />
     <actions />
+    <div style="margin-left: auto">
+      <sign-in />
+    </div>
   </div>
   <router-view />
 </template>
@@ -51,6 +54,7 @@ export default defineComponent({
 body {
   margin: 0;
 }
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -62,13 +66,17 @@ body {
 #nav {
   text-align: left;
   background-color: #3b006d;
+  display: flex;
+  align-items: center;
 }
+
 #nav div,
 #nav img {
   vertical-align: middle;
   display: inline-block;
 }
-#nav > div {
+
+#nav>div {
   margin-right: 1rem;
 }
 </style>

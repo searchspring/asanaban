@@ -26,7 +26,7 @@
         <label>tags</label>
         <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
       </div>
-      <div class="subtasks" v-if="taskEditorSectionIdAndTask.task.subtasks.length > 0">
+      <div class="subtasks" v-if="taskEditorSectionIdAndTask.task.subtasks?.length > 0">
         <label>subtasks</label>
         <n-list style="font-size: 0.8rem">
           <n-list-item v-for="subtask in taskEditorSectionIdAndTask.task.subtasks" :key="subtask.gid">
@@ -59,7 +59,7 @@
       </div>
       <div class="button-bar">
         <n-button strong secondary class="primary left" @click="hide()">cancel</n-button>
-        <n-button type="primary" class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <n-button strong type="primary" class="primary right" @click="save(taskEditorSectionIdAndTask)">
           save
         </n-button>
         <div class="middle-buttons">
@@ -284,7 +284,7 @@ textarea {
 
 .task-editor {
   border-radius: 8px;
-  padding: 20px;
+  padding: 5px 15px 10px 15px;
   position: fixed;
   top: 50%;
   left: 50%;
