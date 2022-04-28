@@ -1,13 +1,6 @@
 <template>
-  <div>
-    <!-- show search bar if signed in -->
-    <div v-if="loggedIn">
-      <input
-        type="text"
-        v-model="search"
-        placeholder="Search for a task..."
-      />
-    </div>
+  <div v-if="loggedIn">
+    <n-input type="text" size="small" placeholder="Search for a task..." v-model:value="search" />
   </div>
 </template>
 
@@ -15,8 +8,12 @@
 import { useAuthStore } from "@/store/auth";
 import { usePrefStore } from "@/store/preferences";
 import { computed, defineComponent, ref, watch } from "vue";
+import { NInput } from "naive-ui";
 
 export default defineComponent({
+  components: {
+    NInput
+  },
   setup() {
     const prefStore = usePrefStore();
     const authStore = useAuthStore();

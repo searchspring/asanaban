@@ -259,16 +259,19 @@ function removeDragOverClass() {
   display: flex;
   flex-wrap: nowrap;
   font-size: 0.8rem;
+  background-color: #dddddd;
 }
 .nav-title {
+  font-size: 1.1rem;
   flex-grow: 1;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
 }
 .nav-item {
-  font-size: 0.5rem;
+  font-size: 0.7rem;
   margin-left: 0.2rem;
   margin-right: 0.2rem;
+  padding-top: 0.3rem;
 }
 .column-nav div,
 .column-nav a {
@@ -276,8 +279,8 @@ function removeDragOverClass() {
 }
 .column {
   text-align: left;
-  background-color: #dddddd;
-  margin-left: 1px;
+  background-color: #eaeaea;
+  margin-left: 2px;
   flex-basis: 100%;
   display: flex;
   flex-flow: column;
@@ -295,9 +298,6 @@ function removeDragOverClass() {
 }
 .drag-over {
   background-color: #f0f0f0;
-}
-.count {
-  font-size: 0.5rem;
 }
 .over-budget {
   background-color: red;
