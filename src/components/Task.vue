@@ -196,6 +196,8 @@ hr {
   display: inline-block;
   margin-right: 0.45rem;
   vertical-align: middle;
+  width: 21px;
+  height: 21px;
 }
 
 .footer {
