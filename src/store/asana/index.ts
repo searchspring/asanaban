@@ -16,6 +16,7 @@ import {
 import { Move, Swimlane } from "@/types/layout";
 import { getColumnCount, getPrettyColumnName, convertAsanaColorToHex } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
+import { ColumnChange } from "@/utils/custom-fields";
 
 
 export const useAsanaStore = defineStore("asana", {
@@ -235,9 +236,7 @@ export const useAsanaStore = defineStore("asana", {
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
       const task = this.tasks.find(task => task.gid === taskId)!;
-      const columnChangeIdx = task?.custom_fields?.findIndex(
-        field => field.name === "column-change"
-      );
+      const columnChangeIdx = task?.custom_fields?.findIndex(field => field.name === ColumnChange);
 
       if (columnChangeIdx === undefined) return;
 
@@ -292,6 +291,7 @@ export const useAsanaStore = defineStore("asana", {
           assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
+          custom_fields: taskAndSectionId.task.custom_fields.reduce((obj, cur) => ({ ...obj, [cur.gid]: cur.enum_value?.gid ?? cur.number_value ?? cur.text_value }), {})
         } as any); // asana interface has incorrect type defintion for assignee - had to typecast to allow null type for assignee field
 
         this.UPDATE_STORIES(taskAndSectionId);

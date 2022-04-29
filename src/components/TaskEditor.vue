@@ -19,13 +19,18 @@
       </div>
       <div class="description">
         <label for="description">description</label>
-        <TextEditor :html="htmlNotes" :forDescription="true"
-          v-on:update="htmlNotes = $event" />
+        <TextEditor :html="htmlNotes" :forDescription="true" v-on:update="htmlNotes = $event" />
       </div>
       <div class="tags">
         <label>tags</label>
-        <TagSelector :task="taskEditorSectionIdAndTask.task"></TagSelector>
+        <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
+      <template v-for="(field, index) in taskEditorSectionIdAndTask.task.custom_fields" :key="field.name">
+        <div class="field" v-if="isDisplayableCustomField(field)">
+          <label>{{ field.name }}</label>
+          <custom-enum-field-selector :field="field" v-model:selectedGid="customFieldSelectedGids[index]" />
+        </div>
+      </template>
       <div class="subtasks" v-if="taskEditorSectionIdAndTask.task.subtasks?.length > 0">
         <label>subtasks</label>
         <n-list style="font-size: 0.8rem">
@@ -95,9 +100,11 @@ import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
 import { NButton, NList, NListItem, NIcon } from 'naive-ui';
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
+import { isDisplayableCustomField } from "@/utils/custom-fields";
+import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
 
 export default defineComponent({
-  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton, NList, NListItem, NIcon, ExternalLinkAlt, CheckCircleRegular, CheckCircle },
+  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton, NList, NListItem, NIcon, ExternalLinkAlt, CheckCircleRegular, CheckCircle, CustomEnumFieldSelector },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -105,12 +112,14 @@ export default defineComponent({
     const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
     const htmlNotes = ref<string>();
+    const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = asanaStore.selectedProject;
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
     });
 
+    // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
       if (taskEditorSectionIdAndTask.value) {
         window.setTimeout(() => {
@@ -120,6 +129,11 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
+
+        customFieldSelectedGids.value = [];
+        for (const field of taskEditorSectionIdAndTask.value.task.custom_fields) {
+          customFieldSelectedGids.value.push(field.enum_value?.gid);
+        }
 
         const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
         // to handle when creating a new task with no date or a task initially has no due date
@@ -132,20 +146,27 @@ export default defineComponent({
     });
 
     const save = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
-      taskEditorSectionIdAndTask.task.name = taskName.value ?? "";
+      const task = taskEditorSectionIdAndTask.task;
+      task.name = taskName.value ?? "";
 
       const dateString = formattedDate(dueDate.value);
-      taskEditorSectionIdAndTask.task.due_on = dateString;
+      task.due_on = dateString;
 
       if (!assigneeGid.value) {
-        taskEditorSectionIdAndTask.task.assignee = null;
+        task.assignee = null;
       } else {
         const selectedUser = asanaStore.users.find((user) => user.gid === assigneeGid.value);
         setAssigneeOnExistingTask(selectedUser!, taskEditorSectionIdAndTask);
       }
 
-      taskEditorSectionIdAndTask.task.html_notes = htmlNotes.value;
-
+      task.html_notes = htmlNotes.value;
+      for (let i = 0; i < task.custom_fields.length; i++) {
+        const field = task.custom_fields[i];
+        if (isDisplayableCustomField(field)) {
+          const selectedVal = field.enum_options?.find(o => o.gid === customFieldSelectedGids.value[i]) ?? null;
+          field.enum_value = selectedVal;
+        }
+      }
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
       } else {
@@ -186,6 +207,8 @@ export default defineComponent({
       taskName,
       assigneeGid,
       htmlNotes,
+      isDisplayableCustomField,
+      customFieldSelectedGids,
       save,
       deleteTask,
       hide,
@@ -251,7 +274,8 @@ label {
 .tags,
 .name,
 .description,
-.subtasks {
+.subtasks,
+.field {
   text-align: left;
 }
 

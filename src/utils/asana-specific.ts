@@ -30,24 +30,41 @@ function convertAsanaColorToHex(color: string): Hex {
   const black = "#000000";
   const white = "#ffffff";
 
-  const colors = { 
+  const colors = {
     "none": { background: "#C6C4C4", font: black },
-    "dark-red": { background: "#E0726E", font: black }, 
-    "dark-orange": { background: "#DF9077", font: black } , 
-    "light-orange": { background: "#E9BE78", font: black }, 
+    "dark-red": { background: "#E0726E", font: black },
+    "dark-orange": { background: "#DF9077", font: black },
+    "light-orange": { background: "#E9BE78", font: black },
     "dark-brown": { background: "#F5DF82", font: black },
-    "light-green": { background: "#B4CC67", font: black }, 
+    "light-green": { background: "#B4CC67", font: black },
     "dark-green": { background: "#6D9F85", font: white },
     "light-teal": { background: "#71C8C3", font: black },
     "dark-teal": { background: "#ADE5E2", font: black },
-    "light-blue": { background: "#4E74CB", font: white }, 
-    "dark-purple": { background: "#8A86E1", font: white } , 
-    "light-purple": { background: "#A971CE", font: white }, 
+    "light-blue": { background: "#4E74CB", font: white },
+    "dark-purple": { background: "#8A86E1", font: white },
+    "light-purple": { background: "#A971CE", font: white },
     "light-pink": { background: "#EDAEEB", font: black },
-    "dark-pink": { background: "#E278B0 ", font: black }, 
+    "dark-pink": { background: "#E278B0 ", font: black },
     "light-red": { background: "#EE9C9C", font: black },
     "light-warm-gray": { background: "#6D6E6F", font: white },
+    "yellow-green": { background: "#aecf55", font: black },
+    "yellow": { background: "#f8df72", font: black },
+    "cool-gray": { background: "#6d6e6f", font: white },
+    "red": { background: "#f06a6a", font: white },
+    "aqua": { background: "#9ee7e3", font: black },
+    "green": { background: "#5da283", font: white },
+    "yellow-orange": { background: "#f1bd6c", font: black },
+    "orange": { background: "#ec8d71", font: black },
+    "blue": { background: "#4573d2", font: black },
+    "magenta": { background: "#f9aaef", font: black },
+    "purple": { background: "#b36bd4", font: black },
+    "indigo": { background: "#8d84e8", font: black }
   };
+
+  if (!colors[color]) {
+    console.log("Don't know Asana hex colours for", color, ":(")
+    return colors["none"];
+  }
 
   return colors[color];
 }

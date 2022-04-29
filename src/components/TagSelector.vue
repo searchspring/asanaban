@@ -18,7 +18,7 @@ import { TagOption } from '@/types/vue';
 import { Task, TaskTag } from "@/types/asana";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
-import { renderTag } from '@/utils/renderTag';
+import { closeableTag } from '@/utils/renderTag';
 
 export default defineComponent({
   components: { NSelect, NSpace },
@@ -49,7 +49,7 @@ export default defineComponent({
     return {
       tagIds,
       options,
-      renderTag,
+      renderTag: closeableTag,
     }
   }
 });
