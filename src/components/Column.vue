@@ -1,49 +1,21 @@
 <template>
-  <div
-    class="column"
-    :class="classObject"
-    @mouseenter="mouseInside = true"
-    @mouseleave="mouseInside = false"
-  >
+  <div class="column" :class="classObject" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
     <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
-      <a
-        class="nav-item"
-        :class="{ mouseInside: mouseInside }"
-        v-if="!columnCollapsed(section?.gid ?? '')"
-        href="javascript:;"
-        @click.prevent.stop="showTaskEditor(section?.gid ?? '')"
-        >add task</a
-      >
+      <a class="nav-item" :class="{ mouseInside: mouseInside }" v-if="!columnCollapsed(section?.gid ?? '')"
+        href="javascript:;" @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
       <div class="count nav-item" v-if="!columnCollapsed(section?.gid ?? '')">
         {{ taskCount(section?.gid ?? '') }} of {{ maxTaskCount() }}
       </div>
       <div class="nav-item" v-if="isSectionComplete(columnName)">
-        <a
-          class="nav-item"
-          :class="{ mouseInside: mouseInside }"
-          v-if="!columnCollapsed(section?.gid ?? '')"
-          href="javascript:;"
-          @click.prevent.stop="release(section?.gid ?? '')"
-          >release</a
-        >
+        <a class="nav-item" :class="{ mouseInside: mouseInside }" v-if="!columnCollapsed(section?.gid ?? '')"
+          href="javascript:;" @click.prevent.stop="release(section?.gid ?? '')">release</a>
       </div>
     </div>
-    <div
-      v-if="!columnCollapsed(section?.gid ?? '')"
-      @drop="onDrop($event, section?.gid ?? '')"
-      @dragenter="onDragEnter($event)"
-      @dragstart="onDragStart()"
-      @dragend="onDragEnd()"
-      @dragover.prevent
-      class="droppable"
-      v-bind:id="section?.gid"
-    >
-      <task
-        v-for="task in tasks(section?.gid ?? '')"
-        :task="task"
-        :key="task.gid"
-      ></task>
+    <div v-if="!columnCollapsed(section?.gid ?? '')" @drop="onDrop($event, section?.gid ?? '')"
+      @dragenter="onDragEnter($event)" @dragstart="onDragStart()" @dragend="onDragEnd()" @dragover.prevent
+      class="droppable" v-bind:id="section?.gid">
+      <task v-for="task in tasks(section?.gid ?? '')" :task="task" :key="task.gid"></task>
     </div>
   </div>
 </template>
@@ -115,7 +87,7 @@ export default defineComponent({
       if (section) {
         return (
           section.maxTaskCount !== "-1" &&
-          taskCount(section.gid) > parseInt(section.maxTaskCount)
+          taskCountForSameNameColumn(section) > parseInt(section.maxTaskCount)
         );
       }
       return false;
@@ -128,6 +100,16 @@ export default defineComponent({
         });
       }).length;
     };
+
+    const taskCountForSameNameColumn = (section: Section) => {
+      const columnName = getPrettyColumnName(section.name).toLowerCase();
+      const sectionsToSum = asanaStore.sections.filter(s => {
+        const c = getPrettyColumnName(s.name).toLowerCase();
+        return columnName === c;
+      });
+
+      return sectionsToSum.reduce((val, s) => val + taskCount(s.gid), 0);
+    }
 
     const maxTaskCount = () => {
       const section = props.section;
@@ -261,22 +243,26 @@ function removeDragOverClass() {
   font-size: 0.8rem;
   background-color: #dddddd;
 }
+
 .nav-title {
   font-size: 1.1rem;
   flex-grow: 1;
   padding-top: 0.3rem;
   padding-bottom: 0.3rem;
 }
+
 .nav-item {
   font-size: 0.7rem;
   margin-left: 0.2rem;
   margin-right: 0.2rem;
   padding-top: 0.3rem;
 }
+
 .column-nav div,
 .column-nav a {
   vertical-align: bottom;
 }
+
 .column {
   text-align: left;
   background-color: #eaeaea;
@@ -285,9 +271,11 @@ function removeDragOverClass() {
   display: flex;
   flex-flow: column;
 }
+
 .droppable {
   flex: 1 1 auto;
 }
+
 .column.collapsed {
   min-width: 1.5rem !important;
   max-width: 1.5rem;
@@ -296,18 +284,23 @@ function removeDragOverClass() {
   padding-left: 0.1rem;
   padding-right: 0.1rem;
 }
+
 .drag-over {
   background-color: #f0f0f0;
 }
+
 .over-budget {
   background-color: red;
 }
+
 .search-match {
   background-color: yellow;
 }
+
 a.nav-item:hover {
   text-decoration: underline;
 }
+
 a.nav-item {
   text-decoration: none;
   font-weight: normal;
@@ -315,6 +308,7 @@ a.nav-item {
   display: inline-block;
   opacity: 0.3;
 }
+
 a.nav-item.mouseInside {
   opacity: 1;
 }
