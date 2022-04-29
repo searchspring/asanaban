@@ -8,21 +8,29 @@
     <project-selector />
     <actions />
     <div style="margin-left: auto">
-      <sign-in />
+      <n-space>
+        <background-selector />
+        <sign-in />
+      </n-space>
     </div>
   </div>
   <router-view />
 </template>
 
 <script lang="ts">
+import { defineComponent, onMounted, watch } from "vue";
 import router from "@/router";
 import { parse } from "query-string";
+
 import ProjectSelector from "@/components/ProjectSelector.vue";
 import SignIn from "@/components/SignIn.vue";
 import Actions from "@/components/Actions.vue";
-import { defineComponent, onMounted } from "vue";
-import Search from "./components/Search.vue";
-import { useAuthStore } from "./store/auth";
+import Search from "@/components/Search.vue";
+import BackgroundSelector from "@/components/BackgroundSelector.vue";
+import { NSpace } from "naive-ui";
+
+import { useAuthStore } from "@/store/auth";
+import { usePrefStore } from "@/store/preferences";
 
 export default defineComponent({
   components: {
@@ -30,9 +38,12 @@ export default defineComponent({
     ProjectSelector,
     Actions,
     Search,
+    BackgroundSelector,
+    NSpace
   },
   setup() {
     const authStore = useAuthStore();
+    const prefStore = usePrefStore();
 
     const tryLoginFromSession = () => authStore.LOGIN_FROM_SESSION();
 
@@ -46,6 +57,18 @@ export default defineComponent({
         router.push({ name: "Home" });
       }
     });
+
+    watch(()=>prefStore.backgroundImage, () => {
+if (prefStore.backgroundImage) {
+        document.body.style.backgroundImage = `url('${prefStore.backgroundImage}')`;
+        document.body.style.backgroundSize = "cover";
+        document.body.style.backgroundAttachment = "fixed";
+      } else {
+        document.body.style.backgroundImage = "";
+        document.body.style.backgroundSize = "";
+        document.body.style.backgroundAttachment = "";
+      }
+    }, { immediate: true});
   }
 });
 </script>

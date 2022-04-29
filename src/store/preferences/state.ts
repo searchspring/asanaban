@@ -13,4 +13,5 @@ export interface State {
   swimlaneStates: SwimlaneState,
   search: string,
   taskEditorSectionIdAndTask: TaskAndSectionId | null,
+  backgroundImage: string | null
 }

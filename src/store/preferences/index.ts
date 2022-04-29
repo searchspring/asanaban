@@ -1,7 +1,6 @@
 import jsonstore from "../../utils/jsonstore";
 import { State } from "./state";
-import { Assignee, TaskAndSectionId, User } from "@/types/asana";
-import { formattedDate } from "../../utils/date";
+import { TaskAndSectionId } from "@/types/asana";
 import { defineStore } from "pinia";
 import { useAsanaStore } from "../asana";
 
@@ -11,6 +10,7 @@ export const usePrefStore = defineStore("preferences", {
     swimlaneStates: jsonstore.get("swimlaneStates", {}),
     search: "",
     taskEditorSectionIdAndTask: null,
+    backgroundImage: jsonstore.get("backgroundImage", null)
   }),
   actions: {
     TOGGLE_COLUMN(gid: string) {
@@ -50,6 +50,11 @@ export const usePrefStore = defineStore("preferences", {
       if (sectionIdAndTask?.task?.gid) {
         useAsanaStore().LOAD_STORIES(sectionIdAndTask.task);
       }
+    },
+
+    SET_BACKGROUND(image: string | null) {
+      jsonstore.set("backgroundImage", image);
+      this.backgroundImage = image;
     }
   }
 });
