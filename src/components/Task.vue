@@ -3,34 +3,46 @@
     @dragstart="startDrag($event, task)" @dragend="endDrag($event)" @click="edit()">
     <div class="text">
       <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
-      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0"><tree-view-alt/></n-icon>
+      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
+        <tree-view-alt />
+      </n-icon>
     </div>
     <div class="label" v-if="dueDate">
       <hr>
       Due Date
       <div class="date">{{ dueDate }}</div>
     </div>
-    <div class="footer" v-if="tags.length > 0">
+    <div class="footer">
       <div class="tag" v-for="tag in tags" :key="tag.name" :style="{
         'background-color': tag.hexes?.background,
         color: tag.hexes?.font,
       }">
         {{ tag.name }}
       </div>
+      <n-tag round size="small" v-for="field in customEnumFieldValues" :key="field.name" :color="{
+        color: field.hexes.background,
+        textColor: field.hexes.font,
+        borderColor: '#ffffff'
+      }">
+        {{ field.name }}
+      </n-tag>
+
     </div>
   </div>
 </template>
 
 <script lang="ts">
-import { Assignee, Task } from "@/types/asana";
+import { Task } from "@/types/asana";
 import { computed, defineComponent, PropType } from "vue";
 import differenceInDays from "date-fns/differenceInDays/index";
 import parseISO from "date-fns/parseISO/index";
 import { parse } from "date-fns";
 import { asanaDateFormat } from "../utils/date";
 import { usePrefStore } from "@/store/preferences";
-import { NIcon } from "naive-ui";
-import { TreeViewAlt} from "@vicons/carbon";
+import { NIcon, NTag } from "naive-ui";
+import { TreeViewAlt } from "@vicons/carbon";
+import { convertAsanaColorToHex } from "@/utils/asana-specific";
+import { getDisplayableCustomFields } from "@/utils/custom-fields";
 
 export default defineComponent({
   props: {
@@ -41,27 +53,35 @@ export default defineComponent({
   },
   components: {
     NIcon,
+    NTag,
     TreeViewAlt
   },
   setup(props) {
     const prefStore = usePrefStore();
 
     const assignee = computed(() => {
-      const photo = props.task?.assignee?.photo?.image_21x21 ?? "";
+      const photo = props.task.assignee?.photo?.image_21x21 ?? "";
       return photo;
     });
 
     const tags = computed(() => {
-      if (props.task) {
-        return props.task.tags.map((tag) => {
-          return { name: tag.name.substring(0, 1), hexes: tag.hexes };
-        });
-      }
-      return [];
+      return props.task.tags.map((tag) => {
+        return { name: tag.name.substring(0, 1), hexes: tag.hexes };
+      });
+    });
+
+    const customEnumFieldValues = computed(() => {
+      const fields = getDisplayableCustomFields(props.task.custom_fields).filter(f => !!f.enum_value); // We only care about custom fields that currently have an assigned value
+
+      return fields.map(f => {
+        return {
+          name: f.enum_value!.name, hexes: convertAsanaColorToHex(f.enum_value!.color)
+        };
+      })
     });
 
     const dueDate = computed(() => {
-      return props.task?.due_on?.substring(0, 10) ?? "";
+      return props.task.due_on?.substring(0, 10) ?? "";
     });
 
     const opacity = computed(() => {
@@ -75,7 +95,7 @@ export default defineComponent({
     });
 
     const backgroundAndTextColor = computed(() => {
-      const dueDate = props.task?.due_on?.substring(0, 10) ?? "";
+      const dueDate = props.task.due_on?.substring(0, 10) ?? "";
       if (dueDate) {
         if (differenceInDays(parse(dueDate, asanaDateFormat, new Date()), new Date()) < 5) {
           return {
@@ -121,6 +141,7 @@ export default defineComponent({
     return {
       assignee,
       tags,
+      customEnumFieldValues,
       dueDate,
       opacity,
       backgroundAndTextColor,
