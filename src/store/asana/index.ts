@@ -36,7 +36,8 @@ export const useAsanaStore = defineStore("asana", {
       locked: false,
       lastLocked: null,
       lastReloadStart: null
-    }
+    },
+    storiesLoading: false
   }),
   getters: {
     IS_SECTION_COMPLETE: (state) => (columnName: string) => {
@@ -389,6 +390,7 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_STORIES(task: Task): void {
+      this.storiesLoading = true; // Set this before the action is invoked
       const loadStories = async () => {
         if (asanaClient) {
           const storiesResponse = await asanaClient.stories
@@ -400,11 +402,16 @@ export const useAsanaStore = defineStore("asana", {
                 created_by.name,\
                 resource_subtype,\
                 type,created_at"
-            } as any);
+            } as any)
+            .catch(() => {
+              this.storiesLoading = false;
+              return { data: [] }; // Keep the response the same to allow the next steps to work
+            });
 
           task.stories = storiesResponse.data.filter(story => {
             return story["resource_subtype"] === "comment_added";
           });
+          this.storiesLoading = false;
         }
       }
       this.ADD_ACTION("loading stories", loadStories);

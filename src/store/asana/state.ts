@@ -37,5 +37,6 @@ export interface State {
   users: User[],
   allTags: TaskTag[],
   lastUpdatedTime: string | null,
-  reloadState: ReloadState
+  reloadState: ReloadState,
+  storiesLoading: boolean
 }
