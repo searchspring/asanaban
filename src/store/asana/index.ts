@@ -402,7 +402,11 @@ export const useAsanaStore = defineStore("asana", {
                 created_by.name,\
                 resource_subtype,\
                 type,created_at"
-            } as any);
+            } as any)
+            .catch(() => {
+              this.storiesLoading = false;
+              return { data: [] }; // Keep the response the same to allow the next steps to work
+            });
 
           task.stories = storiesResponse.data.filter(story => {
             return story["resource_subtype"] === "comment_added";
