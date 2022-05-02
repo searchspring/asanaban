@@ -1,15 +1,15 @@
 <template>
   <div class="column" :class="classObject" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
     <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
-      <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')"
-        href="javascript:;" @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
+      <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')" href="javascript:;"
+        @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
       <div class="count nav-item" v-if="!columnCollapsed(section?.gid ?? '')">
         {{ taskCount(section?.gid ?? '') }} of {{ maxTaskCount() }}
       </div>
       <div class="nav-item" v-if="isSectionComplete(columnName)">
-        <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')"
-          href="javascript:;" @click.prevent.stop="release(section?.gid ?? '')">release</a>
+        <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')" href="javascript:;"
+          @click.prevent.stop="release(section?.gid ?? '')">release</a>
       </div>
     </div>
     <div v-if="!columnCollapsed(section?.gid ?? '')" @drop="onDrop($event, section?.gid ?? '')"
@@ -267,7 +267,7 @@ function removeDragOverClass() {
 .column {
   text-align: left;
   /*background-color: #eaeaea;*/
-  background-image: linear-gradient(to top,rgba(200,200,200,.4),rgba(200,200,200,.8));
+  background-image: linear-gradient(to top, rgba(200, 200, 200, .4), rgba(200, 200, 200, .8));
   border-radius: 5px;
   margin-left: 2px;
   flex-basis: 100%;
@@ -293,11 +293,11 @@ function removeDragOverClass() {
 }
 
 .over-budget {
-  background-color: red;
+  background-image: linear-gradient(to top, rgba(248, 113, 113, 0.4), rgba(248, 113, 113, 0.8));
 }
 
 .search-match {
-  background-color: yellow;
+  background-image: linear-gradient(to top, rgba(253, 224, 71, 0.4), rgba(253, 224, 71, 0.8));
 }
 
 a.nav-item:hover {
