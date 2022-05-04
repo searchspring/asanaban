@@ -142,18 +142,6 @@ export const useAsanaStore = defineStore("asana", {
       jsonstore.set("sections", this.sections);
     },
 
-    SET_TASKS(payload: Task[]): void {
-      this.tasks = payload;
-      colorizeTaskTags(this.tasks);
-      this.SET_TAGS(getAllTaskTags(this.tasks));
-    },
-
-    ADD_TASKS(payload: Task[]): void {
-      this.tasks.push(...payload);
-      colorizeTaskTags(this.tasks);
-      this.SET_TAGS(getAllTaskTags(this.tasks));
-    },
-
     CLEAR_ERRORS(): void {
       this.errors = [];
     },
@@ -188,7 +176,6 @@ export const useAsanaStore = defineStore("asana", {
         }
       });
       colorizeTaskTags(this.tasks);
-      this.SET_TAGS(getAllTaskTags(this.tasks));
     },
 
     MOVE_TASK(payload: Move): void {
@@ -455,7 +442,7 @@ export const useAsanaStore = defineStore("asana", {
     LOAD_TASKS(): void {
       this.ADD_ACTION(
         "loading tasks",
-        async () => loadTasks(this.ADD_TASKS, null)
+        async () => loadTasks(this.MERGE_TASKS, null)
       );
     },
 
@@ -562,15 +549,18 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
       options["modified_since"] = lastUpdated;
     }
     let taskResponse: any = await asanaClient.tasks.findAll(options);
-    if (!lastUpdated) {
-      asanaStore.SET_TASKS([]);
-      asanaStore.SET_TAGS([]);
-    }
+    
     const tasks: Task[] = [];
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
     action(tasks);
+
+
+    if (!lastUpdated) {
+      asanaStore.SET_TAGS(getAllTaskTags(tasks));
+    }
+
     asanaStore.lastUpdatedTime = new Date().toISOString();
   }
 }
