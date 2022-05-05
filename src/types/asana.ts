@@ -33,9 +33,9 @@ export type Task = Omit<asana.resources.Tasks.Type, "tags" | "custom_fields"> & 
   created_by: { name: string },
   html_notes: string | undefined,
   stories: Stories[],
-  subtasks: SubTask[],
+  subtasks: SubTask[] | null | undefined,
   tags: TaskTag[],
-  custom_fields: CustomField[]
+  custom_fields: CustomField[] | null | undefined
 };
 
 export type Assignee = asana.resources.Assignee;
