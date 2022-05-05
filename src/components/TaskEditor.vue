@@ -113,7 +113,7 @@ export default defineComponent({
     const dueDate = ref<Date>();
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
-    const projectId = asanaStore.selectedProject;
+    const projectId = computed(() => asanaStore.selectedProject);
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
@@ -198,7 +198,7 @@ export default defineComponent({
       hide();
     };
 
-    const makeAsanaHref = (taskId: string) => `https://app.asana.com/0/${projectId}/${taskId}`;
+    const makeAsanaHref = (taskId: string) => `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
     return {
       taskEditorSectionIdAndTask,
