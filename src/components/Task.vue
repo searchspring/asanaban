@@ -2,7 +2,15 @@
   <div v-bind:id="task.gid" class="task" draggable="true" :style="{ opacity: opacity, ...backgroundAndTextColor }"
     @dragstart="startDrag($event, task)" @dragend="endDrag($event)" @click="edit()">
     <div class="text">
-      <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
+      <div aria-hidden="true" class="assignee-icon" v-if="assignee.name">
+        <span class="photo avatar" v-if="!assignee.photo" v-bind:style="{ backgroundColor: getAvatarColor(assignee.name) }">
+          <div class="Avatar AvatarPhoto AvatarPhoto--small AvatarPhoto--color2" role="img" :aria-label="assignee.name">
+            <div aria-hidden="true">{{getAssigneeInitials(assignee.name)}}</div>
+          </div>
+        </span>
+        <img class="photo" v-if="assignee.photo" :src="assignee.photo" />
+      </div>
+      {{ task.name }}
       <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
         <tree-view-alt />
       </n-icon>
@@ -43,6 +51,7 @@ import { NIcon, NTag } from "naive-ui";
 import { TreeViewAlt } from "@vicons/carbon";
 import { convertAsanaColorToHex } from "@/utils/asana-specific";
 import { getDisplayableCustomFields } from "@/utils/custom-fields";
+import avatarColors from "../utils/avatar-colors";
 
 export default defineComponent({
   props: {
@@ -56,12 +65,31 @@ export default defineComponent({
     NTag,
     TreeViewAlt
   },
+  methods:{
+    getAssigneeInitials(assignee: string) {
+      if (assignee) {
+        const nameSplit = assignee.split(" ");  
+        return nameSplit.length > 1 ? nameSplit[0][0] + nameSplit[nameSplit.length - 1][0] : nameSplit[0][0];
+      }
+    },
+    getAvatarColor(assignee: string) {
+      if (!assignee) return avatarColors[0];
+
+      let hash = 0;
+      for (let i = 0; i < assignee.length; ++i) {
+        hash = ((hash << 5) - hash) + assignee.charCodeAt(i);
+        hash |= 0;
+      }
+      return avatarColors[-(hash % avatarColors.length)];
+    }
+  },
   setup(props) {
     const prefStore = usePrefStore();
-
     const assignee = computed(() => {
-      const photo = props.task.assignee?.photo?.image_21x21 ?? "";
-      return photo;
+      return {
+        name: props.task.assignee?.name, 
+        photo: props.task.assignee?.photo?.image_21x21 ?? ""
+      };
     });
 
     const tags = computed(() => {
@@ -219,6 +247,16 @@ hr {
   vertical-align: middle;
   width: 21px;
   height: 21px;
+}
+
+.avatar {
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 8px;
+  font-weight: 700;
+  color: white;
 }
 
 .footer {
