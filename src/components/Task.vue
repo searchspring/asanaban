@@ -3,7 +3,7 @@
     @dragstart="startDrag($event, task)" @dragend="endDrag($event)" @click="edit()">
     <div class="text">
       <img class="photo" v-if="assignee" :src="assignee" />{{ task.name }}
-      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
+      <n-icon class="subtask-icon" v-if="task.subtasks?.length > 0">
         <tree-view-alt />
       </n-icon>
     </div>

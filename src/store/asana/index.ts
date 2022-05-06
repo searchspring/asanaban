@@ -231,7 +231,7 @@ export const useAsanaStore = defineStore("asana", {
       const body = {
         custom_fields: {}
       }
-      if (columnChangeIdx !== -1) {
+      if (columnChangeIdx !== -1 && task.custom_fields) {
         body.custom_fields[task.custom_fields[columnChangeIdx].gid] = new Date().toISOString();
         (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
       }
@@ -279,7 +279,7 @@ export const useAsanaStore = defineStore("asana", {
           assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
-          custom_fields: taskAndSectionId.task.custom_fields.reduce((obj, cur) => ({ ...obj, [cur.gid]: cur.enum_value?.gid ?? cur.number_value ?? cur.text_value }), {})
+          custom_fields: taskAndSectionId.task.custom_fields?.reduce((obj, cur) => ({ ...obj, [cur.gid]: cur.enum_value?.gid ?? cur.number_value ?? cur.text_value }), {})
         } as any); // asana interface has incorrect type defintion for assignee - had to typecast to allow null type for assignee field
 
         this.UPDATE_STORIES(taskAndSectionId);

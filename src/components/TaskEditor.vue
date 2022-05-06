@@ -131,9 +131,7 @@ export default defineComponent({
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
 
         customFieldSelectedGids.value = [];
-        for (const field of taskEditorSectionIdAndTask.value.task.custom_fields) {
-          customFieldSelectedGids.value.push(field.enum_value?.gid);
-        }
+        taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) => customFieldSelectedGids.value.push(el.enum_value?.gid));
 
         const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
         // to handle when creating a new task with no date or a task initially has no due date
@@ -160,13 +158,14 @@ export default defineComponent({
       }
 
       task.html_notes = htmlNotes.value;
-      for (let i = 0; i < task.custom_fields.length; i++) {
-        const field = task.custom_fields[i];
+      task.custom_fields?.forEach ((el, idx) => {
+        const field = el;
         if (isDisplayableCustomField(field)) {
-          const selectedVal = field.enum_options?.find(o => o.gid === customFieldSelectedGids.value[i]) ?? null;
+          const selectedVal = field.enum_options?.find(o => o.gid === customFieldSelectedGids.value[idx]) ?? null;
           field.enum_value = selectedVal;
         }
-      }
+      })
+
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
       } else {
