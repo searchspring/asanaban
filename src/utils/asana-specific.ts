@@ -7,7 +7,7 @@ export interface Hex {
 
 function getPrettyColumnName(columnName: string): string {
   const parts = columnName.split(/[:|]/);
-  if (parts && parts.length > 0) {
+  if (parts && parts.length > 1) {
     return parts[1];
   }
   return columnName;
