@@ -76,6 +76,7 @@ if (prefStore.backgroundImage) {
 <style lang="scss">
 body {
   margin: 0;
+  line-height: 1.2 !important;
 }
 
 #app {
