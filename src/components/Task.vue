@@ -168,7 +168,7 @@ hr {
   margin-bottom: 4px;
   background-color: white;
   margin-right: 2px;
-  width: 48%;
+  width: 97%;
   max-width: 15rem;
   min-height: 2.5rem;
   cursor: move;
