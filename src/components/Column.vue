@@ -1,6 +1,6 @@
 <template>
-  <div class="column" :class="classObject" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
-    <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
+  <div class="column" :class="[classObject, singleTaskView ? 'single-task-view' : '']" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
+    <div class="column-nav" :class="singleTaskView ? 'single-task-view' : ''" @click="toggleColumn(section?.gid ?? '')">
       <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')" href="javascript:;"
         @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
@@ -15,7 +15,7 @@
     <div v-if="!columnCollapsed(section?.gid ?? '')" @drop="onDrop($event, section?.gid ?? '')"
       @dragenter="onDragEnter($event)" @dragstart="onDragStart()" @dragend="onDragEnd()" @dragover.prevent
       class="droppable" v-bind:id="section?.gid">
-      <task v-for="task in tasks(section?.gid ?? '')" :task="task" :key="task.gid"></task>
+      <task v-for="task in tasks(section?.gid ?? '')" :singleTaskView="singleTaskView" :task="task" :key="task.gid" />
     </div>
   </div>
 </template>
@@ -31,6 +31,7 @@ export default defineComponent({
   components: { Task },
   props: {
     section: Object as PropType<Section>,
+    singleTaskView: Boolean
   },
   setup(props) {
     const asanaStore = useAsanaStore();
@@ -246,7 +247,7 @@ function removeDragOverClass() {
 }
 
 .nav-title {
-  font-size: 1.1rem;
+  font-size: 110%;
   flex-grow: 1;
   padding: 0.3rem 0.2rem;
 }
@@ -274,8 +275,11 @@ function removeDragOverClass() {
   flex-flow: column;
 }
 
+
+
 .droppable {
   flex: 1 1 auto;
+  width: 100%;
 }
 
 .column.collapsed {
@@ -311,5 +315,12 @@ a.nav-item {
 
 a.nav-item.mouseInside {
   opacity: 1;
+}
+
+.column.single-task-view {
+  width: 20vw;
+}
+.column-nav.single-task-view {
+  width: 20vw;
 }
 </style>

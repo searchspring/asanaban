@@ -10,6 +10,7 @@
           v-for="section in sections(swimlane.name)"
           :section="section"
           :key="section.gid"
+          :singleTaskView="sections(swimlane.name).length > 5"
         />
       </swimlane>
     </div>
