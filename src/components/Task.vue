@@ -1,40 +1,50 @@
 <template>
-  <div v-bind:id="task.gid" class="task" draggable="true" :style="{ opacity: opacity, ...backgroundAndTextColor }"
-    @dragstart="startDrag($event, task)" @dragend="endDrag($event)" @click="edit()">
+  <div
+    v-bind:id="task.gid"
+    class="task"
+    draggable="true"
+    :style="{ opacity: opacity, ...backgroundAndTextColor }"
+    @dragstart="startDrag($event, task)"
+    @dragend="endDrag($event)"
+    @click="edit()"
+  >
     <div class="text">
-      <div aria-hidden="true" class="assignee-icon" v-if="assignee.name">
-        <span class="photo avatar" v-if="!assignee.photo" v-bind:style="{ backgroundColor: getAvatarColor(assignee.name) }">
-          <div class="Avatar AvatarPhoto AvatarPhoto--small AvatarPhoto--color2" role="img" :aria-label="assignee.name">
-            <div aria-hidden="true">{{getAssigneeInitials(assignee.name)}}</div>
-          </div>
-        </span>
-        <img class="photo" v-if="assignee.photo" :src="assignee.photo" />
-      </div>
+      <assignee-icon :assignee="assignee" v-if="assignee" />
       {{ task.name }}
       <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
         <tree-view-alt />
       </n-icon>
     </div>
     <div class="label" v-if="dueDate">
-      <hr>
+      <hr />
       Due Date
       <div class="date">{{ dueDate }}</div>
     </div>
     <div class="footer">
-      <div class="tag" v-for="tag in tags" :key="tag.name" :style="{
-        'background-color': tag.hexes?.background,
-        color: tag.hexes?.font,
-      }">
+      <div
+        class="tag"
+        v-for="tag in tags"
+        :key="tag.name"
+        :style="{
+          'background-color': tag.hexes?.background,
+          color: tag.hexes?.font,
+        }"
+      >
         {{ tag.name }}
       </div>
-      <n-tag round size="small" v-for="field in customEnumFieldValues" :key="field.name" :color="{
-        color: field.hexes.background,
-        textColor: field.hexes.font,
-        borderColor: '#ffffff'
-      }">
+      <n-tag
+        round
+        size="small"
+        v-for="field in customEnumFieldValues"
+        :key="field.name"
+        :color="{
+          color: field.hexes.background,
+          textColor: field.hexes.font,
+          borderColor: '#ffffff',
+        }"
+      >
         {{ field.name }}
       </n-tag>
-
     </div>
   </div>
 </template>
@@ -48,49 +58,27 @@ import { parse } from "date-fns";
 import { asanaDateFormat } from "../utils/date";
 import { usePrefStore } from "@/store/preferences";
 import { NIcon, NTag } from "naive-ui";
+import AssigneeIcon from "./AssigneeIcon.vue";
 import { TreeViewAlt } from "@vicons/carbon";
 import { convertAsanaColorToHex } from "@/utils/asana-specific";
 import { getDisplayableCustomFields } from "@/utils/custom-fields";
-import avatarColors from "../utils/avatar-colors";
 
 export default defineComponent({
   props: {
     task: {
       type: Object as PropType<Task>,
-      required: true
+      required: true,
     },
   },
   components: {
     NIcon,
     NTag,
-    TreeViewAlt
-  },
-  methods:{
-    getAssigneeInitials(assignee: string) {
-      if (assignee) {
-        const nameSplit = assignee.split(" ");  
-        return nameSplit.length > 1 ? nameSplit[0][0] + nameSplit[nameSplit.length - 1][0] : nameSplit[0][0];
-      }
-    },
-    getAvatarColor(assignee: string) {
-      if (!assignee) return avatarColors[0];
-
-      let hash = 0;
-      for (let i = 0; i < assignee.length; ++i) {
-        hash = ((hash << 5) - hash) + assignee.charCodeAt(i);
-        hash |= 0;
-      }
-      return avatarColors[-(hash % avatarColors.length)];
-    }
+    TreeViewAlt,
+    AssigneeIcon,
   },
   setup(props) {
     const prefStore = usePrefStore();
-    const assignee = computed(() => {
-      return {
-        name: props.task.assignee?.name, 
-        photo: props.task.assignee?.photo?.image_21x21 ?? ""
-      };
-    });
+    const assignee = computed(() => props.task.assignee);
 
     const tags = computed(() => {
       return props.task.tags.map((tag) => {
@@ -99,13 +87,16 @@ export default defineComponent({
     });
 
     const customEnumFieldValues = computed(() => {
-      const fields = getDisplayableCustomFields(props.task.custom_fields).filter(f => !!f.enum_value); // We only care about custom fields that currently have an assigned value
+      const fields = getDisplayableCustomFields(
+        props.task.custom_fields
+      ).filter((f) => !!f.enum_value); // We only care about custom fields that currently have an assigned value
 
-      return fields.map(f => {
+      return fields.map((f) => {
         return {
-          name: f.enum_value!.name, hexes: convertAsanaColorToHex(f.enum_value!.color)
+          name: f.enum_value!.name,
+          hexes: convertAsanaColorToHex(f.enum_value!.color),
         };
-      })
+      });
     });
 
     const dueDate = computed(() => {
@@ -114,32 +105,42 @@ export default defineComponent({
 
     const opacity = computed(() => {
       // custom_fields is undefined for free accounts
-      const columnChangeDate = (props.task.custom_fields?.find(field => {
-        return field.name === "column-change";
-      }) as any)?.text_value;
-      const daysSinceMove = differenceInDays(new Date(), parseISO(columnChangeDate) ?? new Date());
-      const opacity = ((100 - (daysSinceMove * 2.3)) / 100) + 0.3;
+      const columnChangeDate = (
+        props.task.custom_fields?.find((field) => {
+          return field.name === "column-change";
+        }) as any
+      )?.text_value;
+      const daysSinceMove = differenceInDays(
+        new Date(),
+        parseISO(columnChangeDate) ?? new Date()
+      );
+      const opacity = (100 - daysSinceMove * 2.3) / 100 + 0.3;
       return Math.max(opacity, 0.3);
     });
 
     const backgroundAndTextColor = computed(() => {
       const dueDate = props.task.due_on?.substring(0, 10) ?? "";
       if (dueDate) {
-        if (differenceInDays(parse(dueDate, asanaDateFormat, new Date()), new Date()) < 5) {
+        if (
+          differenceInDays(
+            parse(dueDate, asanaDateFormat, new Date()),
+            new Date()
+          ) < 5
+        ) {
           return {
             "background-color": "#D44C46", // red
-            "color": "white"
-          }
+            color: "white",
+          };
         }
         return {
           "background-color": "#7960CE", // purple
-          "color": "white"
-        }
+          color: "white",
+        };
       }
       return {
         "background-color": "white",
-        "color": "black"
-      }
+        color: "black",
+      };
     });
 
     const startDrag = (event, task: Task) => {
@@ -162,7 +163,7 @@ export default defineComponent({
         task: props.task,
         htmlText: "",
         newTags: [],
-        sectionId: ""
+        sectionId: "",
       });
     };
 
@@ -175,9 +176,9 @@ export default defineComponent({
       backgroundAndTextColor,
       startDrag,
       endDrag,
-      edit
-    }
-  }
+      edit,
+    };
+  },
 });
 </script>
 
@@ -237,26 +238,6 @@ hr {
 
 .dragging {
   opacity: 0.5;
-}
-
-.photo {
-  border-radius: 100%;
-  border: solid thin white;
-  display: inline-block;
-  margin-right: 0.45rem;
-  vertical-align: middle;
-  width: 21px;
-  height: 21px;
-}
-
-.avatar {
-  background-color: #f0f0f0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 8px;
-  font-weight: 700;
-  color: white;
 }
 
 .footer {
