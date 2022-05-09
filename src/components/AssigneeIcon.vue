@@ -15,7 +15,7 @@
     </span>
     <img
       class="photo"
-      v-if="assignee.photo"
+      v-else
       :src="assignee.photo?.image_21x21"
     />
   </div>
@@ -23,8 +23,8 @@
 
 <script lang="ts">
 import { Assignee } from "@/types/asana";
-import { computed, defineComponent, PropType } from "vue";
-import avatarColors from "../utils/avatar-colors";
+import { defineComponent, PropType } from "vue";
+import getAvatarColor from "../utils/avatar-colors";
 
 export default defineComponent({
   props: {
@@ -43,21 +43,9 @@ export default defineComponent({
       }
     };
 
-    // Assigns a color to the icon based on the assignee's name, similar to Asana's behavior.
-    // Hashing function based on https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript.
-    const getAvatarColor = (name: string | null | undefined) => {
-      if (!name) return avatarColors[0];
-      let hash = 0;
-      for (let i = 0; i < name.length; ++i) {
-        hash = (hash << 5) - hash + name.charCodeAt(i);
-        hash |= 0;
-      }
-      return avatarColors[-(hash % avatarColors.length)];
-    };
-
     return {
-      getAssigneeInitials,
       getAvatarColor,
+      getAssigneeInitials,
     };
   },
 });
