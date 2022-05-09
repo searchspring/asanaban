@@ -9,7 +9,7 @@
     @click="edit()"
   >
     <div class="text">
-      <assignee-icon :assignee="assignee" v-if="assignee" />
+      <assignee-icon v-if="assignee" :assignee="assignee"  />
       {{ task.name }}
       <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
         <tree-view-alt />

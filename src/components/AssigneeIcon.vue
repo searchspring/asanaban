@@ -33,9 +33,9 @@ export default defineComponent({
       required: true,
     },
   },
-  setup() {
-    const getAssigneeInitials = (name: string) => {
-      if (name !== "") {
+  setup(props) {
+    const getAssigneeInitials = (name: string | null | undefined) => {
+      if (name) {
         const nameSplit = name.split(" ");
         const firstInitial = nameSplit[0][0];
         const lastInitial = nameSplit[nameSplit.length - 1][0];
@@ -45,7 +45,7 @@ export default defineComponent({
 
     // Assigns a color to the icon based on the assignee's name, similar to Asana's behavior.
     // Hashing function based on https://stackoverflow.com/questions/7616461/generate-a-hash-from-string-in-javascript.
-    const getAvatarColor = (name: string) => {
+    const getAvatarColor = (name: string | null | undefined) => {
       if (!name) return avatarColors[0];
       let hash = 0;
       for (let i = 0; i < name.length; ++i) {
