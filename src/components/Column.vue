@@ -248,8 +248,7 @@ function removeDragOverClass() {
 .nav-title {
   font-size: 1.1rem;
   flex-grow: 1;
-  padding-top: 0.3rem;
-  padding-bottom: 0.3rem;
+  padding: 0.3rem 0.2rem;
 }
 
 .nav-item {
@@ -284,8 +283,6 @@ function removeDragOverClass() {
   max-width: 1.5rem;
   font-size: 1rem;
   writing-mode: vertical-rl;
-  padding-left: 0.1rem;
-  padding-right: 0.1rem;
 }
 
 .drag-over {
