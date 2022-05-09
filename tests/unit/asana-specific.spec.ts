@@ -1,5 +1,10 @@
 import { expect } from "chai";
-import { xmlToHtml, htmlToXml } from "../../src/utils/asana-specific";
+import { xmlToHtml, htmlToXml, getPrettyColumnName } from "../../src/utils/asana-specific";
+
+it("pretty column name with no special parts", function (done) {
+  expect(getPrettyColumnName("Untitled Section")).to.equal("Untitled Section");
+  done();
+});
 
 it("new lines", function (done) {
   expects(
