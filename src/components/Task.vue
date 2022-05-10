@@ -220,6 +220,7 @@ hr {
   overflow: auto;
 }
 
+
 .task .subtask-icon {
   margin-left: auto;
 }
