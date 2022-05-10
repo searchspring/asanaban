@@ -11,7 +11,8 @@ import {
   TaskTag,
   BaseResource,
   PaginationParams,
-  Resource
+  Resource,
+  Attachments
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import { getColumnCount, getPrettyColumnName, convertAsanaColorToHex } from "@/utils/asana-specific";
@@ -550,12 +551,15 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
     }
     let taskResponse: any = await asanaClient.tasks.findAll(options);
     
-    const tasks: Task[] = [];
+    let tasks: Task[] = [];
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
+    tasks = await Promise.all(tasks.map(async (task) => {
+      task.attachments = await getTaskAttachments(task.gid);
+      return task;
+    }));
     action(tasks);
-
 
     if (!lastUpdated) {
       asanaStore.SET_TAGS(getAllTaskTags(tasks));
@@ -573,6 +577,16 @@ async function completeTask(tasks: Task[], gid: string) {
   await asanaClient?.tasks.update(gid, {
     completed: true,
   });
+}
+
+async function getTaskAttachments(gid: string)  {
+  const compactAttachments = await asanaClient?.attachments.findByTask(gid);
+  if (compactAttachments && compactAttachments?.data.length !== 0) {
+    return Promise.all(compactAttachments.data.map(async (attachment) => {
+      return await asanaClient?.attachments.findById(attachment.gid) as unknown as Attachments;
+    }));
+  }
+  return null;
 }
 
 function sortAndUnique<T extends BaseResource>(stuff: T[]): T[] {

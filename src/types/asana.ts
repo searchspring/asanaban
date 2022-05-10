@@ -29,13 +29,15 @@ export type User = asana.resources.Users.Type & {
 export type Stories = asana.resources.Stories.Type;
 export type SubTask = { gid: string; resource_type: string; name: string; completed: boolean; };
 export type CustomField = asana.resources.CustomField & { text_value: string | null };
+export type Attachments = asana.resources.Attachments;
 export type Task = Omit<asana.resources.Tasks.Type, "tags" | "custom_fields"> & {
   created_by: { name: string },
   html_notes: string | undefined,
   stories: Stories[],
   subtasks: SubTask[] | null | undefined,
   tags: TaskTag[],
-  custom_fields: CustomField[] | null | undefined
+  custom_fields: CustomField[] | null | undefined,
+  attachments: Attachments[] | null | undefined
 };
 
 export type Assignee = asana.resources.Assignee;
