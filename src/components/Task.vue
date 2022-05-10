@@ -8,44 +8,48 @@
     @dragend="endDrag($event)"
     @click="edit()"
   >
-    <div class="text">
-      <img :src="displayImage" />
-      <assignee-icon v-if="assignee" :assignee="assignee"  />
-      {{ task.name }}
-      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
-        <tree-view-alt />
-      </n-icon>
+    <div class="display-image">
+      <img v-if="displayImage" :src="displayImage" />
     </div>
-    <div class="label" v-if="dueDate">
-      <hr />
-      Due Date
-      <div class="date">{{ dueDate }}</div>
-    </div>
-    <div class="footer">
-      <div
-        class="tag"
-        v-for="tag in tags"
-        :key="tag.name"
-        :style="{
-          'background-color': tag.hexes?.background,
-          color: tag.hexes?.font,
-        }"
-      >
-        {{ tag.name }}
+    <div class="content">
+      <div class="text">
+        <assignee-icon v-if="assignee" :assignee="assignee" />
+        {{ task.name }}
+        <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
+          <tree-view-alt />
+        </n-icon>
       </div>
-      <n-tag
-        round
-        size="small"
-        v-for="field in customEnumFieldValues"
-        :key="field.name"
-        :color="{
-          color: field.hexes.background,
-          textColor: field.hexes.font,
-          borderColor: '#ffffff',
-        }"
-      >
-        {{ field.name }}
-      </n-tag>
+      <div class="label" v-if="dueDate">
+        <hr />
+        Due Date
+        <div class="date">{{ dueDate }}</div>
+      </div>
+      <div class="footer">
+        <div
+          class="tag"
+          v-for="tag in tags"
+          :key="tag.name"
+          :style="{
+            'background-color': tag.hexes?.background,
+            color: tag.hexes?.font,
+          }"
+        >
+          {{ tag.name }}
+        </div>
+        <n-tag
+          round
+          size="small"
+          v-for="field in customEnumFieldValues"
+          :key="field.name"
+          :color="{
+            color: field.hexes.background,
+            textColor: field.hexes.font,
+            borderColor: '#ffffff',
+          }"
+        >
+          {{ field.name }}
+        </n-tag>
+      </div>
     </div>
   </div>
 </template>
@@ -79,7 +83,14 @@ export default defineComponent({
   },
   setup(props) {
     const prefStore = usePrefStore();
-    const displayImage = computed(() => props.task.attachments?.filter((attachment) => new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(attachment.name)).pop()?.view_url);
+    const displayImage = computed(
+      () =>
+        props.task.attachments
+          ?.filter((attachment) =>
+            new RegExp(".*(?:jpg|gif|png|jpeg|svg|webp)").test(attachment.name)
+          )
+          .pop()?.view_url
+    );
     const assignee = computed(() => props.task.assignee);
 
     const tags = computed(() => {
@@ -194,7 +205,6 @@ hr {
 
 .task {
   border-radius: 5px;
-  padding: 0.15rem 0.1rem 0rem 0.15rem;
   margin-top: 2px;
   margin-left: 4px;
   margin-bottom: 4px;
@@ -211,6 +221,22 @@ hr {
 
 .task .subtask-icon {
   margin-left: auto;
+}
+
+.display-image {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+.display-image img {
+  object-fit: contain;
+  width: 100%;
+  max-height: 200px;
+}
+
+.content {
+  padding: 0.15rem 0.1rem 0rem 0.15rem;
 }
 
 .text {
