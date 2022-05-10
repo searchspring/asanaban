@@ -1,5 +1,5 @@
 <template>
-  <div class="column" :class="classObject" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
+  <div class="column" :class="[classObject, singleTaskView ? 'single-task-view' : '']" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
     <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
       <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')" href="javascript:;"
         @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
@@ -15,7 +15,7 @@
     <div v-if="!columnCollapsed(section?.gid ?? '')" @drop="onDrop($event, section?.gid ?? '')"
       @dragenter="onDragEnter($event)" @dragstart="onDragStart()" @dragend="onDragEnd()" @dragover.prevent
       class="droppable" v-bind:id="section?.gid">
-      <task v-for="task in tasks(section?.gid ?? '')" :task="task" :key="task.gid"></task>
+      <task v-for="task in tasks(section?.gid ?? '')" :task="task" :key="task.gid" />
     </div>
   </div>
 </template>
@@ -31,6 +31,7 @@ export default defineComponent({
   components: { Task },
   props: {
     section: Object as PropType<Section>,
+    singleTaskView: Boolean
   },
   setup(props) {
     const asanaStore = useAsanaStore();
@@ -246,7 +247,7 @@ function removeDragOverClass() {
 }
 
 .nav-title {
-  font-size: 1.1rem;
+  font-size: 110%;
   flex-grow: 1;
   padding: 0.3rem 0.2rem;
 }
@@ -276,6 +277,19 @@ function removeDragOverClass() {
 
 .droppable {
   flex: 1 1 auto;
+}
+
+.single-task-view .droppable {
+  display: flex;
+  width: 100%;
+  max-width: none;
+  flex-direction: column;
+  margin-right: 2px;
+}
+
+.single-task-view .droppable > * {
+  max-width: none;
+  width: 98%;
 }
 
 .column.collapsed {
@@ -311,5 +325,9 @@ a.nav-item {
 
 a.nav-item.mouseInside {
   opacity: 1;
+}
+
+.column.single-task-view {
+  min-width: 20vw;
 }
 </style>
