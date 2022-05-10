@@ -37,7 +37,7 @@ export type Task = Omit<asana.resources.Tasks.Type, "tags" | "custom_fields"> & 
   subtasks: SubTask[] | null | undefined,
   tags: TaskTag[],
   custom_fields: CustomField[] | null | undefined,
-  attachments: Attachments[] | null | undefined
+  attachments: Attachments[] | null
 };
 
 export type Assignee = asana.resources.Assignee;

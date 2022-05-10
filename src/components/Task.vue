@@ -67,6 +67,7 @@ import AssigneeIcon from "./AssigneeIcon.vue";
 import { TreeViewAlt } from "@vicons/carbon";
 import { convertAsanaColorToHex } from "@/utils/asana-specific";
 import { getDisplayableCustomFields } from "@/utils/custom-fields";
+import { isImageFormat } from "@/utils/match";
 
 export default defineComponent({
   props: {
@@ -87,7 +88,7 @@ export default defineComponent({
       () =>
         props.task.attachments
           ?.filter((attachment) =>
-            new RegExp(".*(?:jpg|gif|png|jpeg|svg|webp)").test(attachment.name)
+            isImageFormat(attachment.name)
           )
           .pop()?.view_url
     );

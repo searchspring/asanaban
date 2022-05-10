@@ -87,12 +87,12 @@
       <div class="attachments">
         <div
           v-for="attachment in taskEditorSectionIdAndTask.task.attachments?.filter(
-            (el) => new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(el.name)
+            (el) => isImageFormat(el.name)
           )"
           class="attachment"
           :key="attachment.gid"
         >
-          <a :href="attachment.permanent_url" target="_blank">
+          <a :href="attachment.permanent_url" target="_blank" rel="noopener">
             <img :src="attachment.view_url" />
           </a>
         </div>
@@ -166,6 +166,7 @@ import { NButton, NList, NListItem, NIcon } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
+import { isImageFormat } from "../utils/match";
 
 export default defineComponent({
   components: {
@@ -305,6 +306,7 @@ export default defineComponent({
       updateHtmlText,
       completeTask,
       makeAsanaHref,
+      isImageFormat,
     };
   },
 });

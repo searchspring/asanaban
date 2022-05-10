@@ -399,7 +399,6 @@ export const useAsanaStore = defineStore("asana", {
           task.stories = storiesResponse.data.filter(story => {
             return story["resource_subtype"] === "comment_added";
           });
-          console.log(storiesResponse.data);
           this.storiesLoading = false;
         }
       }
@@ -560,7 +559,6 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
     // add attachments to task
     tasks = await Promise.all(tasks.map(async (task) => {
       task.attachments = await getTaskAttachments(task.gid);
-      if (task.attachments) console.log(task.attachments);
       return task;
     }));
 
