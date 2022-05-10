@@ -9,6 +9,7 @@
     @click="edit()"
   >
     <div class="text">
+      <img :src="displayImage" />
       <assignee-icon v-if="assignee" :assignee="assignee"  />
       {{ task.name }}
       <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
@@ -78,6 +79,7 @@ export default defineComponent({
   },
   setup(props) {
     const prefStore = usePrefStore();
+    const displayImage = computed(() => props.task.attachments?.filter((attachment) => new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(attachment.name)).pop()?.view_url);
     const assignee = computed(() => props.task.assignee);
 
     const tags = computed(() => {
@@ -168,6 +170,7 @@ export default defineComponent({
     };
 
     return {
+      displayImage,
       assignee,
       tags,
       customEnumFieldValues,

@@ -29,7 +29,7 @@ export type User = asana.resources.Users.Type & {
 export type Stories = asana.resources.Stories.Type;
 export type SubTask = { gid: string; resource_type: string; name: string; completed: boolean; };
 export type CustomField = asana.resources.CustomField & { text_value: string | null };
-export type Attachments = asana.resources.Attachments;
+export type Attachments = asana.resources.Attachments.Type;
 export type Task = Omit<asana.resources.Tasks.Type, "tags" | "custom_fields"> & {
   created_by: { name: string },
   html_notes: string | undefined,

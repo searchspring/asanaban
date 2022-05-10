@@ -560,6 +560,7 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
       return task;
     }));
     action(tasks);
+    console.log(tasks);
 
     if (!lastUpdated) {
       asanaStore.SET_TAGS(getAllTaskTags(tasks));
