@@ -87,15 +87,14 @@
       <div class="attachments">
         <div
           v-for="attachment in taskEditorSectionIdAndTask.task.attachments?.filter(
-            (el) =>
-              new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(
-                el.name
-              )
+            (el) => new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(el.name)
           )"
           class="attachment"
           :key="attachment.gid"
         >
-          <img :src="attachment.view_url" />
+          <a :href="attachment.permanent_url" target="_blank">
+            <img :src="attachment.view_url" />
+          </a>
         </div>
       </div>
       <div class="stories">
