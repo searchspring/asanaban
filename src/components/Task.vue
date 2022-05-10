@@ -232,11 +232,11 @@ hr {
 .display-image img {
   object-fit: contain;
   width: 100%;
-  max-height: 200px;
+  max-height: 150px;
 }
 
 .content {
-  padding: 0.15rem 0.1rem 0rem 0.15rem;
+  padding: 0.15rem 0.1rem 0.2rem 0.15rem;
 }
 
 .text {
