@@ -2,7 +2,6 @@
   <div
     v-bind:id="task.gid"
     class="task"
-    :class="singleTaskView ? 'single-task-view' : ''"
     draggable="true"
     :style="{ opacity: opacity, ...backgroundAndTextColor }"
     @dragstart="startDrag($event, task)"
@@ -70,7 +69,6 @@ export default defineComponent({
       type: Object as PropType<Task>,
       required: true,
     },
-    singleTaskView: Boolean,
   },
   components: {
     NIcon,
@@ -208,10 +206,6 @@ hr {
   overflow: auto;
 }
 
-.task.single-task-view {
-  width: 97%;
-  max-width: none;
-}
 
 .task .subtask-icon {
   margin-left: auto;

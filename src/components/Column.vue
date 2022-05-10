@@ -1,6 +1,6 @@
 <template>
   <div class="column" :class="[classObject, singleTaskView ? 'single-task-view' : '']" @mouseenter="mouseInside = true" @mouseleave="mouseInside = false">
-    <div class="column-nav" :class="singleTaskView ? 'single-task-view' : ''" @click="toggleColumn(section?.gid ?? '')">
+    <div class="column-nav" @click="toggleColumn(section?.gid ?? '')">
       <a class="nav-item mouseInside" v-if="!columnCollapsed(section?.gid ?? '')" href="javascript:;"
         @click.prevent.stop="showTaskEditor(section?.gid ?? '')">add task</a>
       <div class="nav-title">{{ columnName ? columnName : "unknown" }}</div>
@@ -15,7 +15,7 @@
     <div v-if="!columnCollapsed(section?.gid ?? '')" @drop="onDrop($event, section?.gid ?? '')"
       @dragenter="onDragEnter($event)" @dragstart="onDragStart()" @dragend="onDragEnd()" @dragover.prevent
       class="droppable" v-bind:id="section?.gid">
-      <task v-for="task in tasks(section?.gid ?? '')" :singleTaskView="singleTaskView" :task="task" :key="task.gid" />
+      <task v-for="task in tasks(section?.gid ?? '')" :task="task" :key="task.gid" />
     </div>
   </div>
 </template>
@@ -275,11 +275,21 @@ function removeDragOverClass() {
   flex-flow: column;
 }
 
-
-
 .droppable {
   flex: 1 1 auto;
+}
+
+.single-task-view .droppable {
+  display: flex;
   width: 100%;
+  max-width: none;
+  flex-direction: column;
+  margin-right: 2px;
+}
+
+.single-task-view .droppable > * {
+  max-width: none;
+  width: 98%;
 }
 
 .column.collapsed {
@@ -318,9 +328,6 @@ a.nav-item.mouseInside {
 }
 
 .column.single-task-view {
-  width: 20vw;
-}
-.column-nav.single-task-view {
-  width: 20vw;
+  min-width: 20vw;
 }
 </style>
