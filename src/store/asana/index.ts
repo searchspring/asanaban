@@ -399,6 +399,7 @@ export const useAsanaStore = defineStore("asana", {
           task.stories = storiesResponse.data.filter(story => {
             return story["resource_subtype"] === "comment_added";
           });
+          console.log(storiesResponse.data);
           this.storiesLoading = false;
         }
       }
@@ -555,12 +556,15 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
+
+    // add attachments to task
     tasks = await Promise.all(tasks.map(async (task) => {
       task.attachments = await getTaskAttachments(task.gid);
+      if (task.attachments) console.log(task.attachments);
       return task;
     }));
+
     action(tasks);
-    console.log(tasks);
 
     if (!lastUpdated) {
       asanaStore.SET_TAGS(getAllTaskTags(tasks));

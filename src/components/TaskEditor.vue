@@ -54,6 +54,9 @@
           </n-list-item>
         </n-list>
       </div>
+      <div class="attachments">
+        <img v-for="attachment in taskEditorSectionIdAndTask.task.attachments" :src="new RegExp('.*(?:jpg|gif|png|jpeg|svg|webp)').test(attachment.name) ? attachment.view_url : ''" :key="attachment.gid"/>
+      </div>
       <div class="stories">
         <Stories />
       </div>
