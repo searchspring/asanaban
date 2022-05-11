@@ -558,7 +558,8 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
 
     // add attachments to task
     tasks = await Promise.all(tasks.map(async (task) => {
-      task.attachments = await getTaskAttachments(task.gid);
+      const asanaResponse = await getTaskAttachments(task.gid);
+      task.attachments = asanaResponse?.data as Attachments[] | undefined;
       return task;
     }));
 
@@ -583,13 +584,7 @@ async function completeTask(tasks: Task[], gid: string) {
 }
 
 async function getTaskAttachments(gid: string)  {
-  const compactAttachments = await asanaClient?.attachments.findByTask(gid);
-  if (compactAttachments && compactAttachments?.data.length !== 0) {
-    return Promise.all(compactAttachments.data.map(async (attachment) => {
-      return await asanaClient?.attachments.findById(attachment.gid) as unknown as Attachments;
-    }));
-  }
-  return null;
+  return asanaClient?.attachments.findByTask(gid, {opt_fields: "view_url, permanent_url, name"});
 }
 
 function sortAndUnique<T extends BaseResource>(stuff: T[]): T[] {

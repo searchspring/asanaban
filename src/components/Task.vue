@@ -15,7 +15,7 @@
       <div class="text">
         <assignee-icon v-if="assignee" :assignee="assignee" />
         {{ task.name }}
-        <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
+        <n-icon class="subtask-icon" v-if="task.subtasks && task.subtasks.length > 0">
           <tree-view-alt />
         </n-icon>
       </div>
@@ -85,12 +85,13 @@ export default defineComponent({
   setup(props) {
     const prefStore = usePrefStore();
     const displayImage = computed(
-      () =>
-        props.task.attachments
+      () => {
+        const images =  props.task.attachments
           ?.filter((attachment) =>
             isImageFormat(attachment.name)
-          )
-          .pop()?.view_url
+          );
+          return images?.pop()?.view_url;
+      }
     );
     const assignee = computed(() => props.task.assignee);
 

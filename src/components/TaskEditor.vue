@@ -57,7 +57,7 @@
       </template>
       <div
         class="subtasks"
-        v-if="taskEditorSectionIdAndTask.task.subtasks?.length > 0"
+        v-if="taskEditorSectionIdAndTask.task.subtasks && taskEditorSectionIdAndTask.task.subtasks?.length > 0"
       >
         <label>subtasks</label>
         <n-list style="font-size: 0.8rem">
