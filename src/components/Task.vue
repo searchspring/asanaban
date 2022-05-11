@@ -212,13 +212,12 @@ hr {
   margin-bottom: 4px;
   background-color: white;
   margin-right: 2px;
-  width: 48%;
-  max-width: 15rem;
+  width: 98%;
   min-height: 2.5rem;
   cursor: move;
-  display: inline-block;
   vertical-align: top;
   overflow: auto;
+  display: inline-block;
 }
 
 
