@@ -98,6 +98,7 @@ body {
   height: 3.5vh;
   left: 0;
   top: 0;
+  z-index: 1;
 }
 
 #nav div,
