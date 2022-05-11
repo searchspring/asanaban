@@ -13,9 +13,9 @@
           target="_blank"
           rel="noopener"
           :href="makeAsanaHref(taskEditorSectionIdAndTask.task.gid)"
-          >open in asana</a
+          >Open in Asana</a
         >
-        <label for="name">name</label>
+        <label for="name">Name</label>
         <BasicInput
           v-model:input="taskName"
           @keydown.enter="save(taskEditorSectionIdAndTask)"
@@ -23,16 +23,16 @@
       </div>
       <div class="assignee-date-selector">
         <div class="assignee">
-          <label for="assignee">assignee</label>
+          <label for="assignee">Assignee</label>
           <AssigneeSelector v-model:assigneeGid="assigneeGid" />
         </div>
         <div class="due-date">
-          <label>due date</label>
+          <label>Due date</label>
           <DateSelector v-model:date="dueDate" />
         </div>
       </div>
       <div class="description">
-        <label for="description">description</label>
+        <label for="description">Description</label>
         <TextEditor
           :html="htmlNotes"
           :forDescription="true"
@@ -40,7 +40,7 @@
         />
       </div>
       <div class="tags">
-        <label>tags</label>
+        <label>Tags</label>
         <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
       <template
@@ -59,7 +59,7 @@
         class="subtasks"
         v-if="taskEditorSectionIdAndTask.task.subtasks && taskEditorSectionIdAndTask.task.subtasks?.length > 0"
       >
-        <label>subtasks</label>
+        <label>Subtasks</label>
         <n-list style="font-size: 0.8rem">
           <n-list-item
             v-for="subtask in taskEditorSectionIdAndTask.task.subtasks"
@@ -85,6 +85,7 @@
         </n-list>
       </div>
       <div class="attachments">
+        <label>Attached images</label>
         <div
           v-for="attachment in taskEditorSectionIdAndTask.task.attachments?.filter(
             (el) => isImageFormat(el.name)
@@ -101,7 +102,7 @@
         <Stories />
       </div>
       <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
-        <label for="new comment">new comment</label>
+        <label for="new comment">New comment</label>
         <TextEditor
           :html="taskEditorSectionIdAndTask.htmlText"
           :forDescription="false"
