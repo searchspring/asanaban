@@ -85,6 +85,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
+  padding-top: 3.5vh;
 }
 
 #nav {
@@ -92,6 +93,11 @@ body {
   background-color: #3b006d;
   display: flex;
   align-items: center;
+  position: fixed;
+  width: 100vw;
+  height: 3.5vh;
+  left: 0;
+  top: 0;
 }
 
 #nav div,
