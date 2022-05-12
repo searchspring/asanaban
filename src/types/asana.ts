@@ -7,6 +7,7 @@ export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 // interface doesn't have ProjectCompact type https://developers.asana.com/docs/project-compact
 export type Project = BaseResource & {
   workspaceGid: string,
+  custom_fields: CustomField[] | null | undefined
 };
 export type QueriedTask = BaseResource & {
   completed: boolean,

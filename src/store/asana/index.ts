@@ -413,16 +413,25 @@ export const useAsanaStore = defineStore("asana", {
               limit: 100,
               workspace: workspace.gid,
               archived: false,
+              opt_fields: "custom_field_settings, custom_field_settings.custom_field.name"
             };
             let projectResponse: any = await asanaClient?.projects.findAll(options);
             for (; projectResponse; projectResponse = await projectResponse.nextPage()) {
               const projects = projectResponse.data.map(p => {
                 return {
                   ...p,
+                  custom_field_settings: undefined, // we only care about the custom fields
+                  custom_fields: p.custom_field_settings.map((el) => {
+                    return { 
+                      name: el.custom_field.name, 
+                      gid: el.custom_field.gid
+                    }
+                  }),
                   workspaceGid: workspace.gid
                 } as Project
               });
               this.ADD_PROJECTS(projects);
+              console.log(projects);
             }
           });
         }
