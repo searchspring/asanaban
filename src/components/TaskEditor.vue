@@ -84,17 +84,15 @@
           </n-list-item>
         </n-list>
       </div>
-      <div class="attachments">
+      <div class="attachments" v-if="images && images.length > 0">
         <label>Attached images</label>
         <div
-          v-for="attachment in taskEditorSectionIdAndTask.task.attachments?.filter(
-            (el) => isImageFormat(el.name)
-          )"
+          v-for="image in images"
           class="attachment"
-          :key="attachment.gid"
+          :key="image.gid"
         >
-          <a :href="attachment.permanent_url" target="_blank" rel="noopener">
-            <img :src="attachment.view_url" />
+          <a :href="image.permanent_url" target="_blank" rel="noopener">
+            <img :src="image.view_url" />
           </a>
         </div>
       </div>
@@ -200,6 +198,10 @@ export default defineComponent({
       return prefStore.taskEditorSectionIdAndTask!;
     });
 
+    const images = computed(() => prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter(
+            (el) => isImageFormat(el.name)
+          ));
+
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
       if (taskEditorSectionIdAndTask.value) {
@@ -299,6 +301,7 @@ export default defineComponent({
       taskName,
       assigneeGid,
       htmlNotes,
+      images,
       isDisplayableCustomField,
       customFieldSelectedGids,
       save,
