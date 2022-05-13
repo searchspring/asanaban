@@ -277,6 +277,12 @@ function removeDragOverClass() {
 
 .droppable {
   flex: 1 1 auto;
+  columns: auto 15rem;
+  margin: 2px 0;
+  column-gap: 2px;
+  width: 95%;
+  float: left;
+  overflow: auto;
 }
 
 .single-task-view .droppable {
