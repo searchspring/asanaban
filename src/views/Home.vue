@@ -47,7 +47,6 @@ export default defineComponent({
 
     onMounted(() => {
       asanaStore.LOAD_PROJECTS();
-      asanaStore.LOAD_TASKS();
       asanaStore.LOAD_SECTIONS();
     });
 
