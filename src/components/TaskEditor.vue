@@ -1,10 +1,5 @@
 <template>
-  <div
-    tabindex="0"
-    class="overlay"
-    v-if="taskEditorSectionIdAndTask"
-    @keydown.esc="hide"
-  >
+  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide" @click.self="hide">
     <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
         <a
