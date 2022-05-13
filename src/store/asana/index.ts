@@ -610,11 +610,6 @@ async function loadTasks(
     if (tasks.length > 0) {
       asanaStore.LOAD_ATTACHMENTS(tasks);
     }
-    // const tasksWithAttachments = Promise.allSettled(tasks.map(async (task) => {
-    //   const asanaResponse = await getTaskAttachments(task.gid);
-    //   task.attachments = asanaResponse?.data as Attachments[] | undefined;
-    //   return task;
-    // }));
 
     action(tasks);
 
@@ -635,11 +630,6 @@ async function completeTask(tasks: Task[], gid: string) {
     completed: true,
   });
 }
-
-// function getTaskAttachments(gid: string)  {
-//   this.storiesLoading = false;
-//   return asanaClient?.attachments.findByTask(gid, {opt_fields: "view_url, permanent_url, name"});
-// }
 
 function sortAndUnique<T extends BaseResource>(stuff: T[]): T[] {
   const uniqueStuff = unique(stuff);
