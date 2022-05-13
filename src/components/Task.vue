@@ -8,9 +8,10 @@
     @dragend="endDrag($event)"
     @click="edit()"
   >
-    <div class="display-image">
-      <img v-if="displayImage" :src="displayImage" />
+    <div v-if="task.displayImage" class="display-image">
+      <img :src="task.displayImage.view_url" />
     </div>
+    
     <div class="content">
       <div class="text">
         <assignee-icon v-if="assignee" :assignee="assignee" />
@@ -67,7 +68,6 @@ import AssigneeIcon from "./AssigneeIcon.vue";
 import { TreeViewAlt } from "@vicons/carbon";
 import { convertAsanaColorToHex } from "@/utils/asana-specific";
 import { getDisplayableCustomFields } from "@/utils/custom-fields";
-import { isImageFormat } from "@/utils/match";
 
 export default defineComponent({
   props: {
@@ -84,17 +84,7 @@ export default defineComponent({
   },
   setup(props) {
     const prefStore = usePrefStore();
-    const displayImage = computed(
-      () => {
-        const images =  props.task.attachments
-          ?.filter((attachment) =>
-            isImageFormat(attachment.name)
-          );
-          return images?.pop()?.view_url;
-      }
-    );
     const assignee = computed(() => props.task.assignee);
-
     const tags = computed(() => {
       return props.task.tags.map((tag) => {
         return { name: tag.name.substring(0, 1), hexes: tag.hexes };
@@ -183,7 +173,6 @@ export default defineComponent({
     };
 
     return {
-      displayImage,
       assignee,
       tags,
       customEnumFieldValues,

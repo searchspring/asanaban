@@ -1,1 +1,3 @@
-export const isImageFormat = (str: string) => new RegExp(".*(?:jpg|gif|png|jpeg|svg|webp)").test(str)
+export function isFilenameExtensionImage(str: string) {
+  return new RegExp(".*(?:jpg|gif|png|jpeg|svg|webp)").test(str);
+}

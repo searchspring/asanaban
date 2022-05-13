@@ -36,7 +36,7 @@ export type SubTask = {
 export type CustomField = asana.resources.CustomField & {
   text_value: string | null;
 };
-export type Attachments = {
+export type Attachment = {
   gid: string;
   resource_type: string;
   name: string;
@@ -54,7 +54,8 @@ export type Task = Omit<
   subtasks: SubTask[] | null | undefined;
   tags: TaskTag[];
   custom_fields: CustomField[] | null | undefined;
-  attachments: Attachments[] | undefined;
+  attachments: Attachment[];
+  displayImage: Attachment | undefined;
 };
 
 export type Assignee = asana.resources.Assignee;

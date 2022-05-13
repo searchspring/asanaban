@@ -38,5 +38,5 @@ export interface State {
   allTags: TaskTag[],
   lastUpdatedTime: string | null,
   reloadState: ReloadState,
-  storiesLoading: boolean
+  storiesLoading: boolean,
 }

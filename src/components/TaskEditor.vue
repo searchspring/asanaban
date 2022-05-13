@@ -165,7 +165,7 @@ import { NButton, NList, NListItem, NIcon } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
-import { isImageFormat } from "../utils/match";
+import { isFilenameExtensionImage } from "../utils/match";
 
 export default defineComponent({
   components: {
@@ -199,7 +199,7 @@ export default defineComponent({
     });
 
     const images = computed(() => prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter(
-            (el) => isImageFormat(el.name)
+            (el) => isFilenameExtensionImage(el.name)
           ));
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
@@ -310,7 +310,7 @@ export default defineComponent({
       updateHtmlText,
       completeTask,
       makeAsanaHref,
-      isImageFormat,
+      isFilenameExtensionImage,
     };
   },
 });
