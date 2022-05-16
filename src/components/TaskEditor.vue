@@ -242,14 +242,30 @@ export default defineComponent({
       }
 
       task.html_notes = htmlNotes.value;
-      task.custom_fields?.forEach((el, idx) => {
+      project.value?.custom_fields?.forEach((el, idx) => {
         const field = el;
         if (isDisplayableCustomField(field)) {
           const selectedVal =
             field.enum_options?.find(
               (o) => o.gid === customFieldSelectedGids.value[idx]
             ) ?? null;
-          field.enum_value = selectedVal;
+         
+          if (task.gid) {
+            const taskCustomField = taskEditorSectionIdAndTask.task.custom_fields?.find(cf => cf.gid === field.gid);
+            if (taskCustomField) taskCustomField.enum_value = selectedVal;
+          } else if (task.custom_fields) {
+            task.custom_fields.push({
+              ...field,
+              enum_value: selectedVal,
+            })
+          } else {
+            task.custom_fields = [];
+            task.custom_fields.push({
+              ...field,
+              enum_value: selectedVal,
+            })
+          }
+
         }
       });
 

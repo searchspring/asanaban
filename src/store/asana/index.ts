@@ -21,7 +21,7 @@ import {
   convertAsanaColorToHex,
 } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
-import { ColumnChange } from "@/utils/custom-fields";
+import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { isFilenameExtensionImage } from "@/utils/match";
 
 export const useAsanaStore = defineStore("asana", {
@@ -268,6 +268,14 @@ export const useAsanaStore = defineStore("asana", {
           ...taskAndSectionId.task,
           tags: taskAndSectionId.newTags,
           projects: [this.selectedProject],
+          custom_fields: taskAndSectionId.task.custom_fields?.reduce(
+            (obj, cur) => ({
+              ...obj,
+              [cur.gid]:
+                cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
+            }),
+            {}
+          ),
           memberships: [
             {
               section: taskAndSectionId.sectionId,
@@ -275,6 +283,7 @@ export const useAsanaStore = defineStore("asana", {
             },
           ],
         } as any)) as Task;
+
         task.created_by = { name: useAuthStore().user?.name ?? "" };
         this.tasks.push(task);
         this.UPDATE_CUSTOM_FIELDS(task.gid);
