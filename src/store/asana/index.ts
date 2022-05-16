@@ -269,11 +269,22 @@ export const useAsanaStore = defineStore("asana", {
           tags: taskAndSectionId.newTags,
           projects: [this.selectedProject],
           custom_fields: taskAndSectionId.task.custom_fields?.reduce(
-            (obj, cur) => ({
-              ...obj,
-              [cur.gid]:
-                cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
-            }),
+            (obj, cur) => {
+              if (cur.name == ColumnChange) {
+                return {
+                  ...obj,
+                  [cur.gid]: new Date().toISOString()
+                }
+              }
+              if (!isDisplayableCustomField) {
+                return obj;
+              }
+              return  {
+                ...obj,
+                [cur.gid]:
+                  cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
+              }
+            },
             {}
           ),
           memberships: [
@@ -286,7 +297,6 @@ export const useAsanaStore = defineStore("asana", {
 
         task.created_by = { name: useAuthStore().user?.name ?? "" };
         this.tasks.push(task);
-        this.UPDATE_CUSTOM_FIELDS(task.gid);
       };
 
       this.ADD_ACTION("creating task", createTask);
