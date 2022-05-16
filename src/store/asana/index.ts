@@ -95,7 +95,7 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     ADD_PROJECTS(payload: Project[]): void {
-      this.projects.push(...payload);
+      this.projects.unshift(...payload); // important to add at first to make sure unique throws away older version
       this.projects = sortAndUnique(this.projects);
       jsonstore.set("projects", this.projects);
     },
@@ -276,7 +276,7 @@ export const useAsanaStore = defineStore("asana", {
                   [cur.gid]: new Date().toISOString()
                 }
               }
-              if (!isDisplayableCustomField) {
+              if (!isDisplayableCustomField(cur)) {
                 return obj;
               }
               return  {
