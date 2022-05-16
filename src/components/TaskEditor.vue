@@ -39,7 +39,7 @@
         <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
       <template
-        v-for="(field, index) in taskEditorSectionIdAndTask.task.custom_fields"
+        v-for="(field, index) in project?.custom_fields"
         :key="field.name"
       >
         <div class="field" v-if="isDisplayableCustomField(field)">
@@ -188,6 +188,7 @@ export default defineComponent({
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
+    const project = computed(() => asanaStore.projects.find((proj) => proj.gid === asanaStore.selectedProject))
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
@@ -292,6 +293,7 @@ export default defineComponent({
     return {
       taskEditorSectionIdAndTask,
       projectId,
+      project,
       dueDate,
       taskName,
       assigneeGid,
