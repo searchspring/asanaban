@@ -21,7 +21,7 @@ import {
   convertAsanaColorToHex,
 } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
-import { ColumnChange } from "@/utils/custom-fields";
+import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { isFilenameExtensionImage } from "@/utils/match";
 
 export const useAsanaStore = defineStore("asana", {
@@ -95,7 +95,7 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     ADD_PROJECTS(payload: Project[]): void {
-      this.projects.push(...payload);
+      this.projects.unshift(...payload); // important to add at first to make sure unique throws away older version
       this.projects = sortAndUnique(this.projects);
       jsonstore.set("projects", this.projects);
     },
@@ -268,6 +268,25 @@ export const useAsanaStore = defineStore("asana", {
           ...taskAndSectionId.task,
           tags: taskAndSectionId.newTags,
           projects: [this.selectedProject],
+          custom_fields: taskAndSectionId.task.custom_fields?.reduce(
+            (obj, cur) => {
+              if (cur.name == ColumnChange) {
+                return {
+                  ...obj,
+                  [cur.gid]: new Date().toISOString()
+                }
+              }
+              if (!isDisplayableCustomField(cur)) {
+                return obj;
+              }
+              return  {
+                ...obj,
+                [cur.gid]:
+                  cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
+              }
+            },
+            {}
+          ),
           memberships: [
             {
               section: taskAndSectionId.sectionId,
@@ -275,9 +294,9 @@ export const useAsanaStore = defineStore("asana", {
             },
           ],
         } as any)) as Task;
+
         task.created_by = { name: useAuthStore().user?.name ?? "" };
         this.tasks.push(task);
-        this.UPDATE_CUSTOM_FIELDS(task.gid);
       };
 
       this.ADD_ACTION("creating task", createTask);
@@ -454,6 +473,7 @@ export const useAsanaStore = defineStore("asana", {
               limit: 100,
               workspace: workspace.gid,
               archived: false,
+              opt_fields: "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options"
             };
             let projectResponse: any = await asanaClient?.projects.findAll(
               options
@@ -466,8 +486,15 @@ export const useAsanaStore = defineStore("asana", {
               const projects = projectResponse.data.map((p) => {
                 return {
                   ...p,
-                  workspaceGid: workspace.gid,
-                } as Project;
+                  custom_fields: p.custom_field_settings.map((el) => {
+                    return { 
+                      name: el.custom_field.name, 
+                      gid: el.custom_field.gid,
+                      enum_options: el.custom_field.enum_options, 
+                    }
+                  }),
+                  workspaceGid: workspace.gid
+                } as Project
               });
               this.ADD_PROJECTS(projects);
             }

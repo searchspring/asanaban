@@ -39,7 +39,7 @@
         <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
       <template
-        v-for="(field, index) in taskEditorSectionIdAndTask.task.custom_fields"
+        v-for="(field, index) in project.custom_fields"
         :key="field.name"
       >
         <div class="field" v-if="isDisplayableCustomField(field)">
@@ -188,6 +188,11 @@ export default defineComponent({
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
+    const project = computed(() => {
+      const selected = asanaStore.projects.find((proj) => proj.gid === asanaStore.selectedProject);
+      if (selected === undefined) throw("Project cannot be found.");
+      return selected;
+    })
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
@@ -241,14 +246,31 @@ export default defineComponent({
       }
 
       task.html_notes = htmlNotes.value;
-      task.custom_fields?.forEach((el, idx) => {
+      project.value.custom_fields?.forEach((el, idx) => {
         const field = el;
         if (isDisplayableCustomField(field)) {
           const selectedVal =
             field.enum_options?.find(
               (o) => o.gid === customFieldSelectedGids.value[idx]
             ) ?? null;
-          field.enum_value = selectedVal;
+         
+          if (task.gid) {
+            const taskCustomField = taskEditorSectionIdAndTask.task.custom_fields?.find(cf => cf.gid === field.gid);
+            if (taskCustomField) {
+              taskCustomField.enum_value = selectedVal;
+            } else {
+              taskEditorSectionIdAndTask.task.custom_fields?.push({
+                ...field,
+                enum_value: selectedVal,
+              })
+            }
+          } else {
+            task.custom_fields = task.custom_fields ?? [];
+            task.custom_fields.push({
+              ...field,
+              enum_value: selectedVal,
+            })
+          } 
         }
       });
 
@@ -292,6 +314,7 @@ export default defineComponent({
     return {
       taskEditorSectionIdAndTask,
       projectId,
+      project,
       dueDate,
       taskName,
       assigneeGid,
