@@ -376,6 +376,17 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
+    DELETE_STORIES(gid: string): void {
+      if (gid) {
+        this.ADD_ACTION(
+          "deleting stories",
+          async () => {
+            await asanaClient?.stories?.delete(gid);
+          }
+        );
+      }
+    },
+
     LOAD_STORIES(task: Task): void {
       this.storiesLoading = true; // Set this before the action is invoked
       const loadStories = async () => {

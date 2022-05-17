@@ -1,6 +1,14 @@
 import asana from "asana";
 import { Hex } from "@/utils/asana-specific";
 
+declare module "asana" {
+  namespace resources {
+    interface Stories {
+      delete(story: string | number, dispatcherOptions?: any): Promise<unknown>;
+    }
+  }
+}
+
 export type Resource = asana.resources.Resource;
 export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 
