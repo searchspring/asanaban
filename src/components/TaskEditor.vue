@@ -39,7 +39,7 @@
         <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
       <template
-        v-for="(field, index) in project?.custom_fields"
+        v-for="(field, index) in project.custom_fields"
         :key="field.name"
       >
         <div class="field" v-if="isDisplayableCustomField(field)">
@@ -246,7 +246,7 @@ export default defineComponent({
       }
 
       task.html_notes = htmlNotes.value;
-      project.value?.custom_fields?.forEach((el, idx) => {
+      project.value.custom_fields?.forEach((el, idx) => {
         const field = el;
         if (isDisplayableCustomField(field)) {
           const selectedVal =
