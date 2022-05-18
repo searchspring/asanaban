@@ -17,6 +17,7 @@ import { Move, Swimlane } from "@/types/layout";
 import { getColumnCount, getPrettyColumnName, convertAsanaColorToHex } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
 import { ColumnChange } from "@/utils/custom-fields";
+import { usePrefStore } from "../preferences";
 
 
 export const useAsanaStore = defineStore("asana", {
@@ -376,14 +377,15 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
-    DELETE_STORY(gid: string, taskEditorSectionIdAndTask: TaskAndSectionId): void {
+    DELETE_STORY(gid: string): void {
+      const prefStore = usePrefStore();
       if (gid) {
         this.ADD_ACTION(
           "deleting story",
           async () => {
             await asanaClient?.stories?.delete(gid);
-            if (taskEditorSectionIdAndTask.task) {
-              taskEditorSectionIdAndTask.task.stories = taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
+            if (prefStore?.taskEditorSectionIdAndTask?.task) {
+              prefStore.taskEditorSectionIdAndTask.task.stories = prefStore.taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
             }
           }
         );
