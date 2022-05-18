@@ -15,7 +15,7 @@
       <span class="story-date">{{ formatDate(story.created_at) }}</span>
       <span class="username">{{ story.created_by.name }}: </span>
       <span class="text" v-html="formatStory(story.html_text)"></span>
-      <n-icon v-if="usergid && usergid === story.created_by.gid" class="trash" @click="deleteStory(story.gid)">
+      <n-icon v-if="usergid && usergid === story.created_by.gid" class="trash" @click="deleteStory(story.gid, taskEditorSectionIdAndTask)">
         <trash-can />
       </n-icon>
     </div>
@@ -28,13 +28,14 @@ import dayjs from "dayjs";
 import { xmlToHtml } from "@/utils/asana-specific";
 import { usePrefStore } from "@/store/preferences";
 import { useAsanaStore } from "@/store/asana";
-import { NSpin } from "naive-ui";
+import { NSpin, NIcon } from "naive-ui";
 import { TrashCan } from "@vicons/carbon";
 import { useAuthStore } from "@/store/auth/index";
 
 export default defineComponent({
   components: {
     NSpin,
+    NIcon,
     TrashCan
   },
   setup() {
@@ -53,10 +54,7 @@ export default defineComponent({
     const formatStory = (text: string) => xmlToHtml(text);
 
     const deleteStory = (gid: string) => {
-      const checkDeleted = asanaStore.DELETE_STORIES(gid);
-      if (checkDeleted && taskEditorSectionIdAndTask.value) {
-        taskEditorSectionIdAndTask.value.task.stories = taskEditorSectionIdAndTask.value?.task.stories.filter((story) => story.gid !== gid);
-      }
+      if (taskEditorSectionIdAndTask.value) asanaStore.DELETE_STORY(gid, taskEditorSectionIdAndTask.value);
     };
 
     return {
@@ -106,16 +104,9 @@ export default defineComponent({
 
 .trash {
   display: flex;
-  width: 0.8rem;
-  height: 0.9rem;
   margin-right: 0;
   margin-left: auto;
-  border-radius: 50%;
-  padding: 2.5px;
-}
-
-.trash:hover {
-  background-color: #bab5b5;
+  font-size: 15px;
 }
 
 </style>

@@ -376,17 +376,17 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
-    DELETE_STORIES(gid: string): boolean {
+    DELETE_STORY(gid: string, taskEditorSectionIdAndTask: TaskAndSectionId): void {
       if (gid) {
         this.ADD_ACTION(
-          "deleting stories",
+          "deleting story",
           async () => {
             await asanaClient?.stories?.delete(gid);
+            if (taskEditorSectionIdAndTask.task) {
+              taskEditorSectionIdAndTask.task.stories = taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
+            }
           }
         );
-        return true;
-      } else {
-        return false;
       }
     },
 
