@@ -53,8 +53,10 @@ export default defineComponent({
     const formatStory = (text: string) => xmlToHtml(text);
 
     const deleteStory = (gid: string) => {
-      asanaStore.DELETE_STORIES(gid);
-      if (taskEditorSectionIdAndTask.value) taskEditorSectionIdAndTask.value.task.stories = taskEditorSectionIdAndTask.value?.task.stories.filter((story) => story.gid !== gid);
+      const checkDeleted = asanaStore.DELETE_STORIES(gid);
+      if (checkDeleted && taskEditorSectionIdAndTask.value) {
+        taskEditorSectionIdAndTask.value.task.stories = taskEditorSectionIdAndTask.value?.task.stories.filter((story) => story.gid !== gid);
+      }
     };
 
     return {

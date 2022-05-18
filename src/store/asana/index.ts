@@ -376,7 +376,7 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
-    DELETE_STORIES(gid: string): void {
+    DELETE_STORIES(gid: string): boolean {
       if (gid) {
         this.ADD_ACTION(
           "deleting stories",
@@ -384,6 +384,9 @@ export const useAsanaStore = defineStore("asana", {
             await asanaClient?.stories?.delete(gid);
           }
         );
+        return true;
+      } else {
+        return false;
       }
     },
 
