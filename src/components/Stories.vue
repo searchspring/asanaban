@@ -15,7 +15,7 @@
       <span class="story-date">{{ formatDate(story.created_at) }}</span>
       <span class="username">{{ story.created_by.name }}: </span>
       <span class="text" v-html="formatStory(story.html_text)"></span>
-      <n-icon class="trash" @click="deleteStory(story.gid)">
+      <n-icon v-if="usergid && usergid === story.created_by.gid" class="trash" @click="deleteStory(story.gid)">
         <trash-can />
       </n-icon>
     </div>
@@ -30,6 +30,7 @@ import { usePrefStore } from "@/store/preferences";
 import { useAsanaStore } from "@/store/asana";
 import { NSpin } from "naive-ui";
 import { TrashCan } from "@vicons/carbon";
+import { useAuthStore } from "@/store/auth/index";
 
 export default defineComponent({
   components: {
@@ -39,6 +40,7 @@ export default defineComponent({
   setup() {
     const prefStore = usePrefStore();
     const asanaStore = useAsanaStore();
+    const usergid = computed(() => useAuthStore().user?.gid)
 
     const taskEditorSectionIdAndTask = computed(() => prefStore.taskEditorSectionIdAndTask);
     const storiesLoading = computed(() => asanaStore.storiesLoading);
@@ -60,7 +62,8 @@ export default defineComponent({
       storiesLoading,
       formatDate,
       formatStory,
-      deleteStory
+      deleteStory,
+      usergid
     };
   },
 });
