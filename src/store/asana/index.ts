@@ -24,6 +24,7 @@ import { asanaClient, useAuthStore } from "../auth";
 import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { usePrefStore } from "../preferences";
 import { isFilenameExtensionImage } from "@/utils/match";
+import asana from "asana";
 
 export const useAsanaStore = defineStore("asana", {
   state: (): State => ({
@@ -317,6 +318,7 @@ export const useAsanaStore = defineStore("asana", {
           assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
+          projects: taskAndSectionId.task.projects.map((proj) => proj.gid),
           custom_fields: taskAndSectionId.task.custom_fields?.reduce(
             (obj, cur) => ({
               ...obj,
@@ -417,6 +419,30 @@ export const useAsanaStore = defineStore("asana", {
             }
           }
         );
+      }
+    },
+
+    ADD_PROJECT_TO_TASK(task: string, project: string, section?: string) {
+      if (task && project) {
+        const data = { project: project }
+        if (section) data["section"] = section;
+        this.ADD_ACTION(
+          "adding project to task",
+          async () => {
+            await asanaClient?.tasks.addProject(task, data)
+          }
+        )
+      }
+    },
+
+    REMOVE_PROJECT_FROM_TASK(task: string, project: string) {
+      if (task && project) {
+        this.ADD_ACTION(
+          "removing project from task",
+          async () => {
+            await asanaClient?.tasks.removeProject(task, {project: project})
+          }
+        )
       }
     },
 
