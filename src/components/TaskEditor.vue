@@ -1,40 +1,65 @@
 <template>
-  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide">
+  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide" @click.self="hide">
     <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
-        <a v-if="taskEditorSectionIdAndTask.task.gid" class="tiny-link right" target="_blank" rel="noopener"
-          :href="makeAsanaHref(taskEditorSectionIdAndTask.task.gid)">open in asana</a>
-        <label for="name">name</label>
-        <BasicInput v-model:input="taskName" @keydown.enter="save(taskEditorSectionIdAndTask)"></BasicInput>
+        <a
+          v-if="taskEditorSectionIdAndTask.task.gid"
+          class="tiny-link right"
+          target="_blank"
+          rel="noopener"
+          :href="makeAsanaHref(taskEditorSectionIdAndTask.task.gid)"
+          >Open in Asana</a
+        >
+        <label for="name">Name</label>
+        <BasicInput
+          v-model:input="taskName"
+          @keydown.enter="save(taskEditorSectionIdAndTask)"
+        ></BasicInput>
       </div>
       <div class="assignee-date-selector">
         <div class="assignee">
-          <label for="assignee">assignee</label>
+          <label for="assignee">Assignee</label>
           <AssigneeSelector v-model:assigneeGid="assigneeGid" />
         </div>
         <div class="due-date">
-          <label>due date</label>
+          <label>Due date</label>
           <DateSelector v-model:date="dueDate" />
         </div>
       </div>
       <div class="description">
-        <label for="description">description</label>
-        <TextEditor :html="htmlNotes" :forDescription="true" v-on:update="htmlNotes = $event" />
+        <label for="description">Description</label>
+        <TextEditor
+          :html="htmlNotes"
+          :forDescription="true"
+          v-on:update="htmlNotes = $event"
+        />
       </div>
       <div class="tags">
-        <label>tags</label>
+        <label>Tags</label>
         <TagSelector :task="taskEditorSectionIdAndTask.task" />
       </div>
-      <template v-for="(field, index) in taskEditorSectionIdAndTask.task.custom_fields" :key="field.name">
+      <template
+        v-for="(field, index) in project.custom_fields"
+        :key="field.name"
+      >
         <div class="field" v-if="isDisplayableCustomField(field)">
           <label>{{ field.name }}</label>
-          <custom-enum-field-selector :field="field" v-model:selectedGid="customFieldSelectedGids[index]" />
+          <custom-enum-field-selector
+            :field="field"
+            v-model:selectedGid="customFieldSelectedGids[index]"
+          />
         </div>
       </template>
-      <div class="subtasks" v-if="taskEditorSectionIdAndTask.task.subtasks?.length > 0">
-        <label>subtasks</label>
+      <div
+        class="subtasks"
+        v-if="taskEditorSectionIdAndTask.task.subtasks && taskEditorSectionIdAndTask.task.subtasks?.length > 0"
+      >
+        <label>Subtasks</label>
         <n-list style="font-size: 0.8rem">
-          <n-list-item v-for="subtask in taskEditorSectionIdAndTask.task.subtasks" :key="subtask.gid">
+          <n-list-item
+            v-for="subtask in taskEditorSectionIdAndTask.task.subtasks"
+            :key="subtask.gid"
+          >
             <template #prefix>
               <n-icon color="green" v-if="subtask.completed">
                 <check-circle />
@@ -54,26 +79,59 @@
           </n-list-item>
         </n-list>
       </div>
+      <div class="attachments" v-if="images && images.length > 0">
+        <label>Attached images</label>
+        <div
+          v-for="image in images"
+          class="attachment"
+          :key="image.gid"
+        >
+          <a :href="image.permanent_url" target="_blank" rel="noopener">
+            <img :src="image.view_url" />
+          </a>
+        </div>
+      </div>
       <div class="stories">
         <Stories />
       </div>
       <div class="new-comment" v-if="taskEditorSectionIdAndTask.task.gid">
-        <label for="new comment">new comment</label>
-        <TextEditor :html="taskEditorSectionIdAndTask.htmlText" :forDescription="false"
-          v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)" />
+        <label for="new comment">New comment</label>
+        <TextEditor
+          :html="taskEditorSectionIdAndTask.htmlText"
+          :forDescription="false"
+          v-on:update="updateHtmlText($event, taskEditorSectionIdAndTask)"
+        />
       </div>
       <div class="button-bar">
-        <n-button strong secondary class="primary left" @click="hide()">cancel</n-button>
-        <n-button strong type="primary" class="primary right" @click="save(taskEditorSectionIdAndTask)">
+        <n-button strong secondary class="primary left" @click="hide()"
+          >cancel</n-button
+        >
+        <n-button
+          strong
+          type="primary"
+          class="primary right"
+          @click="save(taskEditorSectionIdAndTask)"
+        >
           save
         </n-button>
         <div class="middle-buttons">
-          <n-button strong secondary type="error" class="secondary left" @click="deleteTask(taskEditorSectionIdAndTask)"
-            v-if="taskEditorSectionIdAndTask.task.gid">
+          <n-button
+            strong
+            secondary
+            type="error"
+            class="secondary left"
+            @click="deleteTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid"
+          >
             delete
           </n-button>
-          <n-button strong secondary class="secondary right" @click="completeTask(taskEditorSectionIdAndTask)"
-            v-if="taskEditorSectionIdAndTask.task.gid">
+          <n-button
+            strong
+            secondary
+            class="secondary right"
+            @click="completeTask(taskEditorSectionIdAndTask)"
+            v-if="taskEditorSectionIdAndTask.task.gid"
+          >
             complete
           </n-button>
         </div>
@@ -98,13 +156,29 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import { NButton, NList, NListItem, NIcon } from 'naive-ui';
+import { NButton, NList, NListItem, NIcon } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
+import { isFilenameExtensionImage } from "../utils/match";
 
 export default defineComponent({
-  components: { TextEditor, Stories, TagSelector, DateSelector, BasicInput, AssigneeSelector, NButton, NList, NListItem, NIcon, ExternalLinkAlt, CheckCircleRegular, CheckCircle, CustomEnumFieldSelector },
+  components: {
+    TextEditor,
+    Stories,
+    TagSelector,
+    DateSelector,
+    BasicInput,
+    AssigneeSelector,
+    NButton,
+    NList,
+    NListItem,
+    NIcon,
+    ExternalLinkAlt,
+    CheckCircleRegular,
+    CheckCircle,
+    CustomEnumFieldSelector,
+  },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
@@ -114,10 +188,19 @@ export default defineComponent({
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
+    const project = computed(() => {
+      const selected = asanaStore.projects.find((proj) => proj.gid === asanaStore.selectedProject);
+      if (selected === undefined) throw("Project cannot be found.");
+      return selected;
+    })
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
     });
+
+    const images = computed(() => prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter(
+            (el) => isFilenameExtensionImage(el.name)
+          ));
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -131,9 +214,12 @@ export default defineComponent({
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
 
         customFieldSelectedGids.value = [];
-        taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) => customFieldSelectedGids.value.push(el.enum_value?.gid));
+        taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
+          customFieldSelectedGids.value.push(el.enum_value?.gid)
+        );
 
-        const dueDateString = prefStore.taskEditorSectionIdAndTask?.task?.due_on;
+        const dueDateString =
+          prefStore.taskEditorSectionIdAndTask?.task?.due_on;
         // to handle when creating a new task with no date or a task initially has no due date
         if (dueDateString === null || dueDateString === undefined) {
           dueDate.value = undefined;
@@ -153,18 +239,40 @@ export default defineComponent({
       if (!assigneeGid.value) {
         task.assignee = null;
       } else {
-        const selectedUser = asanaStore.users.find((user) => user.gid === assigneeGid.value);
+        const selectedUser = asanaStore.users.find(
+          (user) => user.gid === assigneeGid.value
+        );
         setAssigneeOnExistingTask(selectedUser!, taskEditorSectionIdAndTask);
       }
 
       task.html_notes = htmlNotes.value;
-      task.custom_fields?.forEach ((el, idx) => {
+      project.value.custom_fields?.forEach((el, idx) => {
         const field = el;
         if (isDisplayableCustomField(field)) {
-          const selectedVal = field.enum_options?.find(o => o.gid === customFieldSelectedGids.value[idx]) ?? null;
-          field.enum_value = selectedVal;
+          const selectedVal =
+            field.enum_options?.find(
+              (o) => o.gid === customFieldSelectedGids.value[idx]
+            ) ?? null;
+         
+          if (task.gid) {
+            const taskCustomField = taskEditorSectionIdAndTask.task.custom_fields?.find(cf => cf.gid === field.gid);
+            if (taskCustomField) {
+              taskCustomField.enum_value = selectedVal;
+            } else {
+              taskEditorSectionIdAndTask.task.custom_fields?.push({
+                ...field,
+                enum_value: selectedVal,
+              })
+            }
+          } else {
+            task.custom_fields = task.custom_fields ?? [];
+            task.custom_fields.push({
+              ...field,
+              enum_value: selectedVal,
+            })
+          } 
         }
-      })
+      });
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
@@ -188,7 +296,10 @@ export default defineComponent({
       prefStore.HIDE_TASK_EDITOR();
     };
 
-    const updateHtmlText = (html: string, taskEditorSectionIdAndTask: TaskAndSectionId) => {
+    const updateHtmlText = (
+      html: string,
+      taskEditorSectionIdAndTask: TaskAndSectionId
+    ) => {
       taskEditorSectionIdAndTask.htmlText = html;
     };
 
@@ -197,15 +308,18 @@ export default defineComponent({
       hide();
     };
 
-    const makeAsanaHref = (taskId: string) => `https://app.asana.com/0/${projectId.value}/${taskId}`;
+    const makeAsanaHref = (taskId: string) =>
+      `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
     return {
       taskEditorSectionIdAndTask,
       projectId,
+      project,
       dueDate,
       taskName,
       assigneeGid,
       htmlNotes,
+      images,
       isDisplayableCustomField,
       customFieldSelectedGids,
       save,
@@ -213,12 +327,16 @@ export default defineComponent({
       hide,
       updateHtmlText,
       completeTask,
-      makeAsanaHref
-    }
+      makeAsanaHref,
+      isFilenameExtensionImage,
+    };
   },
 });
 
-function setAssigneeOnExistingTask(assignee: User, taskEditorSectionIdAndTask: TaskAndSectionId) {
+function setAssigneeOnExistingTask(
+  assignee: User,
+  taskEditorSectionIdAndTask: TaskAndSectionId
+) {
   const gid = assignee.gid;
   const photo = assignee.photo;
 
@@ -288,7 +406,7 @@ label {
 
 .tiny-link {
   font-size: 0.6rem;
-  color: #4B9D5F;
+  color: #4b9d5f;
 }
 
 .right {
@@ -354,5 +472,29 @@ button.left {
 .middle-buttons {
   display: flex;
   justify-content: center;
+}
+
+.attachments {
+  text-align: left;
+  overflow-x: scroll;
+  overflow-y: hidden;
+  white-space: nowrap;
+  width: 100%;
+  height: 150px;
+  padding: 15px 0;
+}
+
+.attachments .attachment {
+  display: inline-block;
+  width: 30%;
+  margin-left: 5px;
+  height: 100%;
+}
+
+.attachments .attachment img {
+  width: 100%;
+  height: 100%;
+  display: inline-block;
+  object-fit: cover;
 }
 </style>

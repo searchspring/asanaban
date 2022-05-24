@@ -8,43 +8,49 @@
     @dragend="endDrag($event)"
     @click="edit()"
   >
-    <div class="text">
-      <assignee-icon v-if="assignee" :assignee="assignee"  />
-      {{ task.name }}
-      <n-icon class="subtask-icon" v-if="task.subtasks.length > 0">
-        <tree-view-alt />
-      </n-icon>
+    <div v-if="task.displayImage" class="display-image">
+      <img :src="task.displayImage.view_url" />
     </div>
-    <div class="label" v-if="dueDate">
-      <hr />
-      Due Date
-      <div class="date">{{ dueDate }}</div>
-    </div>
-    <div class="footer">
-      <div
-        class="tag"
-        v-for="tag in tags"
-        :key="tag.name"
-        :style="{
-          'background-color': tag.hexes?.background,
-          color: tag.hexes?.font,
-        }"
-      >
-        {{ tag.name }}
+    
+    <div class="content">
+      <div class="text">
+        <assignee-icon v-if="assignee" :assignee="assignee" />
+        {{ task.name }}
+        <n-icon class="subtask-icon" v-if="task.subtasks && task.subtasks.length > 0">
+          <tree-view-alt />
+        </n-icon>
       </div>
-      <n-tag
-        round
-        size="small"
-        v-for="field in customEnumFieldValues"
-        :key="field.name"
-        :color="{
-          color: field.hexes.background,
-          textColor: field.hexes.font,
-          borderColor: '#ffffff',
-        }"
-      >
-        {{ field.name }}
-      </n-tag>
+      <div class="label" v-if="dueDate">
+        <hr />
+        Due Date
+        <div class="date">{{ dueDate }}</div>
+      </div>
+      <div class="footer">
+        <div
+          class="tag"
+          v-for="tag in tags"
+          :key="tag.name"
+          :style="{
+            'background-color': tag.hexes?.background,
+            color: tag.hexes?.font,
+          }"
+        >
+          {{ tag.name }}
+        </div>
+        <n-tag
+          round
+          size="small"
+          v-for="field in customEnumFieldValues"
+          :key="field.name"
+          :color="{
+            color: field.hexes.background,
+            textColor: field.hexes.font,
+            borderColor: '#ffffff',
+          }"
+        >
+          {{ field.name }}
+        </n-tag>
+      </div>
     </div>
   </div>
 </template>
@@ -79,7 +85,6 @@ export default defineComponent({
   setup(props) {
     const prefStore = usePrefStore();
     const assignee = computed(() => props.task.assignee);
-
     const tags = computed(() => {
       return props.task.tags.map((tag) => {
         return { name: tag.name.substring(0, 1), hexes: tag.hexes };
@@ -191,24 +196,38 @@ hr {
 
 .task {
   border-radius: 5px;
-  padding: 0.15rem 0.1rem 0rem 0.15rem;
   margin-top: 2px;
   margin-left: 4px;
   margin-bottom: 4px;
   background-color: white;
   margin-right: 2px;
-  width: 48%;
-  max-width: 15rem;
+  width: 98%;
   min-height: 2.5rem;
   cursor: move;
-  display: inline-block;
   vertical-align: top;
   overflow: auto;
+  display: inline-block;
 }
 
 
 .task .subtask-icon {
   margin-left: auto;
+}
+
+.display-image {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+.display-image img {
+  object-fit: contain;
+  width: 100%;
+  max-height: 150px;
+}
+
+.content {
+  padding: 0.15rem 0.1rem 0.2rem 0.15rem;
 }
 
 .text {

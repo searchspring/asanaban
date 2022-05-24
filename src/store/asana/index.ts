@@ -11,14 +11,19 @@ import {
   TaskTag,
   BaseResource,
   PaginationParams,
-  Resource
+  Resource,
+  Attachment,
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
-import { getColumnCount, getPrettyColumnName, convertAsanaColorToHex } from "@/utils/asana-specific";
+import {
+  getColumnCount,
+  getPrettyColumnName,
+  convertAsanaColorToHex,
+} from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
-import { ColumnChange } from "@/utils/custom-fields";
+import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { usePrefStore } from "../preferences";
-
+import { isFilenameExtensionImage } from "@/utils/match";
 
 export const useAsanaStore = defineStore("asana", {
   state: (): State => ({
@@ -36,23 +41,25 @@ export const useAsanaStore = defineStore("asana", {
     reloadState: {
       locked: false,
       lastLocked: null,
-      lastReloadStart: null
+      lastReloadStart: null,
     },
-    storiesLoading: false
+    storiesLoading: false,
   }),
   getters: {
     IS_SECTION_COMPLETE: (state) => (columnName: string) => {
-      const columnNameUpper = columnName.toUpperCase()
-      return columnNameUpper === 'DONE' ||
-        columnNameUpper.startsWith('COMPLETE') ||
-        columnNameUpper.startsWith('FINISH') ||
-        columnNameUpper.startsWith('DEPLOYED')
+      const columnNameUpper = columnName.toUpperCase();
+      return (
+        columnNameUpper === "DONE" ||
+        columnNameUpper.startsWith("COMPLETE") ||
+        columnNameUpper.startsWith("FINISH") ||
+        columnNameUpper.startsWith("DEPLOYED")
+      );
     },
     SWIMLANES: (state) => {
       const swimlanes: Swimlane[] = [];
       const found: Set<string> = new Set();
 
-      state.sections.forEach(section => {
+      state.sections.forEach((section) => {
         if (section.name.indexOf(":") === -1) {
           section.name = "no swimlane:" + section.name;
         }
@@ -83,13 +90,13 @@ export const useAsanaStore = defineStore("asana", {
   },
   actions: {
     SET_WORKSPACE(): void {
-      const match = this.projects.find(p => p.gid === this.selectedProject);
+      const match = this.projects.find((p) => p.gid === this.selectedProject);
       this.workspace = match?.workspaceGid ?? null;
       jsonstore.set("workspace", this.workspace);
     },
 
     ADD_PROJECTS(payload: Project[]): void {
-      this.projects.push(...payload);
+      this.projects.unshift(...payload); // important to add at first to make sure unique throws away older version
       this.projects = sortAndUnique(this.projects);
       jsonstore.set("projects", this.projects);
     },
@@ -122,20 +129,27 @@ export const useAsanaStore = defineStore("asana", {
 
       const taskLimitsByColumnName: Record<string, string> = {};
 
-      this.sections.forEach(section => {
+      this.sections.forEach((section) => {
         const thisColumnLimit = getColumnCount(section.name);
         const justColumnName = getPrettyColumnName(section.name).toLowerCase();
         section.maxTaskCount = thisColumnLimit;
 
-        if (thisColumnLimit !== "-1" && !taskLimitsByColumnName[justColumnName]) { // Store the limit by the _first_ column (that has a limit)
+        if (
+          thisColumnLimit !== "-1" &&
+          !taskLimitsByColumnName[justColumnName]
+        ) {
+          // Store the limit by the _first_ column (that has a limit)
           taskLimitsByColumnName[justColumnName] = thisColumnLimit;
         }
       });
 
       // Now that we have our limits, go back over each section and (re-)set the limit for columns of the same name
-      this.sections.forEach(section => {
+      this.sections.forEach((section) => {
         const justColumnName = getPrettyColumnName(section.name).toLowerCase();
-        if (section.maxTaskCount === "-1" && taskLimitsByColumnName[justColumnName]) {
+        if (
+          section.maxTaskCount === "-1" &&
+          taskLimitsByColumnName[justColumnName]
+        ) {
           section.maxTaskCount = taskLimitsByColumnName[justColumnName];
         }
       });
@@ -156,19 +170,21 @@ export const useAsanaStore = defineStore("asana", {
         description: description,
         func: func,
         isProcessing: false,
-        retries: 0
+        retries: 0,
       });
     },
 
     MERGE_TASKS(payload: Task[]): void {
-      const reloadInterrupted = this.reloadState.lastLocked &&
+      const reloadInterrupted =
+        this.reloadState.lastLocked &&
         this.reloadState.lastReloadStart &&
-        this.reloadState.lastLocked.getTime() > this.reloadState.lastReloadStart.getTime();
+        this.reloadState.lastLocked.getTime() >
+          this.reloadState.lastReloadStart.getTime();
 
       if (this.reloadState.locked || reloadInterrupted) return;
 
       // replace individual task with each task in payload
-      payload.forEach(task => {
+      payload.forEach((task) => {
         const index = this.tasks.findIndex((t) => t.gid === task.gid);
         if (index !== -1) {
           this.tasks.splice(index, 1, task);
@@ -180,16 +196,18 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     MOVE_TASK(payload: Move): void {
-      const task = this.tasks.find(task => task.gid === payload.taskId);
+      const task = this.tasks.find((task) => task.gid === payload.taskId);
 
       if (task?.memberships[0].section?.gid) {
         task.memberships[0].section.gid = payload.endSectionId;
         const siblingTask = this.tasks.find(
-          task => task.gid === payload.siblingTaskId
+          (task) => task.gid === payload.siblingTaskId
         );
 
         const index = this.tasks.indexOf(task);
-        const siblingIndex = !siblingTask ? -1 : this.tasks.indexOf(siblingTask);
+        const siblingIndex = !siblingTask
+          ? -1
+          : this.tasks.indexOf(siblingTask);
         const movingUp = index > siblingIndex;
         const columnChange = payload.startSectionId !== payload.endSectionId;
 
@@ -200,7 +218,8 @@ export const useAsanaStore = defineStore("asana", {
           relative_pos = movingUp ? "insert_before" : "insert_after";
         }
 
-        let insertIdx = columnChange && !movingUp ? siblingIndex - 1 : siblingIndex;
+        let insertIdx =
+          columnChange && !movingUp ? siblingIndex - 1 : siblingIndex;
         if (payload.endOfColumn) {
           insertIdx++;
         }
@@ -208,60 +227,78 @@ export const useAsanaStore = defineStore("asana", {
         this.tasks.splice(index, 1);
         this.tasks.splice(insertIdx, 0, task);
 
-        this.ADD_ACTION(
-          "moving task",
-          async () => {
-            await asanaClient?.sections.addTask(payload.endSectionId, {
-              task: payload.taskId,
-              [relative_pos]: payload.siblingTaskId,
-            });
-            if (payload.startSectionId !== payload.endSectionId) {
-              this.UPDATE_CUSTOM_FIELDS(payload.taskId);
-            }
-          },
-        );
+        this.ADD_ACTION("moving task", async () => {
+          await asanaClient?.sections.addTask(payload.endSectionId, {
+            task: payload.taskId,
+            [relative_pos]: payload.siblingTaskId,
+          });
+          if (payload.startSectionId !== payload.endSectionId) {
+            this.UPDATE_CUSTOM_FIELDS(payload.taskId);
+          }
+        });
       }
     },
 
     UPDATE_CUSTOM_FIELDS(taskId: string): void {
-      const task = this.tasks.find(task => task.gid === taskId)!;
-      const columnChangeIdx = task?.custom_fields?.findIndex(field => field.name === ColumnChange);
+      const task = this.tasks.find((task) => task.gid === taskId)!;
+      const columnChangeIdx = task?.custom_fields?.findIndex(
+        (field) => field.name === ColumnChange
+      );
 
       if (columnChangeIdx === undefined) return;
 
       const body = {
-        custom_fields: {}
-      }
+        custom_fields: {},
+      };
       if (columnChangeIdx !== -1 && task.custom_fields) {
-        body.custom_fields[task.custom_fields[columnChangeIdx].gid] = new Date().toISOString();
-        (task.custom_fields[columnChangeIdx] as any).text_value = new Date().toISOString();
+        body.custom_fields[task.custom_fields[columnChangeIdx].gid] =
+          new Date().toISOString();
+        (task.custom_fields[columnChangeIdx] as any).text_value =
+          new Date().toISOString();
       }
 
-      this.ADD_ACTION(
-        "updating custom fields",
-        async () => {
-          await asanaClient?.tasks.update(task.gid, body);
-        }
-      )
+      this.ADD_ACTION("updating custom fields", async () => {
+        await asanaClient?.tasks.update(task.gid, body);
+      });
     },
 
     CREATE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const createTask = async () => {
-
         // asana interface has incorrect type defintion for this function
-        const task = await asanaClient!.tasks.create({
+        const task = (await asanaClient!.tasks.create({
           ...taskAndSectionId.task,
           tags: taskAndSectionId.newTags,
           projects: [this.selectedProject],
-          memberships: [{
-            section: taskAndSectionId.sectionId,
-            project: this.selectedProject,
-          }],
-        } as any) as Task;
+          custom_fields: taskAndSectionId.task.custom_fields?.reduce(
+            (obj, cur) => {
+              if (cur.name == ColumnChange) {
+                return {
+                  ...obj,
+                  [cur.gid]: new Date().toISOString()
+                }
+              }
+              if (!isDisplayableCustomField(cur)) {
+                return obj;
+              }
+              return  {
+                ...obj,
+                [cur.gid]:
+                  cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
+              }
+            },
+            {}
+          ),
+          memberships: [
+            {
+              section: taskAndSectionId.sectionId,
+              project: this.selectedProject,
+            },
+          ],
+        } as any)) as Task;
+
         task.created_by = { name: useAuthStore().user?.name ?? "" };
         this.tasks.push(task);
-        this.UPDATE_CUSTOM_FIELDS(task.gid);
-      }
+      };
 
       this.ADD_ACTION("creating task", createTask);
     },
@@ -269,7 +306,7 @@ export const useAsanaStore = defineStore("asana", {
     UPDATE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const updateTask = async () => {
         const index = this.tasks.findIndex(
-          t => t.gid === taskAndSectionId.task.gid
+          (t) => t.gid === taskAndSectionId.task.gid
         );
         if (index !== -1) {
           this.tasks.splice(index, 1, taskAndSectionId.task);
@@ -280,12 +317,19 @@ export const useAsanaStore = defineStore("asana", {
           assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
-          custom_fields: taskAndSectionId.task.custom_fields?.reduce((obj, cur) => ({ ...obj, [cur.gid]: cur.enum_value?.gid ?? cur.number_value ?? cur.text_value }), {})
+          custom_fields: taskAndSectionId.task.custom_fields?.reduce(
+            (obj, cur) => ({
+              ...obj,
+              [cur.gid]:
+                cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
+            }),
+            {}
+          ),
         } as any); // asana interface has incorrect type defintion for assignee - had to typecast to allow null type for assignee field
 
         this.UPDATE_STORIES(taskAndSectionId);
         this.UPDATE_TASK_TAGS(taskAndSectionId);
-      }
+      };
 
       this.ADD_ACTION("updating task", updateTask);
     },
@@ -293,69 +337,57 @@ export const useAsanaStore = defineStore("asana", {
     DELETE_TASK(taskAndSectionId: TaskAndSectionId): void {
       const deleteTask = async () => {
         const index = this.tasks.findIndex(
-          t => t.gid === taskAndSectionId.task.gid
+          (t) => t.gid === taskAndSectionId.task.gid
         );
         if (index !== -1) {
           this.tasks.splice(index, 1);
         }
         await asanaClient?.tasks.delete(taskAndSectionId.task.gid);
-      }
+      };
 
       this.ADD_ACTION("deleting task", deleteTask);
     },
 
     COMPLETE_TASK(taskAndSectionId: TaskAndSectionId): void {
-      this.ADD_ACTION(
-        "completing task",
-        async () => {
-          completeTask(this.tasks, taskAndSectionId.task.gid);
-        }
-      );
+      this.ADD_ACTION("completing task", async () => {
+        completeTask(this.tasks, taskAndSectionId.task.gid);
+      });
     },
 
     RELEASE_TASK(task: Task): void {
-      this.ADD_ACTION(
-        "releasing task",
-        async () => {
-          completeTask(this.tasks, task.gid);
-        },
-      );
+      this.ADD_ACTION("releasing task", async () => {
+        completeTask(this.tasks, task.gid);
+      });
     },
 
-    ADD_TASK_TAG(payload: { task: Task, tagGid: string }): void {
-      this.ADD_ACTION(
-        "adding task tag",
-        async () => {
-          await asanaClient?.tasks.addTag(payload.task.gid, {
-            tag: payload.tagGid,
-          });
-        },
-      );
+    ADD_TASK_TAG(payload: { task: Task; tagGid: string }): void {
+      this.ADD_ACTION("adding task tag", async () => {
+        await asanaClient?.tasks.addTag(payload.task.gid, {
+          tag: payload.tagGid,
+        });
+      });
     },
 
-    REMOVE_TASK_TAG(payload: { task: Task, tagGid: string }): void {
-      this.ADD_ACTION(
-        "removing task tag",
-        async () => {
-          await asanaClient?.tasks.removeTag(payload.task.gid, {
-            tag: payload.tagGid,
-          });
-        },
-      );
+    REMOVE_TASK_TAG(payload: { task: Task; tagGid: string }): void {
+      this.ADD_ACTION("removing task tag", async () => {
+        await asanaClient?.tasks.removeTag(payload.task.gid, {
+          tag: payload.tagGid,
+        });
+      });
     },
 
     UPDATE_TASK_TAGS(taskAndSectionId: TaskAndSectionId): void {
-      const originalTagIds = taskAndSectionId.task.tags.map(tag => tag.gid)
+      const originalTagIds = taskAndSectionId.task.tags.map((tag) => tag.gid);
 
       const removedTags = originalTagIds.filter(
-        tagId => !taskAndSectionId.newTags.includes(tagId)
+        (tagId) => !taskAndSectionId.newTags.includes(tagId)
       );
       removedTags.forEach((tagGid) => {
         this.REMOVE_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
       });
 
       const addedTags = taskAndSectionId.newTags.filter(
-        tagId => !originalTagIds.includes(tagId)
+        (tagId) => !originalTagIds.includes(tagId)
       );
       addedTags.forEach((tagGid) => {
         this.ADD_TASK_TAG({ task: taskAndSectionId.task, tagGid: tagGid });
@@ -364,16 +396,12 @@ export const useAsanaStore = defineStore("asana", {
 
     UPDATE_STORIES(taskAndSectionId: TaskAndSectionId): void {
       if (taskAndSectionId.htmlText) {
-        this.ADD_ACTION(
-          "adding stories",
-          async () => {
-            await asanaClient?.stories.createOnTask(
-              taskAndSectionId.task.gid,
-              { html_text: taskAndSectionId.htmlText }
-            );
-            taskAndSectionId.htmlText = "";
-          }
-        );
+        this.ADD_ACTION("adding stories", async () => {
+          await asanaClient?.stories.createOnTask(taskAndSectionId.task.gid, {
+            html_text: taskAndSectionId.htmlText,
+          });
+          taskAndSectionId.htmlText = "";
+        });
       }
     },
 
@@ -404,20 +432,52 @@ export const useAsanaStore = defineStore("asana", {
                 "html_text,\
                 created_by.name,\
                 resource_subtype,\
-                type,created_at"
+                type,created_at",
             } as any)
             .catch(() => {
               this.storiesLoading = false;
               return { data: [] }; // Keep the response the same to allow the next steps to work
             });
 
-          task.stories = storiesResponse.data.filter(story => {
+          task.stories = storiesResponse.data.filter((story) => {
             return story["resource_subtype"] === "comment_added";
           });
           this.storiesLoading = false;
         }
-      }
+      };
       this.ADD_ACTION("loading stories", loadStories);
+    },
+
+    LOAD_ATTACHMENTS(tasks: Task[]) {
+      const loadAttachments = async (task: Task) => {
+        if (asanaClient) {
+          const asanaResponse = await asanaClient.attachments
+            .findByTask(task.gid, {
+              opt_fields: "view_url, permanent_url, name",
+            })
+            .catch(() => {
+              this.storiesLoading = false;
+              return { data: [] }; // Keep the response the same to allow the next steps to work
+            });
+          task.attachments = asanaResponse.data as Attachment[];
+          task.displayImage = asanaResponse.data
+            .filter((attachment) => isFilenameExtensionImage(attachment.name))
+            .pop() as Attachment | undefined;
+          return task;
+        }
+      };
+
+      const loadAllAttachments = async () => {
+        const promises = tasks.map((task) => {
+          return loadAttachments(task);
+        });
+        const tasksWithAttachments = await Promise.allSettled(promises);
+        tasks = (
+          tasksWithAttachments as PromiseFulfilledResult<Task[] | undefined>[]
+        ).map((el) => el.value) as unknown as Task[];
+      };
+
+      this.ADD_ACTION("loading all attachments", loadAllAttachments);
     },
 
     LOAD_PROJECTS(): void {
@@ -429,12 +489,26 @@ export const useAsanaStore = defineStore("asana", {
               limit: 100,
               workspace: workspace.gid,
               archived: false,
+              opt_fields: "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options"
             };
-            let projectResponse: any = await asanaClient?.projects.findAll(options);
-            for (; projectResponse; projectResponse = await projectResponse.nextPage()) {
-              const projects = projectResponse.data.map(p => {
+            let projectResponse: any = await asanaClient?.projects.findAll(
+              options
+            );
+            for (
+              ;
+              projectResponse;
+              projectResponse = await projectResponse.nextPage()
+            ) {
+              const projects = projectResponse.data.map((p) => {
                 return {
                   ...p,
+                  custom_fields: p.custom_field_settings.map((el) => {
+                    return { 
+                      name: el.custom_field.name, 
+                      gid: el.custom_field.gid,
+                      enum_options: el.custom_field.enum_options, 
+                    }
+                  }),
                   workspaceGid: workspace.gid
                 } as Project
               });
@@ -442,7 +516,7 @@ export const useAsanaStore = defineStore("asana", {
             }
           });
         }
-      }
+      };
       this.ADD_ACTION("loading projects", loadProjects);
     },
 
@@ -456,40 +530,37 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     LOAD_TASKS(): void {
-      this.ADD_ACTION(
-        "loading tasks",
-        async () => loadTasks(this.MERGE_TASKS, null)
+      this.ADD_ACTION("loading tasks", async () =>
+        loadTasks(this.MERGE_TASKS, null)
       );
     },
 
     LOAD_SECTIONS(): void {
-      this.ADD_ACTION(
-        "loading sections",
-        async () => {
-          if (asanaClient && this.selectedProject) {
-            const sectionResponse = await asanaClient.sections.findByProject(this.selectedProject);
-            this.SET_SECTIONS(sectionResponse as Section[]);
-          }
+      this.ADD_ACTION("loading sections", async () => {
+        if (asanaClient && this.selectedProject) {
+          const sectionResponse = await asanaClient.sections.findByProject(
+            this.selectedProject
+          );
+          this.SET_SECTIONS(sectionResponse as Section[]);
         }
-      );
+      });
     },
 
     LOAD_USERS(): void {
-      this.ADD_ACTION(
-        "loading users",
-        async () => {
-          if (asanaClient && this.workspace) {
-            const userResponse = await asanaClient.users.findByWorkspace(
-              this.workspace, {
+      this.ADD_ACTION("loading users", async () => {
+        if (asanaClient && this.workspace) {
+          const userResponse = await asanaClient.users.findByWorkspace(
+            this.workspace,
+            {
               opt_fields:
                 "name,\
                   photo.image_21x21,\
                   resource_type,email",
-            })
-            this.SET_USERS(userResponse.data as User[]);
-          }
+            }
+          );
+          this.SET_USERS(userResponse.data as User[]);
         }
-      );
+      });
     },
 
     LOAD_ALL_TAGS(): void {
@@ -499,13 +570,16 @@ export const useAsanaStore = defineStore("asana", {
             limit: 100,
             opt_fields: "color,name",
           };
-          let tagResponse: any = await asanaClient.tags.findByWorkspace(this.workspace!, options);
+          let tagResponse: any = await asanaClient.tags.findByWorkspace(
+            this.workspace!,
+            options
+          );
           this.allTags = [];
           for (; tagResponse; tagResponse = await tagResponse.nextPage()) {
             this.ADD_ALL_TAGS(tagResponse.data as TaskTag[]);
           }
         }
-      }
+      };
       this.ADD_ACTION("loading all tags", loadAllTags);
     },
 
@@ -516,23 +590,28 @@ export const useAsanaStore = defineStore("asana", {
 
     async LOAD_QUERIED_TASK(query: string): Promise<Resource[] | undefined> {
       const taskResponse = await asanaClient?.workspaces.typeahead(
-        this.workspace!, {
+        this.workspace!,
+        {
           // interface wrong, casted to any
           resource_type: "task",
           query: query,
           count: 5,
-          opt_fields: "name,completed,projects.name"
-        } as any);
+          opt_fields: "name,completed,projects.name",
+        } as any
+      );
       return taskResponse?.data;
     },
 
     RELEASE_SECTION(tasks: Task[]): void {
-      tasks.forEach(task => this.RELEASE_TASK(task));
-    }
-  }
+      tasks.forEach((task) => this.RELEASE_TASK(task));
+    },
+  },
 });
 
-async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | null) {
+async function loadTasks(
+  action: (tasks: Task[]) => any,
+  lastUpdated: string | null
+) {
   const asanaStore = useAsanaStore();
   if (asanaClient && asanaStore.selectedProject) {
     const options = {
@@ -565,13 +644,17 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
       options["modified_since"] = lastUpdated;
     }
     let taskResponse: any = await asanaClient.tasks.findAll(options);
-    
+
     const tasks: Task[] = [];
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
-    action(tasks);
+    // add attachments to task
+    if (tasks.length > 0) {
+      asanaStore.LOAD_ATTACHMENTS(tasks);
+    }
 
+    action(tasks);
 
     if (!lastUpdated) {
       asanaStore.SET_TAGS(getAllTaskTags(tasks));
@@ -582,7 +665,7 @@ async function loadTasks(action: (tasks: Task[]) => any, lastUpdated: string | n
 }
 
 async function completeTask(tasks: Task[], gid: string) {
-  const index = tasks.findIndex(t => t.gid === gid);
+  const index = tasks.findIndex((t) => t.gid === gid);
   if (index !== -1) {
     tasks.splice(index, 1);
   }
@@ -610,20 +693,20 @@ function unique<T extends BaseResource>(stuff: T[]): T[] {
 }
 
 function colorizeTaskTags(tasks: Task[]): void {
-  tasks.forEach(task => colorizeTags(task.tags));
+  tasks.forEach((task) => colorizeTags(task.tags));
 }
 
 function colorizeTags(tags: TaskTag[]): void {
-  tags.forEach(tag => {
+  tags.forEach((tag) => {
     tag.hexes = convertAsanaColorToHex(tag.color);
   });
 }
 
 function getAllTaskTags(tasks: Task[]): TaskTag[] {
   const tags: TaskTag[] = [];
-  tasks.forEach(task => {
-    task.tags.forEach(tag => {
-      if (!tags.find(t => t.gid === tag.gid)) {
+  tasks.forEach((task) => {
+    task.tags.forEach((tag) => {
+      if (!tags.find((t) => t.gid === tag.gid)) {
         tags.push(tag);
       }
     });

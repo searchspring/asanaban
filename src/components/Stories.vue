@@ -45,7 +45,6 @@ export default defineComponent({
 
     const taskEditorSectionIdAndTask = computed(() => prefStore.taskEditorSectionIdAndTask);
     const storiesLoading = computed(() => asanaStore.storiesLoading);
-
     const formatDate = (dateString: string) => {
       const date = dayjs(dateString);
       return date.format("YYYY-MM-DD HH:mm");
