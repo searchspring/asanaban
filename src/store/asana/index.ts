@@ -22,6 +22,7 @@ import {
 } from "@/utils/asana-specific";
 import { asanaClient, useAuthStore } from "../auth";
 import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
+import { usePrefStore } from "../preferences";
 import { isFilenameExtensionImage } from "@/utils/match";
 
 export const useAsanaStore = defineStore("asana", {
@@ -401,6 +402,21 @@ export const useAsanaStore = defineStore("asana", {
           });
           taskAndSectionId.htmlText = "";
         });
+      }
+    },
+
+    DELETE_STORY(gid: string): void {
+      const prefStore = usePrefStore();
+      if (gid) {
+        this.ADD_ACTION(
+          "deleting story",
+          async () => {
+            await asanaClient?.stories?.delete(gid);
+            if (prefStore?.taskEditorSectionIdAndTask?.task) {
+              prefStore.taskEditorSectionIdAndTask.task.stories = prefStore.taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
+            }
+          }
+        );
       }
     },
 
