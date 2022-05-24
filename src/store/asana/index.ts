@@ -650,7 +650,6 @@ async function loadTasks(
         created_by,\
         created_at,\
         created_by.name,\
-        projects.gid,\
         tags.name,\
         tags.color,\
         memberships.section.name,\

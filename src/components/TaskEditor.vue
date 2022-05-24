@@ -1,5 +1,11 @@
 <template>
-  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide" @click.self="hide">
+  <div
+    tabindex="0"
+    class="overlay"
+    v-if="taskEditorSectionIdAndTask"
+    @keydown.esc="hide"
+    @click.self="hide"
+  >
     <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
         <a
@@ -25,6 +31,24 @@
           <label>Due date</label>
           <DateSelector v-model:date="dueDate" />
         </div>
+      </div>
+      <div class="projects">
+        <label for="projects">Projects</label>
+        <ul class="project-list">
+          <li
+            v-for="membership in taskEditorSectionIdAndTask.task.memberships"
+            :key="membership.project.gid"
+          >
+            <p>{{ membership.project.name }}</p>
+            <p>
+              {{
+                membership.section !== null
+                  ? membership.section.name
+                  : "Untitled section"
+              }}
+            </p>
+          </li>
+        </ul>
       </div>
       <div class="description">
         <label for="description">Description</label>
@@ -52,7 +76,10 @@
       </template>
       <div
         class="subtasks"
-        v-if="taskEditorSectionIdAndTask.task.subtasks && taskEditorSectionIdAndTask.task.subtasks?.length > 0"
+        v-if="
+          taskEditorSectionIdAndTask.task.subtasks &&
+          taskEditorSectionIdAndTask.task.subtasks?.length > 0
+        "
       >
         <label>Subtasks</label>
         <n-list style="font-size: 0.8rem">
@@ -81,11 +108,7 @@
       </div>
       <div class="attachments" v-if="images && images.length > 0">
         <label>Attached images</label>
-        <div
-          v-for="image in images"
-          class="attachment"
-          :key="image.gid"
-        >
+        <div v-for="image in images" class="attachment" :key="image.gid">
           <a :href="image.permanent_url" target="_blank" rel="noopener">
             <img :src="image.view_url" />
           </a>
@@ -189,18 +212,22 @@ export default defineComponent({
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
     const project = computed(() => {
-      const selected = asanaStore.projects.find((proj) => proj.gid === asanaStore.selectedProject);
-      if (selected === undefined) throw("Project cannot be found.");
+      const selected = asanaStore.projects.find(
+        (proj) => proj.gid === asanaStore.selectedProject
+      );
+      if (selected === undefined) throw "Project cannot be found.";
       return selected;
-    })
+    });
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
     });
 
-    const images = computed(() => prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter(
-            (el) => isFilenameExtensionImage(el.name)
-          ));
+    const images = computed(() =>
+      prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter((el) =>
+        isFilenameExtensionImage(el.name)
+      )
+    );
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -253,24 +280,27 @@ export default defineComponent({
             field.enum_options?.find(
               (o) => o.gid === customFieldSelectedGids.value[idx]
             ) ?? null;
-         
+
           if (task.gid) {
-            const taskCustomField = taskEditorSectionIdAndTask.task.custom_fields?.find(cf => cf.gid === field.gid);
+            const taskCustomField =
+              taskEditorSectionIdAndTask.task.custom_fields?.find(
+                (cf) => cf.gid === field.gid
+              );
             if (taskCustomField) {
               taskCustomField.enum_value = selectedVal;
             } else {
               taskEditorSectionIdAndTask.task.custom_fields?.push({
                 ...field,
                 enum_value: selectedVal,
-              })
+              });
             }
           } else {
             task.custom_fields = task.custom_fields ?? [];
             task.custom_fields.push({
               ...field,
               enum_value: selectedVal,
-            })
-          } 
+            });
+          }
         }
       });
 
@@ -392,6 +422,7 @@ label {
 .name,
 .description,
 .subtasks,
+.projects,
 .field {
   text-align: left;
 }
