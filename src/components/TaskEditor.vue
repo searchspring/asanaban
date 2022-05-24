@@ -39,16 +39,20 @@
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <p>{{ membership.project.name }}</p>
-            <p>
+            <span>{{ membership.project.name }}</span>
+            <span>
               {{
                 membership.section !== null
                   ? membership.section.name
                   : "Untitled section"
               }}
-            </p>
+            </span>
+            <n-icon class="trash" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
+              <trash-can />
+            </n-icon>>
           </li>
         </ul>
+        <task-project-selector />
       </div>
       <div class="description">
         <label for="description">Description</label>
@@ -171,7 +175,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, Project, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -179,11 +183,13 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import { NButton, NList, NListItem, NIcon } from "naive-ui";
+import { NButton, NList, NListItem, NIcon, NSelect } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
 import { isFilenameExtensionImage } from "../utils/match";
+import { TrashCan } from "@vicons/carbon";
+import TaskProjectSelector from "./TaskProjectSelector.vue";
 
 export default defineComponent({
   components: {
@@ -197,14 +203,17 @@ export default defineComponent({
     NList,
     NListItem,
     NIcon,
+    TaskProjectSelector,
     ExternalLinkAlt,
     CheckCircleRegular,
     CheckCircle,
     CustomEnumFieldSelector,
+    TrashCan,
   },
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
+     const projects = computed(() => asanaStore.projects);
     const taskName = ref<string>();
     const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
@@ -335,14 +344,27 @@ export default defineComponent({
 
     const completeTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
       asanaStore.COMPLETE_TASK(taskEditorSectionIdAndTask);
-      hide();
     };
 
     const makeAsanaHref = (taskId: string) =>
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
+    const makeProjectOptions = (projects: Project[]) => {
+    return projects.map(p => {
+      return {
+        label: p.name,
+        value: p.gid
+      };
+    });
+}
+
+    const removeProjectFromTask = (task_gid: string, project_gid: string) => {
+      asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
+    }
+
     return {
       taskEditorSectionIdAndTask,
+      projects,
       projectId,
       project,
       dueDate,
@@ -359,6 +381,8 @@ export default defineComponent({
       completeTask,
       makeAsanaHref,
       isFilenameExtensionImage,
+      makeProjectOptions,
+      removeProjectFromTask,
     };
   },
 });
@@ -425,6 +449,13 @@ label {
 .projects,
 .field {
   text-align: left;
+}
+
+.projects {
+  font-size: 0.8rem;
+  background: #f4f4f8;
+  border-radius: 7px;
+  padding: 0.5em;
 }
 
 .new-comment {
@@ -527,5 +558,12 @@ button.left {
   height: 100%;
   display: inline-block;
   object-fit: cover;
+}
+
+.trash {
+  display: flex;
+  margin-right: 0;
+  margin-left: auto;
+  font-size: 15px;
 }
 </style>

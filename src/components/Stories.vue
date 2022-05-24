@@ -15,7 +15,7 @@
       <span class="story-date">{{ formatDate(story.created_at) }}</span>
       <span class="username">{{ story.created_by.name }}: </span>
       <span class="text" v-html="formatStory(story.html_text)"></span>
-      <n-icon v-if="usergid && usergid === story.created_by.gid" class="trash" @click="deleteStory(story.gid, taskEditorSectionIdAndTask)">
+      <n-icon v-if="usergid && usergid === story.created_by.gid" class="trash" @click="deleteStory(story.gid)">
         <trash-can />
       </n-icon>
     </div>
