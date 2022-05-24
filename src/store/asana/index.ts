@@ -561,11 +561,12 @@ export const useAsanaStore = defineStore("asana", {
       );
     },
 
-    LOAD_SECTIONS(): void {
+    LOAD_SECTIONS(project?: string): void {
+      const loadedProject = project !== undefined ? project : this.selectedProject;
       this.ADD_ACTION("loading sections", async () => {
-        if (asanaClient && this.selectedProject) {
+        if (asanaClient && loadedProject) {
           const sectionResponse = await asanaClient.sections.findByProject(
-            this.selectedProject
+            loadedProject
           );
           this.SET_SECTIONS(sectionResponse as Section[]);
         }
