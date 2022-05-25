@@ -65,8 +65,8 @@
         </ul>
         <task-project-selector
           :task="taskEditorSectionIdAndTask.task.gid"
-          v-model:project="projectSelector"
-          v-model:section="sectionSelector"
+          v-model:project="newProjectSelector"
+          v-model:section="newSectionSelector"
         />
       </div>
       <div class="description">
@@ -252,8 +252,8 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
-    const projectSelector = ref<string>();
-    const sectionSelector = ref<string>();
+    const newProjectSelector = ref<string>();
+    const newSectionSelector = ref<string>();
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -265,8 +265,8 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
-        projectSelector.value = undefined;
-        sectionSelector.value = undefined;
+        newProjectSelector.value = undefined;
+        newSectionSelector.value = undefined;
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
@@ -391,8 +391,8 @@ export default defineComponent({
       assigneeGid,
       htmlNotes,
       images,
-      projectSelector,
-      sectionSelector,
+      newProjectSelector,
+      newSectionSelector,
       isDisplayableCustomField,
       customFieldSelectedGids,
       save,
