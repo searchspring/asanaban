@@ -40,10 +40,26 @@
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <span class="column even project-link" @click="openProject(membership.project.gid)">{{ membership.project.name }}</span>
-            <span class="column">{{ getSwimlane(membership.section.name) }}</span>
-            <span class="column even">{{ getSection(membership.section.name) }}</span>
-            <n-icon class="trash column" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
+            <span
+              class="column even project-link"
+              @click="openProject(membership.project.gid)"
+              >{{ membership.project.name }}</span
+            >
+            <span class="column" v-if="membership.section">{{
+              getSwimlane(membership.section.name)
+            }}</span>
+            <span class="column even" v-if="membership.section">{{
+              getSection(membership.section.name)
+            }}</span>
+            <n-icon
+              class="trash column"
+              @click="
+                removeProjectFromTask(
+                  taskEditorSectionIdAndTask.task.gid,
+                  membership.project.gid
+                )
+              "
+            >
               <trash-can />
             </n-icon>
           </div>
@@ -368,17 +384,17 @@ export default defineComponent({
 
     const getSwimlane = (s: string) => {
       const arraySplit = s.split(":");
-      return (arraySplit.length > 1) ? arraySplit[0] : "No Swimlane";
-    }
+      return arraySplit.length > 1 ? arraySplit[0] : "No Swimlane";
+    };
 
     const getSection = (s: string) => {
       const arraySplit = s.split(":");
-      return (arraySplit[1]) ? arraySplit[1].split("|")[0] : s;
-    }
+      return arraySplit[1] ? arraySplit[1].split("|")[0] : s;
+    };
 
     const openProject = (gid: string) => {
       asanaStore.LOAD_SELECTED_PROJECT(gid);
-    }
+    };
 
     return {
       taskEditorSectionIdAndTask,
@@ -480,7 +496,7 @@ label {
   border-radius: 7px;
   background: #f4f4f8;
   margin-bottom: 0.5em;
-  overflow: hidden
+  overflow: hidden;
 }
 
 .column {
