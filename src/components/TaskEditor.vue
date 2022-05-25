@@ -40,7 +40,7 @@
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <span class="column even">{{ membership.project.name }}</span>
+            <span class="column even project-link" @click="openProject(membership.project.gid)">{{ membership.project.name }}</span>
             <span class="column">{{ getSwimlane(membership.section.name) }}</span>
             <span class="column even">{{ getSection(membership.section.name) }}</span>
             <n-icon class="trash column" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
@@ -368,6 +368,10 @@ export default defineComponent({
       return (arraySplit[1]) ? arraySplit[1].split("|")[0] : s;
     }
 
+    const openProject = (gid: string) => {
+      asanaStore.LOAD_SELECTED_PROJECT(gid);
+    }
+
     return {
       taskEditorSectionIdAndTask,
       projects,
@@ -391,6 +395,7 @@ export default defineComponent({
       removeProjectFromTask,
       getSwimlane,
       getSection,
+      openProject,
     };
   },
 });
@@ -479,6 +484,10 @@ label {
 
 .even {
   background-color: #e9e9ee;
+}
+
+.project-link {
+  cursor: pointer;
 }
 
 .new-comment {
@@ -590,5 +599,6 @@ button.left {
   margin-left: auto;
   font-size: 15px;
   vertical-align: middle;
+  cursor: pointer;
 }
 </style>
