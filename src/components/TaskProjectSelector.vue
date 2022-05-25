@@ -1,47 +1,50 @@
 <template>
-  <n-button
-    @click="
-      () => {
-        $emit('update:project', undefined);
-        $emit('update:section', undefined);
-        isTaskProjectSelectorShown = true;
-      }
-    "
-     v-if="!isTaskProjectSelectorShown"
-    >Add a Project to Task</n-button
-  >
-  <n-select
-    size="small"
-    filterable
-    placeholder="Select a project"
-    :value="project"
-    :options="makeProjectOptions(projects)"
-    :on-update:value="
-      async (val) => {
-        $emit('update:project', val);
-        await updateSections(val);
-      }
-    "
-    v-if="isTaskProjectSelectorShown"
-  />
-  <n-select
-    size="small"
-    filterable
-    placeholder="Select a section"
-    :value="section"
-    :options="makeSectionOptions(sections)"
-    :on-update:value="(val) => $emit('update:section', val)"
-    v-if="isTaskProjectSelectorShown && !sectionsLoading && sections"
-  />
-  <n-button
-    strong
-    secondary
-    class="secondary right"
-    @click="addMembership()"
-    v-if="isTaskProjectSelectorShown && project && section"
-  >
-    Add project to task
-  </n-button>
+  <div class="task-project-selector">
+    <n-button
+      @click="
+        () => {
+          $emit('update:project', undefined);
+          $emit('update:section', undefined);
+          isTaskProjectSelectorShown = true;
+        }
+      "
+      v-if="!isTaskProjectSelectorShown"
+      >Add task to a project</n-button
+    >
+    <n-select
+      size="small"
+      filterable
+      placeholder="Select a project"
+      :value="project"
+      :options="makeProjectOptions(projects)"
+      :on-update:value="
+        async (val) => {
+          $emit('update:project', val);
+          $emit('update:section', undefined);
+          await updateSections(val);
+        }
+      "
+      v-if="isTaskProjectSelectorShown"
+    />
+    <n-select
+      size="small"
+      filterable
+      placeholder="Select a section"
+      :value="section"
+      :options="makeSectionOptions(sections)"
+      :on-update:value="(val) => $emit('update:section', val)"
+      v-if="isTaskProjectSelectorShown && !sectionsLoading && sections"
+    />
+    <n-button
+      strong
+      type="primary"
+      class="primary center"
+      @click="addMembership()"
+      v-if="isTaskProjectSelectorShown && project && section"
+    >
+      Add task to project
+    </n-button>
+  </div>
 </template>
 
 <script lang="ts">
@@ -133,7 +136,19 @@ export default defineComponent({
 </script>
 
 <style scoped>
-n-select {
+.task-project-selector {
+  display: flex;
+  flex-direction: column;
+  border: 1px dashed #e3e3e4;
+  padding: 5px;
+}
+
+.task-project-selector .n-select {
   min-width: 500px;
+  margin-bottom: 5px;
+}
+
+button.center {
+  float: center
 }
 </style>
