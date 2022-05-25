@@ -35,11 +35,12 @@
       <div class="projects">
         <label for="projects">Projects</label>
         <ul class="project-list">
-          <li
+          <div
+            class="project"
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <span>{{ membership.project.name }}</span>
+            <span><b>{{ membership.project.name }}</b></span>&nbsp;
             <span>
               {{
                 membership.section !== null
@@ -49,8 +50,8 @@
             </span>
             <n-icon class="trash" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
               <trash-can />
-            </n-icon>>
-          </li>
+            </n-icon>
+          </div>
         </ul>
         <task-project-selector />
       </div>
@@ -451,11 +452,17 @@ label {
   text-align: left;
 }
 
-.projects {
+.project-list {
   font-size: 0.8rem;
-  background: #f4f4f8;
+  padding:0px;
+  list-style: none;
+}
+
+.project {
   border-radius: 7px;
-  padding: 0.5em;
+  background: #f4f4f8;
+  margin-bottom: 0.5em;
+  padding: 5px;
 }
 
 .new-comment {
