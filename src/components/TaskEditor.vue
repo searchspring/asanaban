@@ -261,6 +261,8 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
+        projectSelector.value = "";
+        sectionSelector.value = "";
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
