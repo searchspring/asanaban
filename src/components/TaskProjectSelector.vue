@@ -3,24 +3,22 @@
     size="small"
     filterable
     placeholder="Select a project"
-    v-model:value="selectedProject"
+    :value="project"
     :options="makeProjectOptions(projects)"
-    style="min-width: 500px"
+    :on-update:value="(val) => {$emit('update:project', val)}"
   />
   <n-select
     size="small"
     filterable
     placeholder="Select a section"
-    v-model:value="selectedSection"
-    v-if="sections"
-    :options="makeSectionOptions(sections)"
-    style="min-width: 500px"
+    :value="section"
+    :on-update:value="updateSection"
   />
 </template>
 
 <script lang="ts">
 import { useAsanaStore } from "@/store/asana";
-import { computed, defineComponent, onMounted, PropType } from "vue";
+import { computed, defineComponent, defineEmits } from "vue";
 import { NSelect } from "naive-ui";
 import { Project, Section, Task } from "@/types/asana";
 
@@ -38,17 +36,11 @@ export default defineComponent({
       required: false,
     },
   },
+  emits: ["update:project", "update:section"],
   setup(props) {
     const asanaStore = useAsanaStore();
-    const selectedProject = computed(() => props.project);
-    const selectedSection = computed(() => props.section);
     const projects = computed(() => asanaStore.projects);
-    const sections = computed(() => {
-      if (selectedProject.value) {
-        return asanaStore.LOAD_SECTIONS(selectedProject.value);
-      }
-      return [];
-    });
+    const emit = defineEmits(["update:project", "update:section"]);
 
     const makeProjectOptions = (projects: Project[]) => {
       return projects.map((p) => {
@@ -68,14 +60,27 @@ export default defineComponent({
       });
     };
 
+    const updateProject = (val) => {
+      emit("update:project", val);
+    };
+
+    const updateSection = (val) => {
+      emit("update:section", val);
+    };
+
     return {
-      selectedProject,
-      selectedSection,
-      sections,
       projects,
       makeProjectOptions,
       makeSectionOptions,
+      updateProject,
+      updateSection,
     };
   },
 });
 </script>
+
+<style scoped>
+n-select {
+  min-width: 500px;
+}
+</style>

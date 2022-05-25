@@ -40,7 +40,9 @@
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <span><b>{{ membership.project.name }}</b></span>&nbsp;
+            <span
+              ><b>{{ membership.project.name }}</b></span
+            >&nbsp;
             <span>
               {{
                 membership.section !== null
@@ -48,12 +50,20 @@
                   : "Untitled section"
               }}
             </span>
-            <n-icon class="trash" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
+            <n-icon
+              class="trash"
+              @click="
+                removeProjectFromTask(
+                  taskEditorSectionIdAndTask.task.gid,
+                  membership.project.gid
+                )
+              "
+            >
               <trash-can />
             </n-icon>
           </div>
         </ul>
-        <task-project-selector />
+        <task-project-selector v-model:project="projectSelector" v-model:section="sectionSelector"/>
       </div>
       <div class="description">
         <label for="description">Description</label>
@@ -214,7 +224,7 @@ export default defineComponent({
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
-     const projects = computed(() => asanaStore.projects);
+    const projects = computed(() => asanaStore.projects);
     const taskName = ref<string>();
     const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
@@ -238,6 +248,8 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
+    const projectSelector = ref<string>();
+    const sectionSelector = ref<string>();
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -351,17 +363,17 @@ export default defineComponent({
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
     const makeProjectOptions = (projects: Project[]) => {
-    return projects.map(p => {
-      return {
-        label: p.name,
-        value: p.gid
-      };
-    });
-}
+      return projects.map((p) => {
+        return {
+          label: p.name,
+          value: p.gid,
+        };
+      });
+    };
 
     const removeProjectFromTask = (task_gid: string, project_gid: string) => {
       asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
-    }
+    };
 
     return {
       taskEditorSectionIdAndTask,
@@ -373,6 +385,8 @@ export default defineComponent({
       assigneeGid,
       htmlNotes,
       images,
+      projectSelector,
+      sectionSelector,
       isDisplayableCustomField,
       customFieldSelectedGids,
       save,
@@ -454,7 +468,7 @@ label {
 
 .project-list {
   font-size: 0.8rem;
-  padding:0px;
+  padding: 0px;
   list-style: none;
 }
 
