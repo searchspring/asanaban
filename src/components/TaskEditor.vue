@@ -63,7 +63,11 @@
             </n-icon>
           </div>
         </ul>
-        <task-project-selector v-model:project="projectSelector" v-model:section="sectionSelector"/>
+        <task-project-selector
+          :task="taskEditorSectionIdAndTask.task.gid"
+          v-model:project="projectSelector"
+          v-model:section="sectionSelector"
+        />
       </div>
       <div class="description">
         <label for="description">Description</label>
@@ -261,8 +265,8 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
-        projectSelector.value = "";
-        sectionSelector.value = "";
+        projectSelector.value = undefined;
+        sectionSelector.value = undefined;
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>

@@ -21,20 +21,34 @@
     :options="makeSectionOptions(sections)"
     :on-update:value="(val) => $emit('update:section', val)"
   />
+  <n-button
+    strong
+    secondary
+    class="secondary right"
+    @click="addMembership()"
+    v-if="project && section"
+  >
+    add project
+  </n-button>
 </template>
 
 <script lang="ts">
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, ref } from "vue";
-import { NSelect } from "naive-ui";
+import { NSelect, NButton } from "naive-ui";
 import { Project, Section, Task } from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 
 export default defineComponent({
   components: {
     NSelect,
+    NButton,
   },
   props: {
+    task: {
+      type: String,
+      required: true,
+    },
     project: {
       type: String,
       required: false,
@@ -80,6 +94,15 @@ export default defineComponent({
     const getSectionsByProject = async (proj) =>
       await asanaClient?.sections.findByProject(proj);
 
+    const addMembership = async () => {
+      if (props.project && props.section) {
+        await asanaClient?.tasks.addProject(props.task, {
+          project: props.project,
+          section: props.section, // package wrongly expects a Number but we want a string
+        });
+      }
+    };
+
     return {
       projects,
       sections,
@@ -87,6 +110,7 @@ export default defineComponent({
       makeProjectOptions,
       makeSectionOptions,
       updateSections,
+      addMembership,
     };
   },
 });
