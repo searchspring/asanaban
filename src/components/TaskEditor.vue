@@ -40,15 +40,10 @@
             v-for="membership in taskEditorSectionIdAndTask.task.memberships"
             :key="membership.project.gid"
           >
-            <span><b>{{ membership.project.name }}</b></span>&nbsp;
-            <span>
-              {{
-                membership.section !== null
-                  ? membership.section.name
-                  : "Untitled section"
-              }}
-            </span>
-            <n-icon class="trash" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
+            <span class="column even">{{ membership.project.name }}</span>
+            <span class="column">{{ getSwimlane(membership.section.name) }}</span>
+            <span class="column even">{{ getSection(membership.section.name) }}</span>
+            <n-icon class="trash column" @click="removeProjectFromTask(taskEditorSectionIdAndTask.task.gid, membership.project.gid)">
               <trash-can />
             </n-icon>
           </div>
@@ -363,6 +358,16 @@ export default defineComponent({
       asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
     }
 
+    const getSwimlane = (s: string) => {
+      const arraySplit = s.split(":");
+      return (arraySplit.length > 1) ? arraySplit[0] : "No Swimlane";
+    }
+
+    const getSection = (s: string) => {
+      const arraySplit = s.split(":");
+      return (arraySplit[1]) ? arraySplit[1].split("|")[0] : s;
+    }
+
     return {
       taskEditorSectionIdAndTask,
       projects,
@@ -384,6 +389,8 @@ export default defineComponent({
       isFilenameExtensionImage,
       makeProjectOptions,
       removeProjectFromTask,
+      getSwimlane,
+      getSection,
     };
   },
 });
@@ -452,17 +459,26 @@ label {
   text-align: left;
 }
 
-.project-list {
-  font-size: 0.8rem;
-  padding:0px;
-  list-style: none;
-}
-
 .project {
+  display: flex;
+  font-size: 12px;
   border-radius: 7px;
   background: #f4f4f8;
   margin-bottom: 0.5em;
+  overflow: hidden
+}
+
+.column {
+  display: flex;
   padding: 5px;
+  text-align: center;
+  flex-basis: 20rem;
+  align-items: center;
+  justify-content: center;
+}
+
+.even {
+  background-color: #e9e9ee;
 }
 
 .new-comment {
@@ -568,9 +584,11 @@ button.left {
 }
 
 .trash {
-  display: flex;
+  display: inline-block;
+  flex-shrink: 3;
   margin-right: 0;
   margin-left: auto;
   font-size: 15px;
+  vertical-align: middle;
 }
 </style>
