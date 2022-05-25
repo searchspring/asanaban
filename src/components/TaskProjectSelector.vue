@@ -1,4 +1,15 @@
 <template>
+  <n-button
+    @click="
+      () => {
+        $emit('update:project', undefined);
+        $emit('update:section', undefined);
+        isTaskProjectSelectorShown = true;
+      }
+    "
+     v-if="!isTaskProjectSelectorShown"
+    >Add a Project to Task</n-button
+  >
   <n-select
     size="small"
     filterable
@@ -11,24 +22,25 @@
         await updateSections(val);
       }
     "
+    v-if="isTaskProjectSelectorShown"
   />
   <n-select
     size="small"
     filterable
     placeholder="Select a section"
-    v-if="!sectionsLoading && sections"
     :value="section"
     :options="makeSectionOptions(sections)"
     :on-update:value="(val) => $emit('update:section', val)"
+    v-if="isTaskProjectSelectorShown && !sectionsLoading && sections"
   />
   <n-button
     strong
     secondary
     class="secondary right"
     @click="addMembership()"
-    v-if="project && section"
+    v-if="isTaskProjectSelectorShown && project && section"
   >
-    add project
+    Add project to task
   </n-button>
 </template>
 
@@ -64,6 +76,7 @@ export default defineComponent({
     const projects = computed(() => asanaStore.projects);
     const sections = ref<Section[]>();
     const sectionsLoading = ref(false);
+    const isTaskProjectSelectorShown = ref(false);
 
     const makeProjectOptions = (projects: Project[]) => {
       return projects.map((p) => {
@@ -96,10 +109,12 @@ export default defineComponent({
 
     const addMembership = async () => {
       if (props.project && props.section) {
+        // asana interface has incorrect type defintion for this function
         await asanaClient?.tasks.addProject(props.task, {
           project: props.project,
-          section: props.section, // package wrongly expects a Number but we want a string
+          section: props.section as any,
         });
+        isTaskProjectSelectorShown.value = false;
       }
     };
 
@@ -107,6 +122,7 @@ export default defineComponent({
       projects,
       sections,
       sectionsLoading,
+      isTaskProjectSelectorShown,
       makeProjectOptions,
       makeSectionOptions,
       updateSections,
