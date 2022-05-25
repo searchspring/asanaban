@@ -48,7 +48,11 @@
             </n-icon>
           </div>
         </ul>
-        <task-project-selector />
+        <task-project-selector
+          :task="taskEditorSectionIdAndTask.task.gid"
+          v-model:project="newProjectSelector"
+          v-model:section="newSectionSelector"
+        />
       </div>
       <div class="description">
         <label for="description">Description</label>
@@ -209,7 +213,7 @@ export default defineComponent({
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
-     const projects = computed(() => asanaStore.projects);
+    const projects = computed(() => asanaStore.projects);
     const taskName = ref<string>();
     const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
@@ -233,6 +237,8 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
+    const newProjectSelector = ref<string>();
+    const newSectionSelector = ref<string>();
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -244,6 +250,8 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
+        newProjectSelector.value = undefined;
+        newSectionSelector.value = undefined;
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
@@ -346,17 +354,17 @@ export default defineComponent({
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
     const makeProjectOptions = (projects: Project[]) => {
-    return projects.map(p => {
-      return {
-        label: p.name,
-        value: p.gid
-      };
-    });
-}
+      return projects.map((p) => {
+        return {
+          label: p.name,
+          value: p.gid,
+        };
+      });
+    };
 
     const removeProjectFromTask = (task_gid: string, project_gid: string) => {
       asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
-    }
+    };
 
     const getSwimlane = (s: string) => {
       const arraySplit = s.split(":");
@@ -382,6 +390,8 @@ export default defineComponent({
       assigneeGid,
       htmlNotes,
       images,
+      newProjectSelector,
+      newSectionSelector,
       isDisplayableCustomField,
       customFieldSelectedGids,
       save,
