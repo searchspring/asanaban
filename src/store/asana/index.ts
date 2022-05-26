@@ -13,7 +13,7 @@ import {
   PaginationParams,
   Resource,
   Attachment,
-  MembershipEdit,
+  MembershipEdits,
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import {
@@ -276,17 +276,17 @@ export const useAsanaStore = defineStore("asana", {
               if (cur.name == ColumnChange) {
                 return {
                   ...obj,
-                  [cur.gid]: new Date().toISOString()
-                }
+                  [cur.gid]: new Date().toISOString(),
+                };
               }
               if (!isDisplayableCustomField(cur)) {
                 return obj;
               }
-              return  {
+              return {
                 ...obj,
                 [cur.gid]:
                   cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
-              }
+              };
             },
             {}
           ),
@@ -411,57 +411,62 @@ export const useAsanaStore = defineStore("asana", {
     DELETE_STORY(gid: string): void {
       const prefStore = usePrefStore();
       if (gid) {
-        this.ADD_ACTION(
-          "deleting story",
-          async () => {
-            await asanaClient?.stories?.delete(gid);
-            if (prefStore?.taskEditorSectionIdAndTask?.task) {
-              prefStore.taskEditorSectionIdAndTask.task.stories = prefStore.taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
-            }
+        this.ADD_ACTION("deleting story", async () => {
+          await asanaClient?.stories?.delete(gid);
+          if (prefStore?.taskEditorSectionIdAndTask?.task) {
+            prefStore.taskEditorSectionIdAndTask.task.stories =
+              prefStore.taskEditorSectionIdAndTask.task.stories.filter(
+                (story) => story.gid !== gid
+              );
           }
-        );
+        });
       }
     },
 
     ADD_PROJECT_TO_TASK(task: string, project: string, section?: string) {
       if (task && project) {
-        const data = { project: project }
+        const data = { project: project };
         if (section) data["section"] = section;
-        this.ADD_ACTION(
-          "adding project to task",
-          async () => {
-            await asanaClient?.tasks.addProject(task, data)
-          }
-        )
+        this.ADD_ACTION("adding project to task", async () => {
+          await asanaClient?.tasks.addProject(task, data);
+        });
       }
     },
 
     REMOVE_PROJECT_FROM_TASK(task: string, project: string) {
       if (task && project) {
-        this.ADD_ACTION(
-          "removing project from task",
-          async () => {
-            await asanaClient?.tasks.removeProject(task, {project: project})
-          }
-        )
+        this.ADD_ACTION("removing project from task", async () => {
+          await asanaClient?.tasks.removeProject(task, { project: project });
+        });
       }
     },
 
-    EDIT_TASK_MEMBERSHIPS(taskId: string, membershipEdits: MembershipEdit[]) {
+    EDIT_TASK_MEMBERSHIPS(taskId: string, membershipEdits: MembershipEdits) {
       const editTaskMemberships = async () => {
-        const promises = membershipEdits.map((edit) => {
-          const data = {project: edit.projectId}
-          if (edit.delete) {
-            return asanaClient?.tasks.removeProject(taskId, data)
+        const promises: any = [];
+        for (const id in membershipEdits) {
+          const edit = membershipEdits[id];
+          if (edit.isDone !== undefined && edit.isDone) continue;
+
+          const data = { project: edit.projectId };
+          if (edit.isDelete) {
+            promises.push(asanaClient?.tasks.removeProject(taskId, data));
           } else if (edit.sectionId) {
-             // asana interface has incorrect type defintion for this function
-            return asanaClient?.tasks.addProject(taskId, {...data, section: edit.sectionId as any});
+            // asana interface has incorrect type defintion for this function
+            promises.push(
+              asanaClient?.tasks.addProject(taskId, {
+                ...data,
+                section: edit.sectionId as any,
+              })
+            );
+          } else {
+            // asana interface has incorrect type defintion for this function
+            promises.push(asanaClient?.tasks.addProject(taskId, data));
           }
-          return asanaClient?.tasks.addProject(taskId, data);
-        })
+          edit.isDone = true;
+        }
         await Promise.all(promises);
-        membershipEdits = []; // clear edits that have already been made
-      }
+      };
       if (taskId) {
         this.ADD_ACTION("editing task memberships", editTaskMemberships);
       }
@@ -536,7 +541,8 @@ export const useAsanaStore = defineStore("asana", {
               limit: 100,
               workspace: workspace.gid,
               archived: false,
-              opt_fields: "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options"
+              opt_fields:
+                "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options",
             };
             let projectResponse: any = await asanaClient?.projects.findAll(
               options
@@ -550,14 +556,14 @@ export const useAsanaStore = defineStore("asana", {
                 return {
                   ...p,
                   custom_fields: p.custom_field_settings.map((el) => {
-                    return { 
-                      name: el.custom_field.name, 
+                    return {
+                      name: el.custom_field.name,
                       gid: el.custom_field.gid,
-                      enum_options: el.custom_field.enum_options, 
-                    }
+                      enum_options: el.custom_field.enum_options,
+                    };
                   }),
-                  workspaceGid: workspace.gid
-                } as Project
+                  workspaceGid: workspace.gid,
+                } as Project;
               });
               this.ADD_PROJECTS(projects);
             }

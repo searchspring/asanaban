@@ -72,11 +72,15 @@ export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
 export type PaginationParams = asana.resources.PaginationParams;
 export type Membership = asana.resources.Membership;
-export type MembershipEdit = {
-  projectId: string,
-  sectionId?: string,
-  delete: boolean,
-}
+
+export type MembershipEditParams = {
+  taskId: string;
+  projectId: string;
+  isDelete: boolean;
+  sectionId?: string;
+  isDone?: boolean;
+};
+export type MembershipEdits = Record<string, MembershipEditParams>;
 
 export type AsanaError = asana.errors.AsanaError;
 

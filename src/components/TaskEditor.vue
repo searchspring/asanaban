@@ -159,7 +159,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, Membership, MembershipEdit, Project, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, MembershipEdits, Project, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -219,7 +219,7 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
-    const membershipEdits = ref<MembershipEdit[]>([]);
+    const membershipEdits = ref<MembershipEdits>({});
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -298,10 +298,8 @@ export default defineComponent({
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
-        if (membershipEdits.value.length > 0) {
-          asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
-          membershipEdits.value = []; // clear edits that have already been made
-        }
+        asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
+        // for (const id in membershipEdits) delete membershipEdits[id] // clear edits that have already been made
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }

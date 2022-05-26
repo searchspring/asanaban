@@ -75,7 +75,7 @@
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, PropType, ref } from "vue";
 import { NSelect, NButton, NIcon } from "naive-ui";
-import { Membership, Project, Section, MembershipEdit, Resource } from "@/types/asana";
+import { Membership, Project, Section, MembershipEdits, Resource } from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 import { TrashCan } from "@vicons/carbon";
 
@@ -96,7 +96,7 @@ export default defineComponent({
       required: true,
     },
     membershipEdits: {
-      type: Object as PropType<MembershipEdit[]>,
+      type: Object as PropType<MembershipEdits>,
       required: true,
     },
   },
@@ -140,8 +140,6 @@ export default defineComponent({
 
     const makeSectionOptions = (sections: Section[]) => {
       return sections.map((p) => {
-        console.log(getSwimlane(p.name));
-        console.log(getSection(p.name));
         return {
           label: getSwimlane(p.name) + ' | ' + getSection(p.name),
           value: p.gid,
@@ -150,7 +148,6 @@ export default defineComponent({
     };
 
     const updateSections = async (val) => {
-      console.log(selectedProject.value);
       selectedSection.value = undefined;
       sectionsLoading.value = true;
       sections.value = (await getSectionsByProject(
@@ -173,12 +170,20 @@ export default defineComponent({
         )
       }
       
-      taskMembershipEdits.value.push({
+      // create a unique edit ID based on the task and project
+      taskMembershipEdits.value[taskId + projectId] = {
+        taskId: taskId,
         projectId: projectId,
         sectionId: sectionId,
-        delete: false,
-      });
+        isDelete: false,
+        isDone: false,
+      }
+
       isTaskProjectSelectorShown.value = false;
+      selectedProject.value = undefined;
+      selectedSection.value = undefined;
+
+      emit("update:memberships", taskMemberships.value);
       emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
@@ -186,10 +191,14 @@ export default defineComponent({
       taskMemberships.value = taskMemberships.value.filter(
         (m) => m.project.gid !== projectId
       );
-      taskMembershipEdits.value.push({
+      // create a unique edit ID based on the task and project
+      taskMembershipEdits.value[taskId + projectId] = {
+        taskId: taskId,
         projectId: projectId,
-        delete: true,
-      });
+        isDelete: true,
+        isDone: false,
+      }
+      emit("update:memberships", taskMemberships.value);
       emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
