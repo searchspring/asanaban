@@ -32,44 +32,12 @@
           <DateSelector v-model:date="dueDate" />
         </div>
       </div>
-      <div class="projects">
-        <label for="projects">Projects</label>
-        <ul class="project-list">
-          <div
-            class="project"
-            v-for="membership in taskEditorSectionIdAndTask.task.memberships"
-            :key="membership.project.gid"
-          >
-            <span
-              class="column even project-link"
-              @click="openProject(membership.project.gid)"
-              >{{ membership.project.name }}</span
-            >
-            <span class="column" v-if="membership.section">{{
-              getSwimlane(membership.section.name)
-            }}</span>
-            <span class="column even" v-if="membership.section">{{
-              getSection(membership.section.name)
-            }}</span>
-            <n-icon
-              class="trash column"
-              @click="
-                removeProjectFromTask(
-                  taskEditorSectionIdAndTask.task.gid,
-                  membership.project.gid
-                )
-              "
-            >
-              <trash-can />
-            </n-icon>
-          </div>
-        </ul>
-        <task-project-selector
-          :task="taskEditorSectionIdAndTask.task.gid"
-          v-model:project="newProjectSelector"
-          v-model:section="newSectionSelector"
-        />
-      </div>
+      <task-project-selector
+        :taskId="taskEditorSectionIdAndTask.task.gid"
+        v-model:memberships="taskEditorSectionIdAndTask.task.memberships"
+        v-model:project="newProjectSelector"
+        v-model:section="newSectionSelector"
+      />
       <div class="description">
         <label for="description">Description</label>
         <TextEditor
@@ -204,7 +172,6 @@ import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
 import { isFilenameExtensionImage } from "../utils/match";
-import { TrashCan } from "@vicons/carbon";
 import TaskProjectSelector from "./TaskProjectSelector.vue";
 
 export default defineComponent({
@@ -224,7 +191,6 @@ export default defineComponent({
     CheckCircleRegular,
     CheckCircle,
     CustomEnumFieldSelector,
-    TrashCan,
   },
   setup() {
     const asanaStore = useAsanaStore();
@@ -378,24 +344,6 @@ export default defineComponent({
       });
     };
 
-    const removeProjectFromTask = (task_gid: string, project_gid: string) => {
-      asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
-    };
-
-    const getSwimlane = (s: string) => {
-      const arraySplit = s.split(":");
-      return arraySplit.length > 1 ? arraySplit[0] : "No Swimlane";
-    };
-
-    const getSection = (s: string) => {
-      const arraySplit = s.split(":");
-      return arraySplit[1] ? arraySplit[1].split("|")[0] : s;
-    };
-
-    const openProject = (gid: string) => {
-      asanaStore.LOAD_SELECTED_PROJECT(gid);
-    };
-
     return {
       taskEditorSectionIdAndTask,
       projects,
@@ -408,8 +356,8 @@ export default defineComponent({
       images,
       newProjectSelector,
       newSectionSelector,
-      isDisplayableCustomField,
       customFieldSelectedGids,
+      isDisplayableCustomField,
       save,
       deleteTask,
       hide,
@@ -418,10 +366,6 @@ export default defineComponent({
       makeAsanaHref,
       isFilenameExtensionImage,
       makeProjectOptions,
-      removeProjectFromTask,
-      getSwimlane,
-      getSection,
-      openProject,
     };
   },
 });
@@ -485,35 +429,8 @@ label {
 .name,
 .description,
 .subtasks,
-.projects,
 .field {
   text-align: left;
-}
-
-.project {
-  display: flex;
-  font-size: 12px;
-  border-radius: 7px;
-  background: #f4f4f8;
-  margin-bottom: 0.5em;
-  overflow: hidden;
-}
-
-.column {
-  display: flex;
-  padding: 5px;
-  text-align: center;
-  flex-basis: 20rem;
-  align-items: center;
-  justify-content: center;
-}
-
-.even {
-  background-color: #e9e9ee;
-}
-
-.project-link {
-  cursor: pointer;
 }
 
 .new-comment {
@@ -618,13 +535,4 @@ button.left {
   object-fit: cover;
 }
 
-.trash {
-  display: inline-block;
-  flex-shrink: 3;
-  margin-right: 0;
-  margin-left: auto;
-  font-size: 15px;
-  vertical-align: middle;
-  cursor: pointer;
-}
 </style>

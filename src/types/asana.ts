@@ -71,6 +71,7 @@ export type Assignee = asana.resources.Assignee;
 export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
 export type PaginationParams = asana.resources.PaginationParams;
+export type Membership = asana.resources.Membership;
 
 export type AsanaError = asana.errors.AsanaError;
 
