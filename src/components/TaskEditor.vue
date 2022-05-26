@@ -37,6 +37,8 @@
         v-model:memberships="taskEditorSectionIdAndTask.task.memberships"
         v-model:project="newProjectSelector"
         v-model:section="newSectionSelector"
+        v-model:membershipEdits="membershipEdits"
+        v-if="taskEditorSectionIdAndTask.task.gid"
       />
       <div class="description">
         <label for="description">Description</label>
@@ -159,7 +161,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, Project, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, Membership, MembershipEdit, Project, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -219,6 +221,7 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
+    const membershipEdits = ref<MembershipEdit[]>([]);
     const newProjectSelector = ref<string>();
     const newSectionSelector = ref<string>();
 
@@ -232,8 +235,6 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
-        newProjectSelector.value = undefined;
-        newSectionSelector.value = undefined;
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
@@ -301,6 +302,7 @@ export default defineComponent({
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
+        if (membershipEdits.value.length > 0) asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
@@ -357,6 +359,7 @@ export default defineComponent({
       newProjectSelector,
       newSectionSelector,
       customFieldSelectedGids,
+      membershipEdits,
       isDisplayableCustomField,
       save,
       deleteTask,

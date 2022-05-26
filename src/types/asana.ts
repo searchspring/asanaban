@@ -14,8 +14,8 @@ export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 
 // interface doesn't have ProjectCompact type https://developers.asana.com/docs/project-compact
 export type Project = BaseResource & {
-  workspaceGid: string,
-  custom_fields: CustomField[] | null | undefined
+  workspaceGid: string;
+  custom_fields: CustomField[] | null | undefined;
 };
 export type QueriedTask = BaseResource & {
   completed: boolean;
@@ -72,6 +72,11 @@ export type TaskParams = asana.resources.Tasks.FindAllParams;
 export type ProjectParams = asana.resources.Projects.FindAllParams;
 export type PaginationParams = asana.resources.PaginationParams;
 export type Membership = asana.resources.Membership;
+export type MembershipEdit = {
+  projectId: string,
+  sectionId?: string,
+  delete: boolean,
+}
 
 export type AsanaError = asana.errors.AsanaError;
 

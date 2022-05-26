@@ -13,6 +13,7 @@ import {
   PaginationParams,
   Resource,
   Attachment,
+  MembershipEdit,
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import {
@@ -446,6 +447,26 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
+    EDIT_TASK_MEMBERSHIPS(taskId: string, membershipEdits: MembershipEdit[]) {
+      const editTaskMemberships = async () => {
+        const promises = membershipEdits.map((edit) => {
+          const data = {project: edit.projectId}
+          if (edit.delete) {
+            return asanaClient?.tasks.removeProject(taskId, data)
+          } else if (edit.sectionId) {
+             // asana interface has incorrect type defintion for this function
+            return asanaClient?.tasks.addProject(taskId, {...data, section: edit.sectionId as any});
+          }
+          return asanaClient?.tasks.addProject(taskId, data);
+        })
+        await Promise.all(promises);
+      }
+      if (taskId) {
+        this.ADD_ACTION("editing task memberships", editTaskMemberships);
+        membershipEdits = []; // clear edits that have already been made
+      }
+    },
+
     LOAD_STORIES(task: Task): void {
       this.storiesLoading = true; // Set this before the action is invoked
       const loadStories = async () => {
@@ -675,6 +696,7 @@ async function loadTasks(
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
+
     // add attachments to task
     if (tasks.length > 0) {
       asanaStore.LOAD_ATTACHMENTS(tasks);

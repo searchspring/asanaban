@@ -4,7 +4,7 @@
     <div class="project-list">
       <div
         class="project"
-        v-for="membership in memberships"
+        v-for="membership in taskMemberships"
         :key="membership.project.gid"
       >
         <span
@@ -79,7 +79,7 @@
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, PropType, ref } from "vue";
 import { NSelect, NButton, NIcon } from "naive-ui";
-import { Membership, Project, Section, Task } from "@/types/asana";
+import { Membership, Project, Section, MembershipEdit } from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 import { TrashCan } from "@vicons/carbon";
 
@@ -107,6 +107,10 @@ export default defineComponent({
       type: String,
       required: false,
     },
+    membershipEdits: {
+      type: Object as PropType<MembershipEdit[]>,
+      required: true
+    }
   },
   setup(props, { emit }) {
     const asanaStore = useAsanaStore();
@@ -114,6 +118,8 @@ export default defineComponent({
     const sections = ref<Section[]>();
     const sectionsLoading = ref(false);
     const isTaskProjectSelectorShown = ref(false);
+    const taskMemberships = ref(props.memberships);
+    const taskMembershipEdits = ref(props.membershipEdits);
 
     const getSwimlane = (s: string) => {
       const arraySplit = s.split(":");
@@ -129,8 +135,17 @@ export default defineComponent({
       asanaStore.LOAD_SELECTED_PROJECT(gid);
     };
 
-    const removeProjectFromTask = (task_gid: string, project_gid: string) => {
-      asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
+    // const removeProjectFromTask = (task_gid: string, project_gid: string) => {
+    //   asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
+    // };
+
+    const removeProjectFromTask = (taskId: string, projectId: string) => {
+      taskMemberships.value = taskMemberships.value.filter((m) => m.project.gid !== projectId);
+      taskMembershipEdits.value.push({
+        projectId: projectId,
+        delete: true
+      })
+      emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
     const makeProjectOptions = (projects: Project[]) => {
@@ -178,6 +193,7 @@ export default defineComponent({
       sections,
       sectionsLoading,
       isTaskProjectSelectorShown,
+      taskMemberships,
       getSwimlane,
       getSection,
       openProject,
