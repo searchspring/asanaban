@@ -7,11 +7,7 @@
         v-for="membership in taskMemberships"
         :key="membership.project.gid"
       >
-        <span
-          class="column even project-link"
-          @click="openProject(membership.project.gid)"
-          >{{ membership.project.name }}</span
-        >
+        <span class="column even">{{ membership.project.name }}</span>
         <span class="column" v-if="membership.section">{{
           getSwimlane(membership.section.name)
         }}</span>
@@ -75,7 +71,13 @@
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, PropType, ref } from "vue";
 import { NSelect, NButton, NIcon } from "naive-ui";
-import { Membership, Project, Section, MembershipEdits, Resource } from "@/types/asana";
+import {
+  Membership,
+  Project,
+  Section,
+  MembershipEdits,
+  Resource,
+} from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 import { TrashCan } from "@vicons/carbon";
 
@@ -125,10 +127,6 @@ export default defineComponent({
       asanaStore.LOAD_SELECTED_PROJECT(gid);
     };
 
-    // const removeMembership = (task_gid: string, project_gid: string) => {
-    //   asanaStore.REMOVE_PROJECT_FROM_TASK(task_gid, project_gid);
-    // };
-
     const makeProjectOptions = (projects: Project[]) => {
       return projects.map((p) => {
         return {
@@ -141,7 +139,7 @@ export default defineComponent({
     const makeSectionOptions = (sections: Section[]) => {
       return sections.map((p) => {
         return {
-          label: getSwimlane(p.name) + ' | ' + getSection(p.name),
+          label: getSwimlane(p.name) + " | " + getSection(p.name),
           value: p.gid,
         };
       });
@@ -159,17 +157,20 @@ export default defineComponent({
     const getSectionsByProject = async (proj) =>
       await asanaClient?.sections.findByProject(proj);
 
-    const addMembership = (taskId: string, projectId: string, sectionId: string) => {
-      const project = projects.value.find(p => p.gid === projectId);
-      const section = sections.value?.find(s => s.gid === sectionId);
+    const addMembership = (
+      taskId: string,
+      projectId: string,
+      sectionId: string
+    ) => {
+      const project = projects.value.find((p) => p.gid === projectId);
+      const section = sections.value?.find((s) => s.gid === sectionId);
       if (project && section) {
         taskMemberships.value.push({
           project: project as unknown as Resource,
-          section: section
-        }
-        )
+          section: section,
+        });
       }
-      
+
       // create a unique edit ID based on the task and project
       taskMembershipEdits.value[taskId + projectId] = {
         taskId: taskId,
@@ -177,7 +178,7 @@ export default defineComponent({
         sectionId: sectionId,
         isDelete: false,
         isDone: false,
-      }
+      };
 
       isTaskProjectSelectorShown.value = false;
       selectedProject.value = undefined;
@@ -197,7 +198,7 @@ export default defineComponent({
         projectId: projectId,
         isDelete: true,
         isDone: false,
-      }
+      };
       emit("update:memberships", taskMemberships.value);
       emit("update:membershipEdits", taskMembershipEdits.value);
     };
@@ -255,10 +256,6 @@ label {
 
 .even {
   background-color: #e9e9ee;
-}
-
-.project-link {
-  cursor: pointer;
 }
 
 .trash {

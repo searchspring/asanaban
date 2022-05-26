@@ -299,7 +299,6 @@ export default defineComponent({
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
         asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
-        // for (const id in membershipEdits) delete membershipEdits[id] // clear edits that have already been made
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
@@ -329,19 +328,12 @@ export default defineComponent({
 
     const completeTask = (taskEditorSectionIdAndTask: TaskAndSectionId) => {
       asanaStore.COMPLETE_TASK(taskEditorSectionIdAndTask);
+      hide();
     };
 
     const makeAsanaHref = (taskId: string) =>
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
-    const makeProjectOptions = (projects: Project[]) => {
-      return projects.map((p) => {
-        return {
-          label: p.name,
-          value: p.gid,
-        };
-      });
-    };
 
     return {
       taskEditorSectionIdAndTask,
@@ -363,7 +355,6 @@ export default defineComponent({
       completeTask,
       makeAsanaHref,
       isFilenameExtensionImage,
-      makeProjectOptions,
     };
   },
 });
