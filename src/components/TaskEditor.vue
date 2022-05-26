@@ -35,8 +35,6 @@
       <task-project-selector
         :taskId="taskEditorSectionIdAndTask.task.gid"
         v-model:memberships="taskEditorSectionIdAndTask.task.memberships"
-        v-model:project="newProjectSelector"
-        v-model:section="newSectionSelector"
         v-model:membershipEdits="membershipEdits"
         v-if="taskEditorSectionIdAndTask.task.gid"
       />
@@ -222,8 +220,6 @@ export default defineComponent({
       )
     );
     const membershipEdits = ref<MembershipEdit[]>([]);
-    const newProjectSelector = ref<string>();
-    const newSectionSelector = ref<string>();
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -302,7 +298,10 @@ export default defineComponent({
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
-        if (membershipEdits.value.length > 0) asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
+        if (membershipEdits.value.length > 0) {
+          asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
+          membershipEdits.value = []; // clear edits that have already been made
+        }
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
@@ -356,8 +355,6 @@ export default defineComponent({
       assigneeGid,
       htmlNotes,
       images,
-      newProjectSelector,
-      newSectionSelector,
       customFieldSelectedGids,
       membershipEdits,
       isDisplayableCustomField,

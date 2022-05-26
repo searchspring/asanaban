@@ -460,10 +460,10 @@ export const useAsanaStore = defineStore("asana", {
           return asanaClient?.tasks.addProject(taskId, data);
         })
         await Promise.all(promises);
+        membershipEdits = []; // clear edits that have already been made
       }
       if (taskId) {
         this.ADD_ACTION("editing task memberships", editTaskMemberships);
-        membershipEdits = []; // clear edits that have already been made
       }
     },
 
