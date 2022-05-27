@@ -213,7 +213,7 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
-    const newMemberships = ref<Membership[]>();
+    const newMemberships = ref<Membership[]>([]);
     const membershipEdits = ref<MembershipEdits>({});
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)

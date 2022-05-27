@@ -116,7 +116,7 @@ export default defineComponent({
       });
     };
 
-    const makeSectionOptions = (sections: Section[]) => {
+    const makeSectionOptions = (sections?: Section[]) => {
       if (sections === undefined) return [];
       return sections.map((p) => {
         return {
@@ -161,7 +161,8 @@ export default defineComponent({
       }
     };
 
-    const addMembership = (projectId: string, sectionId: string) => {
+    const addMembership = (projectId?: string, sectionId?: string) => {
+      if (projectId === undefined || sectionId === undefined) return;
       const project = projects.value.find((p) => p.gid === projectId);
       const section = sections.value?.find((s) => s.gid === sectionId);
       if (project && section) {
