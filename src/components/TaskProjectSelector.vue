@@ -157,6 +157,20 @@ export default defineComponent({
     const getSectionsByProject = async (proj) =>
       await asanaClient?.sections.findByProject(proj);
 
+    const upsertNewMembership = (
+      memberships: Membership[],
+      newMembership: Membership
+    ) => {
+      const sameProjectIdx = memberships.findIndex(
+        (m) => m.project.gid === newMembership.project.gid
+      ); 
+      if (sameProjectIdx === -1) {
+        memberships.push(newMembership);
+      } else {
+        memberships[sameProjectIdx] = newMembership;
+      }
+    };
+
     const addMembership = (
       taskId: string,
       projectId: string,
@@ -165,7 +179,7 @@ export default defineComponent({
       const project = projects.value.find((p) => p.gid === projectId);
       const section = sections.value?.find((s) => s.gid === sectionId);
       if (project && section) {
-        taskMemberships.value.push({
+        upsertNewMembership(taskMemberships.value, {
           project: project as unknown as Resource,
           section: section,
         });
