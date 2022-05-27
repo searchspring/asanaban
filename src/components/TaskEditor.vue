@@ -293,7 +293,7 @@ export default defineComponent({
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
         if (newMemberships.value !== undefined) {
-           asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, newMemberships.value);
+          asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, newMemberships.value);
           taskEditorSectionIdAndTask.task.memberships = newMemberships.value;
         }
       } else {

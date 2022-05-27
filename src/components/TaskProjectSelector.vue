@@ -7,8 +7,8 @@
         v-for="membership in taskMemberships.filter(m => !m.isDeleted)"
         :key="membership.project.gid"
       >
+      <span class="column even">{{ membership.project.name }}</span>
         <template v-if="membership.section">
-          <span class="column even">{{ membership.project.name }}</span>
           <span class="column">{{
             getPrettySwimlaneName(membership.section.name)
           }}</span>
