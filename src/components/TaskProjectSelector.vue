@@ -7,13 +7,15 @@
         v-for="membership in taskMemberships"
         :key="membership.project.gid"
       >
-        <span class="column even">{{ membership.project.name }}</span>
-        <span class="column" v-if="membership.section">{{
-          getPrettySwimlaneName(membership.section.name)
-        }}</span>
-        <span class="column even" v-if="membership.section">{{
-          getPrettyColumnName(membership.section.name)
-        }}</span>
+        <template v-if="membership.section">
+          <span class="column even">{{ membership.project.name }}</span>
+          <span class="column">{{
+            getPrettySwimlaneName(membership.section.name)
+          }}</span>
+          <span class="column even">{{
+            getPrettyColumnName(membership.section.name)
+          }}</span>
+        </template>
         <n-icon
           class="trash column"
           @click="removeMembership(membership.project.gid)"
