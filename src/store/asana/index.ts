@@ -89,6 +89,11 @@ export const useAsanaStore = defineStore("asana", {
       });
       return swimlanes;
     },
+    TASK_EDITOR_SELECTED_PROJECT: (state) => {
+      const selected = state.projects.find((proj) => proj.gid === state.selectedProject);
+      if (selected === undefined) throw "Project cannot be found.";
+      return selected;
+    },
   },
   actions: {
     SET_WORKSPACE(): void {
@@ -423,24 +428,6 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
-    ADD_PROJECT_TO_TASK(task: string, project: string, section?: string) {
-      if (task && project) {
-        const data = { project: project };
-        if (section) data["section"] = section;
-        this.ADD_ACTION("adding project to task", async () => {
-          await asanaClient?.tasks.addProject(task, data);
-        });
-      }
-    },
-
-    REMOVE_PROJECT_FROM_TASK(task: string, project: string) {
-      if (task && project) {
-        this.ADD_ACTION("removing project from task", async () => {
-          await asanaClient?.tasks.removeProject(task, { project: project });
-        });
-      }
-    },
-
     EDIT_TASK_MEMBERSHIPS(taskId: string, membershipEdits: MembershipEdits) {
       const editTaskMemberships = async () => {
         const promises: any = [];
@@ -588,7 +575,7 @@ export const useAsanaStore = defineStore("asana", {
       );
     },
 
-    LOAD_SECTIONS(project?: string): void {
+    LOAD_SECTIONS(): void {
       this.ADD_ACTION("loading sections", async () => {
         if (asanaClient && this.selectedProject) {
           const sectionResponse = await asanaClient.sections.findByProject(

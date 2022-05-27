@@ -202,13 +202,7 @@ export default defineComponent({
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
-    const project = computed(() => {
-      const selected = asanaStore.projects.find(
-        (proj) => proj.gid === asanaStore.selectedProject
-      );
-      if (selected === undefined) throw "Project cannot be found.";
-      return selected;
-    });
+    const project = computed(() => asanaStore.TASK_EDITOR_SELECTED_PROJECT)
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;

@@ -9,14 +9,14 @@
       >
         <span class="column even">{{ membership.project.name }}</span>
         <span class="column" v-if="membership.section">{{
-          getSwimlane(membership.section.name)
+          getPrettySwimlaneName(membership.section.name)
         }}</span>
         <span class="column even" v-if="membership.section">{{
-          getSection(membership.section.name)
+          getPrettyColumnName(membership.section.name)
         }}</span>
         <n-icon
           class="trash column"
-          @click="removeMembership(taskId, membership.project.gid)"
+          @click="removeMembership(membership.project.gid)"
         >
           <trash-can />
         </n-icon>
@@ -24,11 +24,7 @@
     </div>
     <div class="task-project-selector">
       <n-button
-        @click="
-          () => {
-            isTaskProjectSelectorShown = true;
-          }
-        "
+        @click="showTaskProjectSelector()"
         v-if="!isTaskProjectSelectorShown"
         >Add task to a project</n-button
       >
@@ -38,12 +34,7 @@
         placeholder="Select a project"
         v-model:value="selectedProject"
         :options="makeProjectOptions(projects)"
-        :on-update:value="
-          async (val) => {
-            selectedProject = val;
-            await updateSections(val);
-          }
-        "
+        :on-update:value="async (val) => await updateSections(val)"
         v-if="isTaskProjectSelectorShown"
       />
       <n-select
@@ -52,14 +43,16 @@
         placeholder="Select a section"
         v-model:value="selectedSection"
         :options="makeSectionOptions(sections)"
-        v-if="isTaskProjectSelectorShown && !sectionsLoading && sections"
+        :disabled="sectionsLoading || sections === undefined"
+        v-if="isTaskProjectSelectorShown"
       />
       <n-button
         strong
         type="primary"
         class="primary center"
-        @click="addMembership(taskId, selectedProject, selectedSection)"
-        v-if="isTaskProjectSelectorShown && selectedProject && selectedSection"
+        @click="addMembership(selectedProject, selectedSection)"
+        :disabled="!selectedProject || !selectedSection"
+        v-if="isTaskProjectSelectorShown"
       >
         Add task to project
       </n-button>
@@ -71,15 +64,10 @@
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, PropType, ref } from "vue";
 import { NSelect, NButton, NIcon } from "naive-ui";
-import {
-  Membership,
-  Project,
-  Section,
-  MembershipEdits,
-  Resource,
-} from "@/types/asana";
+import { Membership,Project, Section, MembershipEdits, Resource } from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 import { TrashCan } from "@vicons/carbon";
+import { getPrettyColumnName, getPrettySwimlaneName } from "@/utils/asana-specific";
 
 export default defineComponent({
   components: {
@@ -113,16 +101,6 @@ export default defineComponent({
     const taskMemberships = ref(props.memberships);
     const taskMembershipEdits = ref(props.membershipEdits);
 
-    const getSwimlane = (s: string) => {
-      const arraySplit = s.split(":");
-      return arraySplit.length > 1 ? arraySplit[0] : "No Swimlane";
-    };
-
-    const getSection = (s: string) => {
-      const arraySplit = s.split(":");
-      return arraySplit[1] ? arraySplit[1].split("|")[0] : s;
-    };
-
     const openProject = (gid: string) => {
       asanaStore.LOAD_SELECTED_PROJECT(gid);
     };
@@ -137,15 +115,18 @@ export default defineComponent({
     };
 
     const makeSectionOptions = (sections: Section[]) => {
+      if (sections === undefined) return [];
       return sections.map((p) => {
         return {
-          label: getSwimlane(p.name) + " | " + getSection(p.name),
+          label:
+            getPrettySwimlaneName(p.name) + " | " + getPrettyColumnName(p.name),
           value: p.gid,
         };
       });
     };
 
     const updateSections = async (val) => {
+      selectedProject.value = val;
       selectedSection.value = undefined;
       sectionsLoading.value = true;
       sections.value = (await getSectionsByProject(
@@ -157,13 +138,20 @@ export default defineComponent({
     const getSectionsByProject = async (proj) =>
       await asanaClient?.sections.findByProject(proj);
 
+    const showTaskProjectSelector = () => {
+      isTaskProjectSelectorShown.value = true;
+    };
+    const hideTaskProjectSelector = () => {
+      isTaskProjectSelectorShown.value = false;
+    };
+
     const upsertNewMembership = (
       memberships: Membership[],
       newMembership: Membership
     ) => {
       const sameProjectIdx = memberships.findIndex(
         (m) => m.project.gid === newMembership.project.gid
-      ); 
+      );
       if (sameProjectIdx === -1) {
         memberships.push(newMembership);
       } else {
@@ -171,11 +159,7 @@ export default defineComponent({
       }
     };
 
-    const addMembership = (
-      taskId: string,
-      projectId: string,
-      sectionId: string
-    ) => {
+    const addMembership = (projectId: string, sectionId: string) => {
       const project = projects.value.find((p) => p.gid === projectId);
       const section = sections.value?.find((s) => s.gid === sectionId);
       if (project && section) {
@@ -186,15 +170,15 @@ export default defineComponent({
       }
 
       // create a unique edit ID based on the task and project
-      taskMembershipEdits.value[taskId + projectId] = {
-        taskId: taskId,
+      taskMembershipEdits.value[props.taskId + projectId] = {
+        taskId: props.taskId,
         projectId: projectId,
         sectionId: sectionId,
         isDelete: false,
         isDone: false,
       };
 
-      isTaskProjectSelectorShown.value = false;
+      hideTaskProjectSelector();
       selectedProject.value = undefined;
       selectedSection.value = undefined;
 
@@ -202,13 +186,13 @@ export default defineComponent({
       emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
-    const removeMembership = (taskId: string, projectId: string) => {
+    const removeMembership = (projectId: string) => {
       taskMemberships.value = taskMemberships.value.filter(
         (m) => m.project.gid !== projectId
       );
       // create a unique edit ID based on the task and project
-      taskMembershipEdits.value[taskId + projectId] = {
-        taskId: taskId,
+      taskMembershipEdits.value[props.taskId + projectId] = {
+        taskId: props.taskId,
         projectId: projectId,
         isDelete: true,
         isDone: false,
@@ -225,12 +209,14 @@ export default defineComponent({
       taskMemberships,
       selectedProject,
       selectedSection,
-      getSwimlane,
-      getSection,
+      getPrettySwimlaneName,
+      getPrettyColumnName,
       openProject,
       removeMembership,
       makeProjectOptions,
       makeSectionOptions,
+      showTaskProjectSelector,
+      hideTaskProjectSelector,
       updateSections,
       addMembership,
     };
