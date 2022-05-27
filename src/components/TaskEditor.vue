@@ -35,7 +35,6 @@
       <task-project-selector
         :taskId="taskEditorSectionIdAndTask.task.gid"
         v-model:memberships="newMemberships"
-        v-model:membershipEdits="membershipEdits"
         v-if="taskEditorSectionIdAndTask.task.gid"
       />
       <div class="description">
@@ -159,7 +158,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, Membership, MembershipEdits, Project, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, Membership, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -214,7 +213,6 @@ export default defineComponent({
       )
     );
     const newMemberships = ref<Membership[]>([]);
-    const membershipEdits = ref<MembershipEdits>({});
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -294,8 +292,10 @@ export default defineComponent({
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
-        if (newMemberships.value !== undefined) taskEditorSectionIdAndTask.task.memberships = newMemberships.value;
-        asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
+        if (newMemberships.value !== undefined) {
+           asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, newMemberships.value);
+          taskEditorSectionIdAndTask.task.memberships = newMemberships.value;
+        }
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
@@ -344,7 +344,6 @@ export default defineComponent({
       images,
       customFieldSelectedGids,
       newMemberships,
-      membershipEdits,
       isDisplayableCustomField,
       save,
       deleteTask,

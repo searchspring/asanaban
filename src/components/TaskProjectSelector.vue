@@ -4,7 +4,7 @@
     <div class="project-list">
       <div
         class="project"
-        v-for="membership in taskMemberships"
+        v-for="membership in taskMemberships.filter(m => !m.isDeleted)"
         :key="membership.project.gid"
       >
         <template v-if="membership.section">
@@ -66,10 +66,13 @@
 import { useAsanaStore } from "@/store/asana";
 import { computed, defineComponent, defineEmits, PropType, ref } from "vue";
 import { NSelect, NButton, NIcon } from "naive-ui";
-import { Membership,Project, Section, MembershipEdits, Resource } from "@/types/asana";
+import { Membership, Project, Section, Resource } from "@/types/asana";
 import { asanaClient } from "@/store/auth";
 import { TrashCan } from "@vicons/carbon";
-import { getPrettyColumnName, getPrettySwimlaneName } from "@/utils/asana-specific";
+import {
+  getPrettyColumnName,
+  getPrettySwimlaneName,
+} from "@/utils/asana-specific";
 
 export default defineComponent({
   components: {
@@ -87,10 +90,6 @@ export default defineComponent({
       type: Object as PropType<Membership[]>,
       required: true,
     },
-    membershipEdits: {
-      type: Object as PropType<MembershipEdits>,
-      required: true,
-    },
   },
   setup(props, { emit }) {
     const asanaStore = useAsanaStore();
@@ -101,7 +100,6 @@ export default defineComponent({
     const selectedProject = ref<string>();
     const selectedSection = ref<string>();
     const taskMemberships = ref(props.memberships);
-    const taskMembershipEdits = ref(props.membershipEdits);
 
     const openProject = (gid: string) => {
       asanaStore.LOAD_SELECTED_PROJECT(gid);
@@ -169,39 +167,28 @@ export default defineComponent({
         upsertNewMembership(taskMemberships.value, {
           project: project as unknown as Resource,
           section: section,
+          isDeleted: false,
         });
       }
-
-      // create a unique edit ID based on the task and project
-      taskMembershipEdits.value[props.taskId + projectId] = {
-        taskId: props.taskId,
-        projectId: projectId,
-        sectionId: sectionId,
-        isDelete: false,
-        isDone: false,
-      };
 
       hideTaskProjectSelector();
       selectedProject.value = undefined;
       selectedSection.value = undefined;
 
       emit("update:memberships", taskMemberships.value);
-      emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
-    const removeMembership = (projectId: string) => {
-      taskMemberships.value = taskMemberships.value.filter(
-        (m) => m.project.gid !== projectId
-      );
-      // create a unique edit ID based on the task and project
-      taskMembershipEdits.value[props.taskId + projectId] = {
-        taskId: props.taskId,
-        projectId: projectId,
-        isDelete: true,
-        isDone: false,
-      };
+    const removeMembership = (projectId?: string) => {
+      if (projectId === undefined) return;
+      const project = projects.value.find((p) => p.gid === projectId);
+      if (project) {
+        upsertNewMembership(taskMemberships.value, {
+          project: project as unknown as Resource,
+          section: null,
+          isDeleted: true,
+        });
+      }
       emit("update:memberships", taskMemberships.value);
-      emit("update:membershipEdits", taskMembershipEdits.value);
     };
 
     return {

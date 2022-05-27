@@ -14,6 +14,7 @@ import {
   Resource,
   Attachment,
   MembershipEdits,
+  Membership,
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import {
@@ -428,32 +429,24 @@ export const useAsanaStore = defineStore("asana", {
       }
     },
 
-    EDIT_TASK_MEMBERSHIPS(taskId: string, membershipEdits: MembershipEdits) {
+    EDIT_TASK_MEMBERSHIPS(taskId: string, memberships: Membership[]) {
       const editTaskMemberships = async () => {
-        const promises: any = [];
-        for (const id in membershipEdits) {
-          const edit = membershipEdits[id];
-          if (edit.isDone !== undefined && edit.isDone) continue;
-
-          const data = { project: edit.projectId };
-          if (edit.isDelete) {
-            promises.push(asanaClient?.tasks.removeProject(taskId, data));
-          } else if (edit.sectionId) {
-            // asana interface has incorrect type defintion for this function
-            promises.push(
-              asanaClient?.tasks.addProject(taskId, {
-                ...data,
-                section: edit.sectionId as any,
-              })
-            );
-          } else {
-            // asana interface has incorrect type defintion for this function
-            promises.push(asanaClient?.tasks.addProject(taskId, data));
+        const promises = memberships.map((m) => {
+          const data = { project: m.project.gid }
+          if (m.isDeleted) {
+            return asanaClient?.tasks.removeProject(taskId, data);
+          } else if (m.section !== null) {
+             // asana interface has incorrect type defintion for this function
+             return asanaClient?.tasks.addProject(taskId, {
+              ...data,
+              section: m.section.gid as any,
+            })
           }
-          edit.isDone = true;
-        }
+          // asana interface has incorrect type defintion for this function
+          return asanaClient?.tasks.addProject(taskId, data)
+        })
         await Promise.all(promises);
-      };
+      }
       if (taskId) {
         this.ADD_ACTION("editing task memberships", editTaskMemberships);
       }
