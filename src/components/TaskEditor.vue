@@ -34,7 +34,7 @@
       </div>
       <task-project-selector
         :taskId="taskEditorSectionIdAndTask.task.gid"
-        v-model:memberships="taskEditorSectionIdAndTask.task.memberships"
+        v-model:memberships="newMemberships"
         v-model:membershipEdits="membershipEdits"
         v-if="taskEditorSectionIdAndTask.task.gid"
       />
@@ -159,7 +159,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, MembershipEdits, Project, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, Membership, MembershipEdits, Project, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -219,6 +219,7 @@ export default defineComponent({
         isFilenameExtensionImage(el.name)
       )
     );
+    const newMemberships = ref<Membership[]>();
     const membershipEdits = ref<MembershipEdits>({});
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
@@ -231,6 +232,7 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
+        newMemberships.value = JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)); // deep copy of array
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
@@ -298,6 +300,7 @@ export default defineComponent({
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
+        if (newMemberships.value !== undefined) taskEditorSectionIdAndTask.task.memberships = newMemberships.value;
         asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, membershipEdits.value);
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
@@ -346,6 +349,7 @@ export default defineComponent({
       htmlNotes,
       images,
       customFieldSelectedGids,
+      newMemberships,
       membershipEdits,
       isDisplayableCustomField,
       save,
