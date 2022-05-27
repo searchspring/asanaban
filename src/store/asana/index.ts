@@ -13,6 +13,8 @@ import {
   PaginationParams,
   Resource,
   Attachment,
+  MembershipEdits,
+  Membership,
 } from "@/types/asana";
 import { Move, Swimlane } from "@/types/layout";
 import {
@@ -24,6 +26,7 @@ import { asanaClient, useAuthStore } from "../auth";
 import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { usePrefStore } from "../preferences";
 import { isFilenameExtensionImage } from "@/utils/match";
+import asana from "asana";
 
 export const useAsanaStore = defineStore("asana", {
   state: (): State => ({
@@ -86,6 +89,11 @@ export const useAsanaStore = defineStore("asana", {
         }
       });
       return swimlanes;
+    },
+    TASK_EDITOR_SELECTED_PROJECT: (state) => {
+      const selected = state.projects.find((proj) => proj.gid === state.selectedProject);
+      if (selected === undefined) throw "Project cannot be found.";
+      return selected;
     },
   },
   actions: {
@@ -274,17 +282,17 @@ export const useAsanaStore = defineStore("asana", {
               if (cur.name == ColumnChange) {
                 return {
                   ...obj,
-                  [cur.gid]: new Date().toISOString()
-                }
+                  [cur.gid]: new Date().toISOString(),
+                };
               }
               if (!isDisplayableCustomField(cur)) {
                 return obj;
               }
-              return  {
+              return {
                 ...obj,
                 [cur.gid]:
                   cur.enum_value?.gid ?? cur.number_value ?? cur.text_value,
-              }
+              };
             },
             {}
           ),
@@ -317,6 +325,7 @@ export const useAsanaStore = defineStore("asana", {
           assignee: taskAndSectionId.task.assignee?.gid ?? null,
           html_notes: taskAndSectionId.task.html_notes,
           due_on: taskAndSectionId.task.due_on,
+          projects: taskAndSectionId.task.projects.map((proj) => proj.gid),
           custom_fields: taskAndSectionId.task.custom_fields?.reduce(
             (obj, cur) => ({
               ...obj,
@@ -408,15 +417,38 @@ export const useAsanaStore = defineStore("asana", {
     DELETE_STORY(gid: string): void {
       const prefStore = usePrefStore();
       if (gid) {
-        this.ADD_ACTION(
-          "deleting story",
-          async () => {
-            await asanaClient?.stories?.delete(gid);
-            if (prefStore?.taskEditorSectionIdAndTask?.task) {
-              prefStore.taskEditorSectionIdAndTask.task.stories = prefStore.taskEditorSectionIdAndTask.task.stories.filter((story) => story.gid !== gid);
-            }
+        this.ADD_ACTION("deleting story", async () => {
+          await asanaClient?.stories?.delete(gid);
+          if (prefStore?.taskEditorSectionIdAndTask?.task) {
+            prefStore.taskEditorSectionIdAndTask.task.stories =
+              prefStore.taskEditorSectionIdAndTask.task.stories.filter(
+                (story) => story.gid !== gid
+              );
           }
-        );
+        });
+      }
+    },
+
+    EDIT_TASK_MEMBERSHIPS(taskId: string, memberships: Membership[]) {
+      const editTaskMemberships = async () => {
+        const promises = memberships.map((m) => {
+          const data = { project: m.project.gid }
+          if (m.isDeleted) {
+            return asanaClient?.tasks.removeProject(taskId, data);
+          } else if (m.section !== null) {
+             // asana interface has incorrect type defintion for this function
+             return asanaClient?.tasks.addProject(taskId, {
+              ...data,
+              section: m.section.gid as any,
+            })
+          }
+          // asana interface has incorrect type defintion for this function
+          return asanaClient?.tasks.addProject(taskId, data)
+        })
+        await Promise.all(promises);
+      }
+      if (taskId) {
+        this.ADD_ACTION("editing task memberships", editTaskMemberships);
       }
     },
 
@@ -489,7 +521,8 @@ export const useAsanaStore = defineStore("asana", {
               limit: 100,
               workspace: workspace.gid,
               archived: false,
-              opt_fields: "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options"
+              opt_fields:
+                "name, custom_field_settings.custom_field.name, custom_field_settings.custom_field.enum_options",
             };
             let projectResponse: any = await asanaClient?.projects.findAll(
               options
@@ -503,14 +536,14 @@ export const useAsanaStore = defineStore("asana", {
                 return {
                   ...p,
                   custom_fields: p.custom_field_settings.map((el) => {
-                    return { 
-                      name: el.custom_field.name, 
+                    return {
+                      name: el.custom_field.name,
                       gid: el.custom_field.gid,
-                      enum_options: el.custom_field.enum_options, 
-                    }
+                      enum_options: el.custom_field.enum_options,
+                    };
                   }),
-                  workspaceGid: workspace.gid
-                } as Project
+                  workspaceGid: workspace.gid,
+                } as Project;
               });
               this.ADD_PROJECTS(projects);
             }
@@ -649,6 +682,7 @@ async function loadTasks(
     for (; taskResponse; taskResponse = await taskResponse.nextPage()) {
       tasks.push(...taskResponse.data);
     }
+
     // add attachments to task
     if (tasks.length > 0) {
       asanaStore.LOAD_ATTACHMENTS(tasks);

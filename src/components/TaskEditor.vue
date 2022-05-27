@@ -1,5 +1,11 @@
 <template>
-  <div tabindex="0" class="overlay" v-if="taskEditorSectionIdAndTask" @keydown.esc="hide" @click.self="hide">
+  <div
+    tabindex="0"
+    class="overlay"
+    v-if="taskEditorSectionIdAndTask"
+    @keydown.esc="hide"
+    @click.self="hide"
+  >
     <div tabindex="0" class="task-editor" @keydown.esc="hide">
       <div class="name">
         <a
@@ -26,6 +32,11 @@
           <DateSelector v-model:date="dueDate" />
         </div>
       </div>
+      <task-project-selector
+        :taskId="taskEditorSectionIdAndTask.task.gid"
+        v-model:memberships="newMemberships"
+        v-if="taskEditorSectionIdAndTask.task.gid"
+      />
       <div class="description">
         <label for="description">Description</label>
         <TextEditor
@@ -52,7 +63,10 @@
       </template>
       <div
         class="subtasks"
-        v-if="taskEditorSectionIdAndTask.task.subtasks && taskEditorSectionIdAndTask.task.subtasks?.length > 0"
+        v-if="
+          taskEditorSectionIdAndTask.task.subtasks &&
+          taskEditorSectionIdAndTask.task.subtasks?.length > 0
+        "
       >
         <label>Subtasks</label>
         <n-list style="font-size: 0.8rem">
@@ -81,11 +95,7 @@
       </div>
       <div class="attachments" v-if="images && images.length > 0">
         <label>Attached images</label>
-        <div
-          v-for="image in images"
-          class="attachment"
-          :key="image.gid"
-        >
+        <div v-for="image in images" class="attachment" :key="image.gid">
           <a :href="image.permanent_url" target="_blank" rel="noopener">
             <img :src="image.view_url" />
           </a>
@@ -148,7 +158,7 @@ import { defineComponent, ref, watch, computed } from "vue";
 import BasicInput from "./BasicInput.vue";
 import TextEditor from "./TextEditor.vue";
 import Stories from "./Stories.vue";
-import { Assignee, TaskAndSectionId, User } from "@/types/asana";
+import { Assignee, Membership, TaskAndSectionId, User } from "@/types/asana";
 import TagSelector from "./TagSelector.vue";
 import DateSelector from "./DateSelector.vue";
 import { asanaDateFormat, formattedDate } from "../utils/date";
@@ -156,11 +166,12 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import { NButton, NList, NListItem, NIcon } from "naive-ui";
+import { NButton, NList, NListItem, NIcon, NSelect } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
 import { isFilenameExtensionImage } from "../utils/match";
+import TaskProjectSelector from "./TaskProjectSelector.vue";
 
 export default defineComponent({
   components: {
@@ -174,6 +185,7 @@ export default defineComponent({
     NList,
     NListItem,
     NIcon,
+    TaskProjectSelector,
     ExternalLinkAlt,
     CheckCircleRegular,
     CheckCircle,
@@ -182,25 +194,25 @@ export default defineComponent({
   setup() {
     const asanaStore = useAsanaStore();
     const prefStore = usePrefStore();
+    const projects = computed(() => asanaStore.projects);
     const taskName = ref<string>();
     const assigneeGid = ref<string>();
     const dueDate = ref<Date>();
     const htmlNotes = ref<string>();
     const customFieldSelectedGids = ref<(string | undefined)[]>([]);
     const projectId = computed(() => asanaStore.selectedProject);
-    const project = computed(() => {
-      const selected = asanaStore.projects.find((proj) => proj.gid === asanaStore.selectedProject);
-      if (selected === undefined) throw("Project cannot be found.");
-      return selected;
-    })
+    const project = computed(() => asanaStore.TASK_EDITOR_SELECTED_PROJECT)
 
     const taskEditorSectionIdAndTask = computed(() => {
       return prefStore.taskEditorSectionIdAndTask!;
     });
 
-    const images = computed(() => prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter(
-            (el) => isFilenameExtensionImage(el.name)
-          ));
+    const images = computed(() =>
+      prefStore.taskEditorSectionIdAndTask?.task?.attachments?.filter((el) =>
+        isFilenameExtensionImage(el.name)
+      )
+    );
+    const newMemberships = ref<Membership[]>([]);
 
     // This component is re-used, so we don't call setup() again. So we watch the taskEditorSectionIdAndTask to identify when a new "task" is being edited(and thus re-initialize our input fields)
     watch([taskEditorSectionIdAndTask], () => {
@@ -212,6 +224,7 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
+        newMemberships.value = JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)); // deep copy of array
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
@@ -253,29 +266,36 @@ export default defineComponent({
             field.enum_options?.find(
               (o) => o.gid === customFieldSelectedGids.value[idx]
             ) ?? null;
-         
+
           if (task.gid) {
-            const taskCustomField = taskEditorSectionIdAndTask.task.custom_fields?.find(cf => cf.gid === field.gid);
+            const taskCustomField =
+              taskEditorSectionIdAndTask.task.custom_fields?.find(
+                (cf) => cf.gid === field.gid
+              );
             if (taskCustomField) {
               taskCustomField.enum_value = selectedVal;
             } else {
               taskEditorSectionIdAndTask.task.custom_fields?.push({
                 ...field,
                 enum_value: selectedVal,
-              })
+              });
             }
           } else {
             task.custom_fields = task.custom_fields ?? [];
             task.custom_fields.push({
               ...field,
               enum_value: selectedVal,
-            })
-          } 
+            });
+          }
         }
       });
 
       if (taskEditorSectionIdAndTask.task.gid) {
         asanaStore.UPDATE_TASK(taskEditorSectionIdAndTask);
+        if (newMemberships.value !== undefined) {
+          asanaStore.EDIT_TASK_MEMBERSHIPS(taskEditorSectionIdAndTask.task.gid, newMemberships.value);
+          taskEditorSectionIdAndTask.task.memberships = newMemberships.value;
+        }
       } else {
         asanaStore.CREATE_TASK(taskEditorSectionIdAndTask);
       }
@@ -311,8 +331,10 @@ export default defineComponent({
     const makeAsanaHref = (taskId: string) =>
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
+
     return {
       taskEditorSectionIdAndTask,
+      projects,
       projectId,
       project,
       dueDate,
@@ -320,8 +342,9 @@ export default defineComponent({
       assigneeGid,
       htmlNotes,
       images,
-      isDisplayableCustomField,
       customFieldSelectedGids,
+      newMemberships,
+      isDisplayableCustomField,
       save,
       deleteTask,
       hide,
@@ -497,4 +520,5 @@ button.left {
   display: inline-block;
   object-fit: cover;
 }
+
 </style>

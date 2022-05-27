@@ -13,6 +13,11 @@ function getPrettyColumnName(columnName: string): string {
   return columnName;
 }
 
+function getPrettySwimlaneName(s: string): string {
+  const arraySplit = s.split(":");
+  return arraySplit.length > 1 ? arraySplit[0] : "No Swimlane";
+};
+
 // TODO : return a number in all cases (not a string)
 function getColumnCount(columnName: string): string {
   const parts = columnName.split(/[:|]/);
@@ -162,6 +167,7 @@ function recursivePTags(
 
 export {
   getPrettyColumnName,
+  getPrettySwimlaneName,
   getColumnCount,
   convertAsanaColorToHex,
   xmlToHtml,
