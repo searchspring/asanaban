@@ -9,6 +9,14 @@ declare module "asana" {
   }
 }
 
+declare module "asana" {
+  namespace resources {
+    interface attachments {
+      createAttachmentsForTask(task: string, dispatcherOptions?: any): Promise<unknown>;
+    }
+  }
+}
+
 export type Resource = asana.resources.Resource;
 export type BaseResource = Omit<Resource, "resource_subtype" | "id">;
 
@@ -53,6 +61,15 @@ export type Attachment = {
   view_url: string;
   permanent_url: string;
 };
+export type AttachmentUploadParams = {
+  file: string,
+  name: string,
+  parent: string,
+  resource_subtype: string,
+  url: string,
+}
+
+
 export type Task = Omit<
   asana.resources.Tasks.Type,
   "tags" | "custom_fields"
