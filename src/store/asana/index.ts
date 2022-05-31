@@ -93,7 +93,9 @@ export const useAsanaStore = defineStore("asana", {
       return swimlanes;
     },
     TASK_EDITOR_SELECTED_PROJECT: (state) => {
-      const selected = state.projects.find((proj) => proj.gid === state.selectedProject);
+      const selected = state.projects.find(
+        (proj) => proj.gid === state.selectedProject
+      );
       if (selected === undefined) throw "Project cannot be found.";
       return selected;
     },
@@ -434,21 +436,21 @@ export const useAsanaStore = defineStore("asana", {
     EDIT_TASK_MEMBERSHIPS(taskId: string, memberships: Membership[]) {
       const editTaskMemberships = async () => {
         const promises = memberships.map((m) => {
-          const data = { project: m.project.gid }
+          const data = { project: m.project.gid };
           if (m.isDeleted) {
             return asanaClient?.tasks.removeProject(taskId, data);
           } else if (m.section !== null) {
-             // asana interface has incorrect type defintion for this function
-             return asanaClient?.tasks.addProject(taskId, {
+            // asana interface has incorrect type defintion for this function
+            return asanaClient?.tasks.addProject(taskId, {
               ...data,
               section: m.section.gid as any,
-            })
+            });
           }
           // asana interface has incorrect type defintion for this function
-          return asanaClient?.tasks.addProject(taskId, data)
-        })
+          return asanaClient?.tasks.addProject(taskId, data);
+        });
         await Promise.all(promises);
-      }
+      };
       if (taskId) {
         this.ADD_ACTION("editing task memberships", editTaskMemberships);
       }
@@ -515,33 +517,32 @@ export const useAsanaStore = defineStore("asana", {
     },
 
     UPLOAD_ATTACHMENT(taskGid: string, uploadFile?: UploadFileInfo) {
-      const createAttachmentsForTask = (task_gid: string, upload_file: Blob) => {
+      const createAttachmentsForTask = (
+        task_gid: string,
+        upload_file: ReadableStreamDefaultReader<any>
+      ) => {
+        const path = `/tasks/${task_gid}/attachments`;
         const params = {
-          method: 'POST',
-          url: `https://app.asana.com/api/1.0/tasks/${task_gid}/attachments`,
-          formData: {
-              file: upload_file.stream(),
-              resource_subtype: "external",
-              url: 'https://images.unsplash.com/photo-1649972904366-7309c5e13abd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2370&q=80',
-              name: "image",
-              parent: taskGid,
-          },
-          headers: {
-              "Content-Type": "multipart/form-data"
-          },
+          file: "https://images.unsplash.com/photo-1649972904366-7309c5e13abd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2370&q=80",
+          resource_subtype: "external",
+          url: "https://images.unsplash.com/photo-1649972904366-7309c5e13abd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2370&q=80",
+          name: "image",
+        }
+        return asanaClient?.dispatcher.post(path, params)
       };
-      console.log(params);
-      return asanaClient?.dispatcher.dispatch(params, {});
-    }
       this.ADD_ACTION("uploading attachment", async () => {
-        // if (uploadFile.file) createAttachmentsForTask(taskGid, uploadFile.file)
-        const image = await fetch('./image.jpg')
-        console.log(image);
-        const imageBinary = await image.blob();
-        const response = await createAttachmentsForTask(taskGid, imageBinary);
-        console.log(response);
-      })
-  },
+        fetch("https://images.unsplash.com/photo-1649972904366-7309c5e13abd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2370&q=80")
+          // Retrieve its body as ReadableStream
+          .then((response) => {
+            const reader = response.body?.getReader();
+            if (reader) return createAttachmentsForTask(taskGid, reader)
+          })
+          .then((resp) => console.log(resp));
+
+        // const response = await createAttachmentsForTask(taskGid, imageBinary);
+        // console.log(response);
+      });
+    },
 
     LOAD_PROJECTS(): void {
       const loadProjects = async () => {

@@ -103,7 +103,7 @@
        
       </div>
       <n-button @click="uploadAttachmentTest">Upload Attachment Test</n-button>
-       <n-upload 
+       <!-- <n-upload 
           :action="getAttachmentUploadUrl()"
           :headers="{
             'Content-Type': 'multipart/form-data'
@@ -111,7 +111,7 @@
           @before-upload="uploadAttachment"
         >
         <n-button>Upload Attachment</n-button>
-        </n-upload>
+        </n-upload> -->
       <div class="stories">
         <Stories />
       </div>
@@ -197,7 +197,6 @@ export default defineComponent({
     NList,
     NListItem,
     NIcon,
-    NUpload,
     TaskProjectSelector,
     ExternalLinkAlt,
     CheckCircleRegular,
@@ -237,7 +236,7 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
-        newMemberships.value = JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)); // deep copy of array
+        newMemberships.value = taskEditorSectionIdAndTask.value.task.memberships !== undefined ? JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)) : []; // deep copy of array
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
