@@ -13,6 +13,7 @@ import {
   PaginationParams,
   Resource,
   Attachment,
+  AttachmentUploadParams,
   MembershipEdits,
   Membership,
 } from "@/types/asana";
@@ -27,6 +28,7 @@ import { ColumnChange, isDisplayableCustomField } from "@/utils/custom-fields";
 import { usePrefStore } from "../preferences";
 import { isFilenameExtensionImage } from "@/utils/match";
 import asana from "asana";
+import { UploadFileInfo } from "naive-ui";
 
 export const useAsanaStore = defineStore("asana", {
   state: (): State => ({
@@ -511,6 +513,35 @@ export const useAsanaStore = defineStore("asana", {
 
       this.ADD_ACTION("loading all attachments", loadAllAttachments);
     },
+
+    UPLOAD_ATTACHMENT(taskGid: string, uploadFile?: UploadFileInfo) {
+      const createAttachmentsForTask = (task_gid: string, upload_file: Blob) => {
+        const params = {
+          method: 'POST',
+          url: `https://app.asana.com/api/1.0/tasks/${task_gid}/attachments`,
+          formData: {
+              file: upload_file.stream(),
+              resource_subtype: "external",
+              url: 'https://images.unsplash.com/photo-1649972904366-7309c5e13abd?ixlib=rb-1.2.1&ixid=MnwxMjA3fDF8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=2370&q=80',
+              name: "image",
+              parent: taskGid,
+          },
+          headers: {
+              "Content-Type": "multipart/form-data"
+          },
+      };
+      console.log(params);
+      return asanaClient?.dispatcher.dispatch(params, {});
+    }
+      this.ADD_ACTION("uploading attachment", async () => {
+        // if (uploadFile.file) createAttachmentsForTask(taskGid, uploadFile.file)
+        const image = await fetch('./image.jpg')
+        console.log(image);
+        const imageBinary = await image.blob();
+        const response = await createAttachmentsForTask(taskGid, imageBinary);
+        console.log(response);
+      })
+  },
 
     LOAD_PROJECTS(): void {
       const loadProjects = async () => {

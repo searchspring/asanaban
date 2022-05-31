@@ -100,7 +100,18 @@
             <img :src="image.view_url" />
           </a>
         </div>
+       
       </div>
+      <n-button @click="uploadAttachmentTest">Upload Attachment Test</n-button>
+       <n-upload 
+          :action="getAttachmentUploadUrl()"
+          :headers="{
+            'Content-Type': 'multipart/form-data'
+          }"
+          @before-upload="uploadAttachment"
+        >
+        <n-button>Upload Attachment</n-button>
+        </n-upload>
       <div class="stories">
         <Stories />
       </div>
@@ -166,12 +177,13 @@ import { parse } from "date-fns";
 import { useAsanaStore } from "@/store/asana";
 import { usePrefStore } from "@/store/preferences";
 import AssigneeSelector from "./AssigneeSelector.vue";
-import { NButton, NList, NListItem, NIcon, NSelect } from "naive-ui";
+import { NButton, NList, NListItem, NIcon, NSelect, NUpload, UploadCustomRequestOptions, UploadFileInfo } from "naive-ui";
 import { ExternalLinkAlt, CheckCircleRegular, CheckCircle } from "@vicons/fa";
 import { isDisplayableCustomField } from "@/utils/custom-fields";
 import CustomEnumFieldSelector from "./CustomEnumFieldSelector.vue";
 import { isFilenameExtensionImage } from "../utils/match";
 import TaskProjectSelector from "./TaskProjectSelector.vue";
+import { FileInfo } from "naive-ui/lib/upload/src/interface";
 
 export default defineComponent({
   components: {
@@ -185,6 +197,7 @@ export default defineComponent({
     NList,
     NListItem,
     NIcon,
+    NUpload,
     TaskProjectSelector,
     ExternalLinkAlt,
     CheckCircleRegular,
@@ -331,6 +344,24 @@ export default defineComponent({
     const makeAsanaHref = (taskId: string) =>
       `https://app.asana.com/0/${projectId.value}/${taskId}`;
 
+    const uploadAttachment = (data: {
+        file: UploadFileInfo
+        fileList: UploadFileInfo[]
+      }) => {
+      asanaStore.UPLOAD_ATTACHMENT(taskEditorSectionIdAndTask.value.task.gid, data.file);
+    };
+
+    const uploadAttachmentTest = () => {
+      console.log(taskEditorSectionIdAndTask.value.task.name);
+      asanaStore.UPLOAD_ATTACHMENT(taskEditorSectionIdAndTask.value.task.gid);
+    };
+
+    const getAttachmentUploadUrl = () => {
+      if (taskEditorSectionIdAndTask.value.task.gid) {
+        return `https://app.asana.com/api/1.0/tasks/${taskEditorSectionIdAndTask.value.task.gid}/attachments`
+      }
+    }
+
 
     return {
       taskEditorSectionIdAndTask,
@@ -352,6 +383,9 @@ export default defineComponent({
       completeTask,
       makeAsanaHref,
       isFilenameExtensionImage,
+      uploadAttachment,
+      uploadAttachmentTest,
+      getAttachmentUploadUrl,
     };
   },
 });
