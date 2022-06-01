@@ -224,7 +224,7 @@ export default defineComponent({
         taskName.value = taskEditorSectionIdAndTask.value.task.name;
         assigneeGid.value = taskEditorSectionIdAndTask.value.task.assignee?.gid;
         htmlNotes.value = taskEditorSectionIdAndTask.value.task.html_notes;
-        newMemberships.value = JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)); // deep copy of array
+        newMemberships.value = taskEditorSectionIdAndTask.value.task.memberships !== undefined ? JSON.parse(JSON.stringify(taskEditorSectionIdAndTask.value.task.memberships)) : []; // deep copy of array
 
         customFieldSelectedGids.value = [];
         taskEditorSectionIdAndTask.value.task.custom_fields?.forEach((el) =>
