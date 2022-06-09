@@ -119,8 +119,8 @@ export default defineComponent({
         new Date(),
         parseISO(columnChangeDate) ?? new Date()
       );
-      const opacity = (100 - daysSinceMove * 2.3) / 100 + 0.3;
-      return Math.max(opacity, 0.3);
+      const opacity = (100 - daysSinceMove * 2.3) / 100 + 0.5;
+      return Math.max(opacity, 0.5);
     });
 
     const backgroundAndTextColor = computed(() => {
