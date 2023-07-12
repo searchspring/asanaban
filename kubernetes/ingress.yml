@@ -6,7 +6,7 @@ metadata:
   annotations:
     nginx.org/redirect-to-https: "true"
 spec:
-  omgressClassName: nginx-ext
+  ingressClassName: nginx-ext
   rules:
   - host: asanaban.kube.searchspring.io
     http:
