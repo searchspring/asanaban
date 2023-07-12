@@ -11,20 +11,20 @@ spec:
   - host: asanaban.kube.searchspring.io
     http:
       paths:
-      - path: /
-        pathType: Prefix
-        backend:
-          service:
-            name: asanaban-service
-            port: 
-	      number: 3000 
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: asanaban-service
+              port:
+                number: 3000 
   - host: asanaban.com
     http:
       paths:
-      - path: /
-	pathType: Prefix
-        backend:
-          service:
-	    name: asanaban-service
-            port:
-              number: 3000 
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: asanaban-service
+              port:
+                number: 3000 
